@@ -1,0 +1,95 @@
+{
+  "feet": {
+    "mustafcilun": { "bits": "1010110", "name": "مستفعلن", "la_naam": ["لا", "لا", "نعم"] },
+    "mutafcilun": { "bits": "110110", "name": "متفعلن", "la_naam": ["نعم", "لا", "نعم"], "zihaf_of": "mustafcilun", "zihaf": "خبن" },
+    "muftacilun": { "bits": "101110", "name": "مفتعلن", "la_naam": ["لا", "نعم", "نعم"], "zihaf_of": "mustafcilun", "zihaf": "طي" },
+    "failun": { "bits": "10110", "name": "فاعلن", "la_naam": ["لا", "نعم"] },
+    "failatun": { "bits": "1011010", "name": "فاعلاتن", "la_naam": ["لا", "نعم", "لا"] },
+    "faulun": { "bits": "11010", "name": "فعولن", "la_naam": ["نعم", "لا"] },
+    "faulu": { "bits": "1110", "name": "فعول", "la_naam": ["نعم"], "zihaf_of": "faulun", "zihaf": "قبض" },
+    "mafailun": { "bits": "1101010", "name": "مفاعيلن", "la_naam": ["نعم", "لا", "لا"] },
+    "failun_short": { "bits": "1010", "name": "فعلن", "la_naam": ["لا", "لا"], "zihaf_of": "failun", "zihaf": "خبن" }
+  },
+  "meters": [
+    {
+      "id": "mashub",
+      "name": "المسحوب",
+      "fasih": "السريع",
+      "priority": 1,
+      "feet": ["mustafcilun", "mustafcilun", "failatun"],
+      "note": "أكثر بحر نبطي. الصدر والعجز بنفس القالب."
+    },
+    {
+      "id": "arda",
+      "name": "العرضة",
+      "fasih": "الرمل",
+      "priority": 2,
+      "feet": ["failatun", "failatun", "failun"],
+      "note": "بحر الطبل والسلاح. نحمد الله تمشي هنا."
+    },
+    {
+      "id": "ramal",
+      "name": "الرمل",
+      "fasih": "الرمل",
+      "priority": 12,
+      "feet": ["failatun", "failatun", "failun"],
+      "note": "مقابل فصيح للعرضة. نفس القالب الرقمي."
+    },
+    {
+      "id": "hajini_tamm",
+      "name": "الهجيني التام",
+      "fasih": "مجزوء البسيط",
+      "priority": 3,
+      "feet": ["mustafcilun", "failun", "mustafcilun", "failun"],
+      "note": "أخف من المسحوب وأوسع من القصير."
+    },
+    {
+      "id": "hajini_qasir",
+      "name": "الهجيني القصير",
+      "fasih": "مجزوء البسيط",
+      "priority": 4,
+      "feet": ["mustafcilun", "failun", "failun"],
+      "note": "أسرع صور الهجيني."
+    },
+    {
+      "id": "hilali",
+      "name": "الهلالي",
+      "fasih": "الطويل",
+      "priority": 5,
+      "feet": ["faulun", "mafailun", "faulun", "mafailun"],
+      "note": "أطول نفساً. فعولن مفاعيلن مرتين."
+    },
+    {
+      "id": "sakhri",
+      "name": "الصخري",
+      "fasih": "الهزج / الوافر",
+      "priority": 6,
+      "feet": ["mafailun", "mafailun", "faulun"],
+      "note": "يميل للوافر في حسّه."
+    },
+    {
+      "id": "hida",
+      "name": "الحداء",
+      "fasih": "الرجز",
+      "priority": 7,
+      "feet": ["mustafcilun", "mustafcilun", "mustafcilun"],
+      "note": "مستفعلن ثلاث مرات."
+    },
+    {
+      "id": "madid",
+      "name": "المديد",
+      "fasih": "المديد",
+      "priority": 8,
+      "feet": ["failatun", "failun", "failatun", "failun"],
+      "note": "فاعلاتن فاعلن فاعلاتن فاعلن."
+    },
+    {
+      "id": "mumtadd",
+      "name": "الممتد",
+      "fasih": "الرمل التام",
+      "priority": 9,
+      "feet": ["failatun", "failatun", "failatun", "failun"],
+      "note": "عرضة ممدودة: فاعلاتن ثلاث ثم فاعلن."
+    }
+  ]
+}

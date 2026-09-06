@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans-arabic/400.css";
+@import "@fontsource/ibm-plex-sans-arabic/500.css";
+@import "@fontsource/ibm-plex-sans-arabic/600.css";
+@import "@fontsource/ibm-plex-sans-arabic/700.css";
+@import "@fontsource/amiri/400.css";
+@import "@fontsource/amiri/700.css";
+
+@theme {
+  --color-bg: #12100e;
+  --color-bg-elevated: #1a1714;
+  --color-surface: #211d18;
+  --color-paper: #f3ead8;
+  --color-paper-edge: #e4d7c0;
+  --color-ink: #1c1612;
+  --color-ink-soft: #3a322b;
+  --color-fg: #f4efe6;
+  --color-muted: #9a9186;
+  --color-subtle: #6e675f;
+  --color-accent: #6b7f63;
+  --color-accent-fg: #f4efe6;
+  --color-ok: #6b7f63;
+  --color-ok-fg: #ecf3e8;
+  --color-break: #9a5347;
+  --color-break-fg: #f8e8e4;
+  --color-one: #3f5c4a;
+  --color-zero: #7a4a42;
+  --color-border: #3a342d;
+  --color-ring: #8a9a7b;
+
+  --font-sans: "IBM Plex Sans Arabic", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif;
+  --font-display: "Amiri", "Noto Naskh Arabic", "Traditional Arabic", serif;
+  --font-mono: "IBM Plex Sans Arabic", ui-monospace, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-paper: 0 18px 40px -24px rgb(0 0 0 / 0.55), 0 1px 0 rgb(255 255 255 / 0.4) inset;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    text-align: right;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 40%, transparent);
+    color: var(--color-fg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
