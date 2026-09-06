@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ميزان النبط</title>
+    <meta name="description" content="وزن الشعر النبطي من غير تشكيل: بحث سكون، صناديق لا ونعم، وكشف الكسر." />
+    <meta name="theme-color" content="#12100e" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #12100e;
+        --bg-elevated: #1a1714;
+        --surface: #211d18;
+        --paper: #f3ead8;
+        --paper-edge: #e4d7c0;
+        --ink: #1c1612;
+        --ink-soft: #3a322b;
+        --fg: #f4efe6;
+        --muted: #9a9186;
+        --subtle: #6e675f;
+        --accent: #6b7f63;
+        --ok: #6b7f63;
+        --ok-fg: #ecf3e8;
+        --break: #9a5347;
+        --break-fg: #f8e8e4;
+        --one: #3f5c4a;
+        --zero: #7a4a42;
+        --border: #3a342d;
+        --ring: #8a9a7b;
+        --sans: "IBM Plex Sans Arabic", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif;
+        --display: "Amiri", "Noto Naskh Arabic", "Traditional Arabic", serif;
+        --shadow-paper: 0 18px 40px -24px rgb(0 0 0 / 0.55), 0 1px 0 rgb(255 255 255 / 0.4) inset;
+      }
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; background: var(--bg); color: var(--fg); }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        text-align: right;
+        -webkit-font-smoothing: antialiased;
+      }
+      button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+      ::selection { background: color-mix(in oklab, var(--accent) 40%, transparent); color: var(--fg); }
+      .wrap {
+        position: relative;
+        margin: 0 auto;
+        max-width: 48rem;
+        padding: 2.25rem 1rem 3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      @media (min-width: 640px) { .wrap { padding: 2.5rem 1.5rem 3.5rem; } }
+      .glow {
+        pointer-events: none;
+        position: absolute;
+        inset: 0 0 auto;
+        height: 16rem;
+        opacity: 0.7;
+        background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 80%, transparent), transparent);
+      }
+      header { display: flex; flex-direction: column; gap: 1rem; }
+      .head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+      .kicker { margin: 0; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; color: var(--muted); }
+      h1 {
+        margin: 0.25rem 0 0;
+        font-family: var(--display);
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        line-height: 1.15;
+      }
+      .lede { margin: 0.75rem 0 0; max-width: 36rem; font-size: 0.9rem; line-height: 1.75; color: var(--muted); }
+      .icon {
+        display: none;
+        width: 3rem; height: 3rem;
+        flex-shrink: 0;
+        align-items: center; justify-content: center;
+        border-radius: 0.5rem;
+        background: var(--surface);
+        box-shadow: inset 0 0 0 1px var(--border);
+        color: var(--accent);
+      }
+      @media (min-width: 640px) { .icon { display: flex; } }
+      .legend {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      @media (min-width: 640px) { .legend { grid-template-columns: repeat(4, 1fr); } }
+      .legend div {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: var(--surface);
+        border-radius: 0.5rem;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+      .legend dt { font-family: var(--display); font-size: 0.9rem; font-weight: 700; color: var(--fg); }
+      .panel {
+        background: var(--surface);
+        border-radius: 0.9rem;
+        padding: 1rem 1.1rem 1.15rem;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+      label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; }
+      textarea {
+        width: 100%;
+        resize: vertical;
+        min-height: 5.5rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: var(--bg-elevated);
+        color: var(--fg);
+        font-family: var(--display);
+        font-size: 1.25rem;
+        line-height: 1.9;
+        padding: 0.75rem 1rem;
+        outline: none;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+      textarea:focus { box-shadow: inset 0 0 0 2px var(--ring); }
+      textarea::placeholder { color: var(--subtle); }
+      .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+      .chip {
+        border: 0;
+        background: var(--bg);
+        color: var(--muted);
+        font-family: inherit;
+        font-size: 0.875rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+      .chip:hover, .chip.active { color: var(--fg); }
+      .row { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+      @media (min-width: 640px) {
+        .row { flex-direction: row; align-items: flex-end; }
+        .row .grow { flex: 1; }
+      }
+      select {
+        height: 2.75rem;
+        width: 100%;
+        border: 0;
+        border-radius: 0.5rem;
+        background: var(--bg-elevated);
+        color: var(--fg);
+        font-family: inherit;
+        font-size: 0.9rem;
+        padding: 0 0.75rem;
+        outline: none;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+      select:focus { box-shadow: inset 0 0 0 2px var(--ring); }
+      .reset {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        height: 2.75rem;
+        border: 0;
+        border-radius: 0.5rem;
+        background: var(--fg);
+        color: var(--bg);
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0 1.25rem;
+      }
+      .hint { margin: 0.75rem 0 0; font-size: 0.75rem; line-height: 1.6; color: var(--subtle); }
+      .empty {
+        background: var(--surface);
+        color: var(--muted);
+        text-align: center;
+        font-size: 0.9rem;
+        padding: 2rem 1.25rem;
+        border-radius: 0.9rem;
+        box-shadow: inset 0 0 0 1px var(--border);
+      }
+      .paper {
+        background: var(--paper);
+        color: var(--ink);
+        border-radius: 0.9rem;
+        box-shadow: var(--shadow-paper), inset 0 0 0 1px var(--paper-edge);
+        overflow: hidden;
+      }
+      .paper-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid var(--paper-edge);
+      }
+      .paper-head .meta { display: flex; align-items: center; gap: 0.75rem; }
+      .lbl { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; color: color-mix(in oklab, var(--ink-soft) 70%, transparent); }
+      .meter-name { font-family: var(--display); font-size: 1.15rem; font-weight: 700; }
+      .pill {
+        border-radius: 999px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .pill.ok { background: var(--ok); color: var(--ok-fg); }
+      .pill.break { background: var(--break); color: var(--break-fg); }
+      .pill.muted { background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink-soft); }
+      .letters { padding: 1.25rem 1rem 1.15rem; }
+      @media (min-width: 640px) { .letters { padding: 1.25rem 1.5rem; } }
+      .words { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 1rem 1.25rem; }
+      .word { display: flex; gap: 0.2rem; }
+      .tile {
+        min-height: 2.75rem;
+        min-width: 2.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem 0.35rem;
+        border: 0;
+        background: transparent;
+        border-radius: 0.3rem;
+        font-family: inherit;
+        color: var(--ink);
+      }
+      .tile:hover { background: color-mix(in oklab, var(--ink) 6%, transparent); }
+      .tile.skipped { opacity: 0.45; }
+      .tile.locked:not(.skipped) { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 15%, transparent); }
+      .glyph { font-family: var(--display); font-size: 1.55rem; line-height: 1; }
+      .bit { margin-top: 0.25rem; font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+      .bit.one { color: var(--one); }
+      .bit.zero { color: var(--zero); }
+      .bit.none { color: var(--subtle); }
+      .la { margin: 1.15rem 1.25rem 0; font-family: var(--display); font-size: 1.25rem; line-height: 1.6; color: var(--ink-soft); }
+      .bits { margin: 0.15rem 1.25rem 1rem; font-family: ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.18em; color: var(--subtle); direction: ltr; text-align: left; }
+      .boxes {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        padding: 1rem;
+        border-top: 1px solid var(--paper-edge);
+      }
+      @media (min-width: 640px) { .boxes { grid-template-columns: repeat(3, 1fr); } }
+      @media (min-width: 768px) { .boxes { grid-template-columns: repeat(4, 1fr); } }
+      .box {
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 10%, transparent);
+        background: color-mix(in oklab, var(--ink) 3%, transparent);
+      }
+      .box.broken {
+        background: color-mix(in oklab, var(--break) 10%, transparent);
+        box-shadow: inset 0 0 0 1px var(--break);
+      }
+      .box-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+      .box-name { font-family: var(--display); font-size: 1rem; font-weight: 700; }
+      .box-zihaf { font-size: 0.75rem; color: var(--ink-soft); }
+      .ln { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
+      .ln span {
+        border-radius: 0.25rem;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+      .ln .naam { background: var(--one); color: var(--ok-fg); }
+      .ln .laa { background: color-mix(in oklab, var(--ink) 80%, transparent); color: var(--paper); }
+      .broke { margin: 0.5rem 0 0; font-size: 0.75rem; font-weight: 500; color: var(--break); }
+      .alts { padding: 0.75rem 1.25rem 1rem; border-top: 1px solid var(--paper-edge); }
+      .alts p { margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 500; color: var(--ink-soft); }
+      .alts li { font-size: 0.9rem; margin: 0 0 0.4rem; }
+      .alts .note { color: var(--ink-soft); }
+      .alts .mono { margin-inline-start: 0.5rem; font-family: ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; color: var(--subtle); direction: ltr; }
+      .fasih { margin: 0; padding: 0.5rem 1.25rem; border-top: 1px solid var(--paper-edge); font-size: 0.75rem; color: var(--subtle); }
+      .warn { text-align: center; font-size: 0.9rem; color: var(--muted); }
+      footer { padding: 0.5rem 0 1.5rem; text-align: center; font-size: 0.75rem; line-height: 1.7; color: var(--subtle); }
+      footer a { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="glow"></div>
+      <header>
+        <div class="head-row">
+          <div>
+            <p class="kicker">شعر نبطي · من غير تشكيل</p>
+            <h1>ميزان النبط</h1>
+            <p class="lede">
+              الصق صدراً أو عجزاً أو بيتاً. البرنامج لا يخمن سكوناً واحداً: يولّد تقطيعات
+              محتملة، يقيسها على قوالب البحور، ويأخذ الأعلى مطابقة. اضغط الحرف لقلب 1 و 0.
+            </p>
+          </div>
+          <div class="icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>
+            </svg>
+          </div>
+        </div>
+        <dl class="legend">
+          <div><dt>1</dt><dd>متحرك</dd></div>
+          <div><dt>0</dt><dd>ساكن</dd></div>
+          <div><dt>لا</dt><dd>سبب 10</dd></div>
+          <div><dt>نعم</dt><dd>وتد 110</dd></div>
+        </dl>
+      </header>
+
+      <section class="panel">
+        <label for="verse">البيت</label>
+        <textarea id="verse" rows="3" placeholder="الصق الشطر هنا، بلا حركات. افصل الصدر عن العجز بنجمة أو سطر.">يا ما حلا بعد العشا شرب الفنجال</textarea>
+        <div class="chips" id="chips"></div>
+        <div class="row">
+          <div class="grow">
+            <label for="meter">البحر</label>
+            <select id="meter"></select>
+          </div>
+          <button type="button" class="reset" id="reset">أعد التخمين</button>
+        </div>
+        <p class="hint" id="mode-hint"></p>
+      </section>
+
+      <section id="results" class="results"></section>
+      <p class="warn" id="same-warn" hidden></p>
+      <footer>
+        القياس على النطق النجدي لا على الرسم. الله سببان لا وتد. ال الشمسية تُدغم.
+        <br />
+        <a href="https://github.com/khaledSoq/mizan-alnabt">المصدر على GitHub</a>
+      </footer>
+    </div>
+    <script src="./engine.js"></script>
+    <script>
+      const EXAMPLES = [
+        { label: "يا ما حلا", text: "يا ما حلا بعد العشا شرب الفنجال", meter: "mashub" },
+        { label: "نحمد الله", text: "نحمد الله جت على ما تمنى", meter: "auto" },
+        { label: "من هجركم", text: "من هجركم", meter: "auto" },
+        { label: "بيت صدر وعجز", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب", meter: "arda" },
+      ];
+      const LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
+
+      const verseEl = document.getElementById("verse");
+      const meterEl = document.getElementById("meter");
+      const chipsEl = document.getElementById("chips");
+      const resultsEl = document.getElementById("results");
+      const hintEl = document.getElementById("mode-hint");
+      const warnEl = document.getElementById("same-warn");
+      const resetEl = document.getElementById("reset");
+
+      let locks = [];
+
+      EXAMPLES.forEach((ex) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip";
+        b.textContent = ex.label;
+        b.addEventListener("click", () => {
+          verseEl.value = ex.text;
+          meterEl.value = ex.meter;
+          locks = [];
+          render();
+        });
+        chipsEl.appendChild(b);
+      });
+
+      Arud.meterList().forEach((m) => {
+        const o = document.createElement("option");
+        o.value = m.id;
+        o.textContent = m.feet && m.feet.length ? `${m.name} — ${m.feet.join(" ")}` : m.name;
+        meterEl.appendChild(o);
+      });
+      meterEl.value = "mashub";
+
+      verseEl.addEventListener("input", () => { locks = []; render(); });
+      meterEl.addEventListener("change", render);
+      resetEl.addEventListener("click", () => { locks = []; render(); });
+
+      function groupLetters(letters) {
+        const words = [];
+        let cur = [];
+        let wi = letters[0] ? letters[0].wordI : 0;
+        for (const L of letters) {
+          if (L.wordI !== wi) {
+            if (cur.length) words.push(cur);
+            cur = [L];
+            wi = L.wordI;
+          } else cur.push(L);
+        }
+        if (cur.length) words.push(cur);
+        return words;
+      }
+
+      function letterOffset(wi, li, words) {
+        let n = 0;
+        for (let i = 0; i < wi; i++) n += words[i].length;
+        return n + li;
+      }
+
+      function esc(s) {
+        return String(s ?? "")
+          .replace(/&/g, "&")
+          .replace(/</g, "<")
+          .replace(/>/g, ">")
+          .replace(/"/g, """);
+      }
+
+      function hemistichHTML(h, label, hi) {
+        const words = groupLetters(h.letters || []);
+        const status = !h.ok ? "empty" : h.accepted ? "ok" : "break";
+        const score = Number.isFinite(h.score) ? ` · ${Math.round(h.score * 100)}٪` : "";
+        const pill = h.ok
+          ? `<span class="pill ${status}">${esc(h.message)}${score}</span>`
+          : `<span class="pill muted">${esc(h.message)}</span>`;
+
+        let letters = "";
+        if (!h.letters || !h.letters.length) {
+          letters = `<p class="lede" style="color:var(--ink-soft);margin:0">${esc(h.message || "أدخل شطراً ليظهر التقطيع.")}</p>`;
+        } else {
+          letters = `<div class="words">${words
+            .map(
+              (word, wi) =>
+                `<div class="word">${word
+                  .map((L, li) => {
+                    const global = letterOffset(wi, li, words);
+                    const cls = [
+                      "tile",
+                      L.skipped ? "skipped" : "",
+                      L.locked && !L.skipped ? "locked" : "",
+                    ].join(" ");
+                    const bitCls = L.bit === 1 ? "one" : L.bit === 0 ? "zero" : "none";
+                    const bitTxt = L.bit === null || L.bit === undefined ? "—" : L.bit;
+                    return `<button type="button" class="${cls}" data-hi="${hi}" data-li="${global}" data-bit="${L.bit}" title="اضغط لقلب المتحرك/الساكن">
+                      <span class="glyph">${esc(L.char)}</span>
+                      <span class="bit ${bitCls}">${bitTxt}</span>
+                    </button>`;
+                  })
+                  .join("")}</div>`,
+            )
+            .join("")}</div>`;
+        }
+
+        const la = h.ok && h.laNaam && h.laNaam.length
+          ? `<p class="la" dir="rtl">${h.laNaam.map(esc).join(" · ")}</p>`
+          : "";
+        const bits = h.ok && h.bits ? `<p class="bits" dir="ltr">${esc(h.bits)}</p>` : "";
+
+        const boxes = (h.boxes || []).length
+          ? `<div class="boxes">${h.boxes
+              .map(
+                (box) => `<div class="box ${box.broken ? "broken" : ""}">
+                  <div class="box-top">
+                    <span class="box-name">${esc(box.name)}</span>
+                    ${box.zihaf ? `<span class="box-zihaf">${esc(box.zihaf)}</span>` : ""}
+                  </div>
+                  <div class="ln">${(box.laNaam || [])
+                    .map((ln) => `<span class="${ln === "نعم" ? "naam" : "laa"}">${esc(ln)}</span>`)
+                    .join("")}</div>
+                  ${box.broken ? `<p class="broke">موضع الكسر</p>` : ""}
+                </div>`,
+              )
+              .join("")}</div>`
+          : "";
+
+        const alts = (h.alts || []).length
+          ? `<div class="alts"><p>أوجه أخرى قريبة</p><ul>${h.alts
+              .map(
+                (a) => `<li><span>${esc(a.meterName)}</span>${
+                  a.note ? `<span class="note"> — ${esc(a.note)}</span>` : ""
+                }<span class="mono" dir="ltr">${esc(a.bits)}</span></li>`,
+              )
+              .join("")}</ul></div>`
+          : "";
+
+        const fasih = h.fasih && h.ok ? `<p class="fasih">مقابله في الفصيح: ${esc(h.fasih)}</p>` : "";
+
+        return `<article class="paper">
+          <header class="paper-head">
+            <div class="meta">
+              <span class="lbl">${esc(label)}</span>
+              ${h.meterName ? `<span class="meter-name">${esc(h.meterName)}</span>` : ""}
+            </div>
+            ${pill}
+          </header>
+          <div class="letters">${letters}${la}${bits}</div>
+          ${boxes}${alts}${fasih}
+        </article>`;
+      }
+
+      function render() {
+        const text = verseEl.value;
+        const meterId = meterEl.value;
+        const result = Arud.weigh(text, meterId, locks);
+        hintEl.textContent =
+          `الوضع ${result.mode === "discover" ? "اكتشاف تلقائي لأقرب بحر" : "فحص البحر المختار"}. افصل الشطرين بـ *** أو سطر جديد. يعمل بعد التشغيل بلا شبكة.`;
+
+        if (!result.hemistichs || result.hemistichs.length === 0) {
+          resultsEl.innerHTML = `<div class="empty">${esc(result.message)}</div>`;
+        } else {
+          resultsEl.innerHTML = result.hemistichs
+            .map((h, i) =>
+              hemistichHTML(
+                h,
+                result.hemistichs.length === 1 ? "الشطر" : LABELS[i] || `شطر ${i + 1}`,
+                i,
+              ),
+            )
+            .join("");
+        }
+
+        if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
+          warnEl.hidden = false;
+          warnEl.textContent = "الشطران على بحرين مختلفين. راجع الوزن أو ثبّت بحراً واحداً للقصيدة.";
+        } else {
+          warnEl.hidden = true;
+        }
+
+        resultsEl.querySelectorAll(".tile").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const hi = Number(btn.dataset.hi);
+            const li = Number(btn.dataset.li);
+            const cur = btn.dataset.bit === "1" ? 1 : 0;
+            const next = cur === 1 ? 0 : 1;
+            while (locks.length <= hi) locks.push({});
+            locks[hi] = { ...locks[hi], [li]: next };
+            render();
+          });
+        });
+      }
+
+      render();
+    </script>
+  </body>
+</html>
