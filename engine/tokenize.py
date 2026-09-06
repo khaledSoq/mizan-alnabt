@@ -14,6 +14,7 @@ from .letters import (
     LAM,
     MADDA_ALIF,
     PREFIX_CONNECT,
+    PRONOUNS,
     SHADDA,
     SHAMSI,
     SUKUN,
@@ -264,6 +265,29 @@ def _function_10(word: str, word_i: int, src0: int) -> list[Phoneme]:
     return out
 
 
+def _pronoun(word: str, word_i: int, src0: int, last_word: bool) -> list[Phoneme]:
+    """هو/هي/هم: الواو والياء صامتان لا مدّ. الأول متحرك."""
+    letters = [ch for ch, *_ in _iter_base_letters(word)]
+    if not letters:
+        letters = list(strip_harakat(word))
+    out: list[Phoneme] = []
+    for k, ch in enumerate(letters):
+        last = last_word and k == len(letters) - 1
+        fixed: Optional[int] = 0 if last else 1
+        out.append(
+            Phoneme(
+                char=ch,
+                kind="cons",
+                fixed=fixed,
+                display=True,
+                word_i=word_i,
+                src_index=src0,
+                hint="pron",
+            )
+        )
+    return out
+
+
 def tokenize_hemistich(text: str) -> Hemistich:
     cleaned = clean_line(text)
     words = [w for w in cleaned.split(" ") if w]
@@ -283,6 +307,11 @@ def tokenize_hemistich(text: str) -> Hemistich:
 
         if bare in FUNCTION_10:
             h.phonemes.extend(_function_10(word, wi, src))
+            src += len(word) + 1
+            continue
+
+        if bare in PRONOUNS:
+            h.phonemes.extend(_pronoun(word, wi, src, last_word=(wi == len(words) - 1)))
             src += len(word) + 1
             continue
 

@@ -72,7 +72,7 @@ export function HemistichView({ result, label, onFlip }: Props) {
                       key={`${wi}-${li}-${L.char}-${global}`}
                       letter={L}
                       onClick={() => {
-                        const next = L.bit === 1 ? 0 : 1;
+                        const next = L.shadda ? 0 : L.bit === 1 ? 2 : 1;
                         onFlip(global, next);
                       }}
                     />
@@ -169,27 +169,32 @@ function letterOffset(wi: number, li: number, words: LetterOut[][]): number {
 
 function LetterTile({ letter, onClick }: { letter: LetterOut; onClick: () => void }) {
   const bit = letter.bit;
+  const label = letter.shadda ? "01" : bit === null ? "—" : String(bit);
   return (
     <button
       type="button"
       onClick={onClick}
-      title="اضغط لقلب المتحرك/الساكن"
+      title="اضغط: متحرك ثم ساكن ثم شدة"
       className={cn(
         "flex min-h-11 min-w-9 flex-col items-center justify-center rounded-sm px-1.5 py-1 transition-colors duration-150",
         letter.skipped ? "opacity-45" : "hover:bg-ink/6",
         letter.locked && !letter.skipped ? "ring-1 ring-ink/15" : "",
       )}
     >
-      <span className="font-display text-2xl leading-none text-ink">{letter.char}</span>
+      <span className="font-display text-2xl leading-none text-ink">
+        {letter.char}
+        {letter.shadda ? "\u0651" : ""}
+      </span>
       <span
         className={cn(
           "mt-1 font-mono text-xs font-semibold tabular-nums",
-          bit === 1 && "text-one",
-          bit === 0 && "text-zero",
-          bit === null && "text-subtle",
+          letter.shadda && "text-one",
+          !letter.shadda && bit === 1 && "text-one",
+          !letter.shadda && bit === 0 && "text-zero",
+          bit === null && !letter.shadda && "text-subtle",
         )}
       >
-        {bit === null ? "—" : bit}
+        {label}
       </span>
     </button>
   );

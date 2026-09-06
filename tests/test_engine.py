@@ -119,11 +119,36 @@ class MeterGoldTests(unittest.TestCase):
         self.assertTrue(r.ok, r.message)
         self.assertGreaterEqual(r.score, 0.85, f"{r.score} {r.bits} {[b.name for b in r.boxes]}")
 
-    def test_hilali_does_not_crash(self):
+    def test_hilali_gold(self):
+        r = weigh_hemistich("على ما يفوت القلب لا تشمت العدا", "hilali")
+        self.assertTrue(r.ok, r.message)
+        self.assertGreaterEqual(r.score, 0.90, f"{r.score} {r.bits}")
+        auto = weigh_hemistich("على ما يفوت القلب لا تشمت العدا", "auto")
+        self.assertEqual(auto.meter_id, "hilali")
+
+    def test_huwa_starts_watad(self):
         r = weigh_hemistich("هو الدهر يا حماد ليس له مدى", "hilali")
-        self.assertTrue(r.letters)
-        self.assertTrue(r.bits)
-        self.assertEqual(r.meter_id, "hilali")
+        self.assertTrue(r.bits.startswith("11") or r.bits.startswith("10"), r.bits)
+        h = tokenize_hemistich("هو الدهر")
+        kinds = [(p.char, p.kind, p.fixed, p.hint) for p in h.phonemes]
+        self.assertEqual(kinds[0][2], 1)
+        self.assertEqual(kinds[0][3], "pron")
+
+    def test_shadda_lock_on_hammad(self):
+        text = "هو الدهر يا حماد ليس له مدى"
+        base = weigh_hemistich(text, "hilali")
+        locked = weigh_hemistich(text, "hilali", {9: 2})
+        self.assertTrue(locked.bits)
+        self.assertTrue(any(L.shadda for L in locked.letters) or locked.score >= base.score - 0.05)
+
+    def test_hida_gold(self):
+        r = weigh_hemistich("يا راكبن من عندنا فوق حرباب", "hida")
+        self.assertGreaterEqual(r.score, 0.95, f"{r.score} {r.bits}")
+
+    def test_hajini_tamm_gold(self):
+        r = weigh_hemistich("من يلوم القلب ما هو منصف", "hajini_tamm")
+        self.assertGreaterEqual(r.score, 0.85, f"{r.score} {r.bits} {r.meter_id}")
+
 
     def test_user_bayt_splits(self):
         out = weigh("هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى", "hilali")

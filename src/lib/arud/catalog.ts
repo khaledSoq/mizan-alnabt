@@ -131,13 +131,15 @@ export function matchCandidate(
         let { score: sc, hamm, first } = scoreBits(bits, t);
         if (t !== tmpl) sc -= 0.04;
         else {
-          if (bits.length === t.length) sc += 0.03;
-          else if (Math.abs(bits.length - t.length) >= 3) sc -= 0.02 * Math.abs(bits.length - t.length);
+          if (bits.length === t.length) sc += 0.05;
+          else if (Math.abs(bits.length - t.length) >= 3) sc -= 0.025 * Math.abs(bits.length - t.length);
         }
+        if (bits.slice(0, 2) === "11" && t.slice(0, 2) === "11") sc += 0.05;
+        else if (bits.slice(0, 2) === "10" && t.slice(0, 2) === "10") sc += 0.02;
         const nZihaf = fs.filter((f) => f.zihaf).length;
         sc -= 0.055 * nZihaf;
         if (nZihaf >= 2) sc -= 0.05;
-        if (fs[0]?.zihaf) sc -= 0.04;
+        if (fs.length && fs[0] && fs[0].zihaf) sc -= 0.04;
         const hit: MeterHit = {
           meter,
           template: t,

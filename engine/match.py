@@ -154,9 +154,13 @@ def match_candidate(
                     sc -= 0.04
                 else:
                     if len(bits) == len(t):
-                        sc += 0.03
+                        sc += 0.05
                     elif abs(len(bits) - len(t)) >= 3:
-                        sc -= 0.02 * abs(len(bits) - len(t))
+                        sc -= 0.025 * abs(len(bits) - len(t))
+                if bits.startswith("11") and t.startswith("11"):
+                    sc += 0.05
+                elif bits.startswith("10") and t.startswith("10"):
+                    sc += 0.02
                 n_zihaf = sum(1 for f in fs if f.zihaf)
                 sc -= 0.055 * n_zihaf
                 if n_zihaf >= 2:

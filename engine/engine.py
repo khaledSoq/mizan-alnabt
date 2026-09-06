@@ -26,6 +26,7 @@ class LetterOut:
     kind: str
     word_i: int
     locked: bool
+    shadda: bool = False
 
 
 @dataclass
@@ -70,12 +71,19 @@ class HemistichResult:
 
 def _letters_for(h: Hemistich, cand: Candidate) -> list[LetterOut]:
     out: list[LetterOut] = []
-    for p, a in zip(h.phonemes, cand.assign):
+    for i, (p, a) in enumerate(zip(h.phonemes, cand.assign)):
         if not p.display and a == -1:
             continue
         if not p.display and a in (0, 1):
-            # شدة مفكوكة غير معروضة: ندمجها بصمت في السلسلة فقط
             continue
+        shadda = False
+        if i > 0:
+            prev = h.phonemes[i - 1]
+            prev_a = cand.assign[i - 1] if i - 1 < len(cand.assign) else -1
+            if (not prev.display) and prev.hint in ("user_shadda", "shamsi_sukun") and prev_a == 0 and a == 1:
+                shadda = prev.hint == "user_shadda"
+            if prev.hint == "user_shadda" and prev_a == 0:
+                shadda = True
         out.append(
             LetterOut(
                 char=p.char or "·",
@@ -84,6 +92,7 @@ def _letters_for(h: Hemistich, cand: Candidate) -> list[LetterOut]:
                 kind=p.kind,
                 word_i=p.word_i,
                 locked=p.fixed is not None and p.kind not in ("wasl",),
+                shadda=shadda,
             )
         )
     return out
@@ -109,31 +118,48 @@ def _boxes(hit: MeterHit) -> tuple[list[BoxOut], Optional[int]]:
 
 
 def _apply_locks(h: Hemistich, locks: dict[int, int]) -> None:
-    """أقفال المستخدم: مفتاحها فهرس الحرف المعروض."""
+    """أقفال المستخدم: مفتاحها فهرس الحرف المعروض. 2 = شدة (0 ثم 1)."""
     if not locks:
         return
-    shown = 0
-    for p in h.phonemes:
-        visible = p.display
-        if not visible:
+    shown_map: list[int] = []
+    for i, p in enumerate(h.phonemes):
+        if p.display:
+            shown_map.append(i)
+    items = sorted(((int(k), int(v)) for k, v in locks.items()), key=lambda kv: -kv[0])
+    for shown, bit in items:
+        if shown < 0 or shown >= len(shown_map):
             continue
-        if shown in locks:
-            bit = locks[shown]
-            if bit in (0, 1):
-                if p.kind == "wasl" and bit == 0:
-                    p.kind = "collapsed"
-                    p.fixed = 0
-                    p.hint = "user_drop"
-                elif p.kind == "collapsed":
-                    if bit == 1:
-                        p.kind = "cons"
-                        p.fixed = 1
-                        p.hint = "user"
-                else:
-                    p.fixed = bit
+        pi = shown_map[shown]
+        p = h.phonemes[pi]
+        if bit == 2:
+            hidden = Phoneme(
+                char=p.char,
+                kind="cons",
+                fixed=0,
+                display=False,
+                word_i=p.word_i,
+                src_index=getattr(p, "src_index", 0),
+                hint="user_shadda",
+            )
+            if p.kind in ("waw", "ya", "alif_madd", "wasl", "collapsed"):
+                p.kind = "cons"
+            p.fixed = 1
+            p.hint = "user_shadda_move"
+            h.phonemes.insert(pi, hidden)
+            continue
+        if bit in (0, 1):
+            if p.kind == "wasl" and bit == 0:
+                p.kind = "collapsed"
+                p.fixed = 0
+                p.hint = "user_drop"
+            elif p.kind == "collapsed":
+                if bit == 1:
+                    p.kind = "cons"
+                    p.fixed = 1
                     p.hint = "user"
-
-        shown += 1
+            else:
+                p.fixed = bit
+                p.hint = "user"
 
 
 def weigh_hemistich(

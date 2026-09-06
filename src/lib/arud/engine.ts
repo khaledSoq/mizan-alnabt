@@ -52,6 +52,12 @@ function lettersFor(h: Hemistich, cand: Candidate): LetterOut[] {
     const a = cand.assign[i] ?? -1;
     if (!p.display && a === -1) return;
     if (!p.display && (a === 0 || a === 1)) return;
+    let shadda = false;
+    if (i > 0) {
+      const prev = h.phonemes[i - 1]!;
+      const prevA = cand.assign[i - 1] ?? -1;
+      if (prev.hint === "user_shadda" && prevA === 0) shadda = true;
+    }
     out.push({
       char: p.char || "·",
       bit: a === -1 ? null : a,
@@ -59,6 +65,7 @@ function lettersFor(h: Hemistich, cand: Candidate): LetterOut[] {
       kind: p.kind,
       wordI: p.wordI,
       locked: p.fixed !== null && p.kind !== "wasl",
+      shadda,
     });
   });
   return out;
@@ -80,29 +87,51 @@ function boxesOf(hit: MeterHit): { boxes: BoxOut[]; brokenBox: number | null } {
 
 function applyLocks(h: Hemistich, locks: Record<number, number> | undefined) {
   if (!locks) return;
-  let shown = 0;
-  for (const p of h.phonemes) {
-    if (!p.display) continue;
-    if (shown in locks) {
-      const bit = locks[shown]!;
-      if (bit === 0 || bit === 1) {
-        if (p.kind === "wasl" && bit === 0) {
-          p.kind = "collapsed";
-          p.fixed = 0;
-          p.hint = "user_drop";
-        } else if (p.kind === "collapsed") {
-          if (bit === 1) {
-            p.kind = "cons";
-            p.fixed = 1;
-            p.hint = "user";
-          }
-        } else {
-          p.fixed = bit;
+  const shownMap: number[] = [];
+  for (let i = 0; i < h.phonemes.length; i++) {
+    if (h.phonemes[i]!.display) shownMap.push(i);
+  }
+  const items: [number, number][] = Object.keys(locks).map((k) => [Number(k), Number(locks[Number(k)])]);
+  items.sort((a, b) => b[0] - a[0]);
+  for (let n = 0; n < items.length; n++) {
+    const shown = items[n]![0];
+    const bit = items[n]![1];
+    if (shown < 0 || shown >= shownMap.length) continue;
+    const pi = shownMap[shown]!;
+    const p = h.phonemes[pi]!;
+    if (bit === 2) {
+      const hidden = {
+        char: p.char,
+        kind: "cons" as const,
+        fixed: 0 as const,
+        display: false,
+        wordI: p.wordI,
+        hint: "user_shadda",
+      };
+      if (p.kind === "waw" || p.kind === "ya" || p.kind === "alif_madd" || p.kind === "wasl" || p.kind === "collapsed") {
+        p.kind = "cons";
+      }
+      p.fixed = 1;
+      p.hint = "user_shadda_move";
+      h.phonemes.splice(pi, 0, hidden);
+      continue;
+    }
+    if (bit === 0 || bit === 1) {
+      if (p.kind === "wasl" && bit === 0) {
+        p.kind = "collapsed";
+        p.fixed = 0;
+        p.hint = "user_drop";
+      } else if (p.kind === "collapsed") {
+        if (bit === 1) {
+          p.kind = "cons";
+          p.fixed = 1;
           p.hint = "user";
         }
+      } else {
+        p.fixed = bit;
+        p.hint = "user";
       }
     }
-    shown += 1;
   }
 }
 

@@ -9,14 +9,34 @@ export const Route = createFileRoute("/")({ component: Home });
 
 const EXAMPLES: { label: string; text: string; meter: string }[] = [
   {
-    label: "يا ما حلا",
+    label: "المسحوب",
     text: "يا ما حلا بعد العشا شرب الفنجال",
     meter: "mashub",
   },
   {
-    label: "نحمد الله",
-    text: "نحمد الله جت على ما تمنى",
-    meter: "auto",
+    label: "العرضة",
+    text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب",
+    meter: "arda",
+  },
+  {
+    label: "الهلالي",
+    text: "على ما يفوت القلب لا تشمت العدا\nولا تشمت اللي ما درى بالذي جرى",
+    meter: "hilali",
+  },
+  {
+    label: "الصخري",
+    text: "أقول لها وقد طارت شعاعا",
+    meter: "sakhri",
+  },
+  {
+    label: "الحداء",
+    text: "يا راكبن من عندنا فوق حرباب",
+    meter: "hida",
+  },
+  {
+    label: "الهجيني",
+    text: "من يلوم القلب ما هو منصف",
+    meter: "hajini_tamm",
   },
   {
     label: "من هجركم",
@@ -24,12 +44,7 @@ const EXAMPLES: { label: string; text: string; meter: string }[] = [
     meter: "auto",
   },
   {
-    label: "بيت صدر وعجز",
-    text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب",
-    meter: "arda",
-  },
-  {
-    label: "هلالي",
+    label: "جرّب القلب",
     text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى",
     meter: "hilali",
   },
@@ -164,7 +179,7 @@ function Home() {
           </div>
           <p className="mt-3 text-xs leading-5 text-subtle">
             الوضع {result.mode === "discover" ? "اكتشاف تلقائي لأقرب بحر" : "فحص البحر المختار"}.
-            إذا انكسر، اضغط الحرف لقلب 1 و 0.
+            اضغط الحرف: متحرك ثم ساكن ثم شدة (لحمّاد وأمثالها).
           </p>
         </section>
 

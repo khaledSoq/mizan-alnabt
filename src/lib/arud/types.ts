@@ -56,6 +56,7 @@ export type LetterOut = {
   kind: string;
   wordI: number;
   locked: boolean;
+  shadda?: boolean;
 };
 
 export type BoxOut = {

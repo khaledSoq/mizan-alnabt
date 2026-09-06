@@ -47,7 +47,13 @@ const FUNCTION_10 = new Set([
   "أو",
   "ما",
   "لا",
+  "له",
+  "به",
+  "كم",
+  "ثم",
 ]);
+
+const PRONOUNS = new Set(["هو", "هي", "هم", "هن", "هما"]);
 
 const ALLAH_FORMS = new Set([
   "الله",
@@ -195,6 +201,18 @@ function function10(word: string, wordI: number): Phoneme[] {
   return out;
 }
 
+function pronoun(word: string, wordI: number, lastWord: boolean): Phoneme[] {
+  let letters = iterBaseLetters(word).map((x) => x.ch);
+  if (!letters.length) letters = [...stripHarakat(word)];
+  const out: Phoneme[] = [];
+  letters.forEach((ch, k) => {
+    const last = lastWord && k === letters.length - 1;
+    const fixed = last ? 0 : 1;
+    out.push(ph(ch, "cons", fixed, true, wordI, "pron"));
+  });
+  return out;
+}
+
 function applyMaddConstraints(h: Hemistich) {
   const phs = h.phonemes;
   for (let i = 0; i < phs.length; i++) {
@@ -231,6 +249,10 @@ export function tokenizeHemistich(text: string): Hemistich {
     }
     if (FUNCTION_10.has(bare)) {
       h.phonemes.push(...function10(word, wi));
+      continue;
+    }
+    if (PRONOUNS.has(bare)) {
+      h.phonemes.push(...pronoun(word, wi, wi === words.length - 1));
       continue;
     }
 
