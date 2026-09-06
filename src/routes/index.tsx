@@ -28,6 +28,11 @@ const EXAMPLES: { label: string; text: string; meter: string }[] = [
     text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب",
     meter: "arda",
   },
+  {
+    label: "هلالي",
+    text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى",
+    meter: "hilali",
+  },
 ];
 
 const LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
@@ -120,40 +125,46 @@ function Home() {
             ))}
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1">
-              <label htmlFor="meter" className="mb-2 block text-sm font-medium text-fg">
-                البحر
-              </label>
-              <select
-                id="meter"
-                value={meterId}
-                onChange={(e) => setMeterId(e.target.value)}
-                className="h-11 w-full rounded-md bg-bg-elevated px-3 text-sm text-fg outline-none ring-1 ring-border focus:ring-2 focus:ring-ring"
-              >
-                {meters.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                    {m.feet.length ? ` — ${m.feet.join(" ")}` : ""}
-                  </option>
-                ))}
-              </select>
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium text-fg">البحر</p>
+            <div className="flex flex-wrap gap-2">
+              {meters.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMeterId(m.id)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-sm ring-1 transition-colors",
+                    meterId === m.id
+                      ? "bg-paper text-ink ring-paper"
+                      : "bg-bg-elevated text-fg ring-border",
+                  )}
+                >
+                  {m.name}
+                </button>
+              ))}
             </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setLocks((x) => x.slice())}
+              className="inline-flex h-11 flex-1 items-center justify-center rounded-md bg-paper px-5 text-sm font-bold text-ink"
+            >
+              زِن البيت
+            </button>
             <button
               type="button"
               onClick={() => setLocks([])}
-              className={cn(
-                "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-fg px-5 text-sm font-medium text-bg",
-                "transition-transform active:scale-[0.98]",
-              )}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-bg-elevated px-4 text-sm text-fg ring-1 ring-border"
             >
               <RotateCcw className="size-4" strokeWidth={1.75} />
-              أعد التخمين
+              صفّر
             </button>
           </div>
           <p className="mt-3 text-xs leading-5 text-subtle">
             الوضع {result.mode === "discover" ? "اكتشاف تلقائي لأقرب بحر" : "فحص البحر المختار"}.
-            افصل الشطرين بـ *** أو سطر جديد. يعمل بعد التشغيل بلا شبكة.
+            إذا انكسر، اضغط الحرف لقلب 1 و 0.
           </p>
         </section>
 

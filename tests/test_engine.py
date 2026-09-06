@@ -35,12 +35,11 @@ class MashubTests(unittest.TestCase):
         r = weigh_hemistich(MASHUB, "mashub")
         self.assertTrue(r.ok, r.message)
         names = [b.name for b in r.boxes]
-        # قريب من مستفعلن مستفعلن فاعلاتن — لا فشل صامت
         self.assertGreaterEqual(len(names), 2, names)
         self.assertIn("مستفعلن", "".join(names) + r.meter_name)
         self.assertGreaterEqual(r.score, 0.75, f"score={r.score} bits={r.bits} boxes={names}")
         self.assertTrue(r.bits, "empty bits")
-        self.assertNotIn("11" * 5, r.bits)  # sanity
+        self.assertNotIn("11" * 5, r.bits)
 
     def test_letters_align(self):
         r = weigh_hemistich(MASHUB, "mashub")
@@ -48,6 +47,10 @@ class MashubTests(unittest.TestCase):
         self.assertGreaterEqual(len(shown), 8)
         bits_from_letters = "".join(str(L.bit) for L in r.letters if L.bit is not None)
         self.assertEqual(bits_from_letters, r.bits)
+
+    def test_mashub_second_gold(self):
+        r = weigh_hemistich("ما يستريح القلب لا صار مشغول", "mashub")
+        self.assertGreaterEqual(r.score, 0.80, f"{r.score} {r.bits}")
 
 
 class ArdaTests(unittest.TestCase):
@@ -63,20 +66,17 @@ class HajrTests(unittest.TestCase):
     def test_two_faces(self):
         r = weigh_hemistich(HAJR, "auto")
         self.assertTrue(r.ok or r.bits, r.message)
-        # لا ينهار
         self.assertIsInstance(r.bits, str)
 
     def test_failatun_meter(self):
         r = weigh_hemistich(HAJR, "arda")
         self.assertNotEqual(r.message, "")
-        # جزء من شطر — لا يكسر البرنامج
         self.assertTrue(r.letters)
 
     def test_hajr_bits_are_one_of_two_faces(self):
         r_arda = weigh_hemistich(HAJR, "arda")
         r_mash = weigh_hemistich(HAJR, "mashub")
         faces = {r_arda.bits, r_mash.bits, weigh_hemistich(HAJR, "auto").bits}
-        # أحد الوجهين 1011010 فاعلاتن أو 1010110 مستفعلن
         self.assertTrue(
             any(f in ("1011010", "1010110") or f.startswith("1011010") or f.startswith("1010110") for f in faces),
             faces,
@@ -111,6 +111,23 @@ class EncodingTests(unittest.TestCase):
         h = tokenize_hemistich("الله")
         kinds = [p.hint for p in h.phonemes]
         self.assertIn("allah_lam1", kinds)
+
+
+class MeterGoldTests(unittest.TestCase):
+    def test_sakhri_line(self):
+        r = weigh_hemistich("أقول لها وقد طارت شعاعا", "sakhri")
+        self.assertTrue(r.ok, r.message)
+        self.assertGreaterEqual(r.score, 0.85, f"{r.score} {r.bits} {[b.name for b in r.boxes]}")
+
+    def test_hilali_does_not_crash(self):
+        r = weigh_hemistich("هو الدهر يا حماد ليس له مدى", "hilali")
+        self.assertTrue(r.letters)
+        self.assertTrue(r.bits)
+        self.assertEqual(r.meter_id, "hilali")
+
+    def test_user_bayt_splits(self):
+        out = weigh("هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى", "hilali")
+        self.assertEqual(len(out["hemistichs"]), 2)
 
 
 if __name__ == "__main__":

@@ -1,543 +1,340 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ميزان النبط</title>
-    <meta name="description" content="وزن الشعر النبطي من غير تشكيل: بحث سكون، صناديق لا ونعم، وكشف الكسر." />
-    <meta name="theme-color" content="#12100e" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg: #12100e;
-        --bg-elevated: #1a1714;
-        --surface: #211d18;
-        --paper: #f3ead8;
-        --paper-edge: #e4d7c0;
-        --ink: #1c1612;
-        --ink-soft: #3a322b;
-        --fg: #f4efe6;
-        --muted: #9a9186;
-        --subtle: #6e675f;
-        --accent: #6b7f63;
-        --ok: #6b7f63;
-        --ok-fg: #ecf3e8;
-        --break: #9a5347;
-        --break-fg: #f8e8e4;
-        --one: #3f5c4a;
-        --zero: #7a4a42;
-        --border: #3a342d;
-        --ring: #8a9a7b;
-        --sans: "IBM Plex Sans Arabic", "Noto Naskh Arabic", "Segoe UI", Tahoma, sans-serif;
-        --display: "Amiri", "Noto Naskh Arabic", "Traditional Arabic", serif;
-        --shadow-paper: 0 18px 40px -24px rgb(0 0 0 / 0.55), 0 1px 0 rgb(255 255 255 / 0.4) inset;
-      }
-      * { box-sizing: border-box; }
-      html, body { min-height: 100%; background: var(--bg); color: var(--fg); }
-      body {
-        margin: 0;
-        font-family: var(--sans);
-        text-align: right;
-        -webkit-font-smoothing: antialiased;
-      }
-      button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
-      ::selection { background: color-mix(in oklab, var(--accent) 40%, transparent); color: var(--fg); }
-      .wrap {
-        position: relative;
-        margin: 0 auto;
-        max-width: 48rem;
-        padding: 2.25rem 1rem 3rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-      @media (min-width: 640px) { .wrap { padding: 2.5rem 1.5rem 3.5rem; } }
-      .glow {
-        pointer-events: none;
-        position: absolute;
-        inset: 0 0 auto;
-        height: 16rem;
-        opacity: 0.7;
-        background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 80%, transparent), transparent);
-      }
-      header { display: flex; flex-direction: column; gap: 1rem; }
-      .head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
-      .kicker { margin: 0; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; color: var(--muted); }
-      h1 {
-        margin: 0.25rem 0 0;
-        font-family: var(--display);
-        font-size: clamp(2rem, 5vw, 3rem);
-        font-weight: 700;
-        line-height: 1.15;
-      }
-      .lede { margin: 0.75rem 0 0; max-width: 36rem; font-size: 0.9rem; line-height: 1.75; color: var(--muted); }
-      .icon {
-        display: none;
-        width: 3rem; height: 3rem;
-        flex-shrink: 0;
-        align-items: center; justify-content: center;
-        border-radius: 0.5rem;
-        background: var(--surface);
-        box-shadow: inset 0 0 0 1px var(--border);
-        color: var(--accent);
-      }
-      @media (min-width: 640px) { .icon { display: flex; } }
-      .legend {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-        font-size: 0.75rem;
-        color: var(--muted);
-      }
-      @media (min-width: 640px) { .legend { grid-template-columns: repeat(4, 1fr); } }
-      .legend div {
-        display: flex; align-items: center; gap: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        background: var(--surface);
-        border-radius: 0.5rem;
-        box-shadow: inset 0 0 0 1px var(--border);
-      }
-      .legend dt { font-family: var(--display); font-size: 0.9rem; font-weight: 700; color: var(--fg); }
-      .panel {
-        background: var(--surface);
-        border-radius: 0.9rem;
-        padding: 1rem 1.1rem 1.15rem;
-        box-shadow: inset 0 0 0 1px var(--border);
-      }
-      label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; }
-      textarea {
-        width: 100%;
-        resize: vertical;
-        min-height: 5.5rem;
-        border: 0;
-        border-radius: 0.5rem;
-        background: var(--bg-elevated);
-        color: var(--fg);
-        font-family: var(--display);
-        font-size: 1.25rem;
-        line-height: 1.9;
-        padding: 0.75rem 1rem;
-        outline: none;
-        box-shadow: inset 0 0 0 1px var(--border);
-      }
-      textarea:focus { box-shadow: inset 0 0 0 2px var(--ring); }
-      textarea::placeholder { color: var(--subtle); }
-      .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
-      .chip {
-        border: 0;
-        background: var(--bg);
-        color: var(--muted);
-        font-family: inherit;
-        font-size: 0.875rem;
-        padding: 0.35rem 0.75rem;
-        border-radius: 999px;
-        box-shadow: inset 0 0 0 1px var(--border);
-      }
-      .chip:hover, .chip.active { color: var(--fg); }
-      .row { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
-      @media (min-width: 640px) {
-        .row { flex-direction: row; align-items: flex-end; }
-        .row .grow { flex: 1; }
-      }
-      select {
-        height: 2.75rem;
-        width: 100%;
-        border: 0;
-        border-radius: 0.5rem;
-        background: var(--bg-elevated);
-        color: var(--fg);
-        font-family: inherit;
-        font-size: 0.9rem;
-        padding: 0 0.75rem;
-        outline: none;
-        box-shadow: inset 0 0 0 1px var(--border);
-      }
-      select:focus { box-shadow: inset 0 0 0 2px var(--ring); }
-      .reset {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        height: 2.75rem;
-        border: 0;
-        border-radius: 0.5rem;
-        background: var(--fg);
-        color: var(--bg);
-        font-family: inherit;
-        font-size: 0.9rem;
-        font-weight: 500;
-        padding: 0 1.25rem;
-      }
-      .hint { margin: 0.75rem 0 0; font-size: 0.75rem; line-height: 1.6; color: var(--subtle); }
-      .empty {
-        background: var(--surface);
-        color: var(--muted);
-        text-align: center;
-        font-size: 0.9rem;
-        padding: 2rem 1.25rem;
-        border-radius: 0.9rem;
-        box-shadow: inset 0 0 0 1px var(--border);
-      }
-      .paper {
-        background: var(--paper);
-        color: var(--ink);
-        border-radius: 0.9rem;
-        box-shadow: var(--shadow-paper), inset 0 0 0 1px var(--paper-edge);
-        overflow: hidden;
-      }
-      .paper-head {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        padding: 0.75rem 1.25rem;
-        border-bottom: 1px solid var(--paper-edge);
-      }
-      .paper-head .meta { display: flex; align-items: center; gap: 0.75rem; }
-      .lbl { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; color: color-mix(in oklab, var(--ink-soft) 70%, transparent); }
-      .meter-name { font-family: var(--display); font-size: 1.15rem; font-weight: 700; }
-      .pill {
-        border-radius: 999px;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-      }
-      .pill.ok { background: var(--ok); color: var(--ok-fg); }
-      .pill.break { background: var(--break); color: var(--break-fg); }
-      .pill.muted { background: color-mix(in oklab, var(--ink) 8%, transparent); color: var(--ink-soft); }
-      .letters { padding: 1.25rem 1rem 1.15rem; }
-      @media (min-width: 640px) { .letters { padding: 1.25rem 1.5rem; } }
-      .words { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 1rem 1.25rem; }
-      .word { display: flex; gap: 0.2rem; }
-      .tile {
-        min-height: 2.75rem;
-        min-width: 2.25rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0.25rem 0.35rem;
-        border: 0;
-        background: transparent;
-        border-radius: 0.3rem;
-        font-family: inherit;
-        color: var(--ink);
-      }
-      .tile:hover { background: color-mix(in oklab, var(--ink) 6%, transparent); }
-      .tile.skipped { opacity: 0.45; }
-      .tile.locked:not(.skipped) { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 15%, transparent); }
-      .glyph { font-family: var(--display); font-size: 1.55rem; line-height: 1; }
-      .bit { margin-top: 0.25rem; font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-      .bit.one { color: var(--one); }
-      .bit.zero { color: var(--zero); }
-      .bit.none { color: var(--subtle); }
-      .la { margin: 1.15rem 1.25rem 0; font-family: var(--display); font-size: 1.25rem; line-height: 1.6; color: var(--ink-soft); }
-      .bits { margin: 0.15rem 1.25rem 1rem; font-family: ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.18em; color: var(--subtle); direction: ltr; text-align: left; }
-      .boxes {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-        padding: 1rem;
-        border-top: 1px solid var(--paper-edge);
-      }
-      @media (min-width: 640px) { .boxes { grid-template-columns: repeat(3, 1fr); } }
-      @media (min-width: 768px) { .boxes { grid-template-columns: repeat(4, 1fr); } }
-      .box {
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 10%, transparent);
-        background: color-mix(in oklab, var(--ink) 3%, transparent);
-      }
-      .box.broken {
-        background: color-mix(in oklab, var(--break) 10%, transparent);
-        box-shadow: inset 0 0 0 1px var(--break);
-      }
-      .box-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-      .box-name { font-family: var(--display); font-size: 1rem; font-weight: 700; }
-      .box-zihaf { font-size: 0.75rem; color: var(--ink-soft); }
-      .ln { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.5rem; }
-      .ln span {
-        border-radius: 0.25rem;
-        padding: 0.1rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 500;
-      }
-      .ln .naam { background: var(--one); color: var(--ok-fg); }
-      .ln .laa { background: color-mix(in oklab, var(--ink) 80%, transparent); color: var(--paper); }
-      .broke { margin: 0.5rem 0 0; font-size: 0.75rem; font-weight: 500; color: var(--break); }
-      .alts { padding: 0.75rem 1.25rem 1rem; border-top: 1px solid var(--paper-edge); }
-      .alts p { margin: 0 0 0.5rem; font-size: 0.75rem; font-weight: 500; color: var(--ink-soft); }
-      .alts li { font-size: 0.9rem; margin: 0 0 0.4rem; }
-      .alts .note { color: var(--ink-soft); }
-      .alts .mono { margin-inline-start: 0.5rem; font-family: ui-monospace, monospace; font-size: 0.75rem; letter-spacing: 0.08em; color: var(--subtle); direction: ltr; }
-      .fasih { margin: 0; padding: 0.5rem 1.25rem; border-top: 1px solid var(--paper-edge); font-size: 0.75rem; color: var(--subtle); }
-      .warn { text-align: center; font-size: 0.9rem; color: var(--muted); }
-      footer { padding: 0.5rem 0 1.5rem; text-align: center; font-size: 0.75rem; line-height: 1.7; color: var(--subtle); }
-      footer a { color: var(--muted); }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="glow"></div>
-      <header>
-        <div class="head-row">
-          <div>
-            <p class="kicker">شعر نبطي · من غير تشكيل</p>
-            <h1>ميزان النبط</h1>
-            <p class="lede">
-              الصق صدراً أو عجزاً أو بيتاً. البرنامج لا يخمن سكوناً واحداً: يولّد تقطيعات
-              محتملة، يقيسها على قوالب البحور، ويأخذ الأعلى مطابقة. اضغط الحرف لقلب 1 و 0.
-            </p>
-          </div>
-          <div class="icon" aria-hidden="true">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-              <path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>
-            </svg>
-          </div>
-        </div>
-        <dl class="legend">
-          <div><dt>1</dt><dd>متحرك</dd></div>
-          <div><dt>0</dt><dd>ساكن</dd></div>
-          <div><dt>لا</dt><dd>سبب 10</dd></div>
-          <div><dt>نعم</dt><dd>وتد 110</dd></div>
-        </dl>
-      </header>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ميزان النبط</title>
+  <meta name="description" content="وزن الشعر النبطي من غير تشكيل" />
+  <meta name="theme-color" content="#12100e" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #12100e;
+      --elev: #1a1714;
+      --surf: #211d18;
+      --paper: #f3ead8;
+      --edge: #e4d7c0;
+      --ink: #1c1612;
+      --soft: #3a322b;
+      --fg: #f4efe6;
+      --muted: #9a9186;
+      --subtle: #6e675f;
+      --ok: #6b7f63;
+      --okfg: #ecf3e8;
+      --brk: #9a5347;
+      --brkfg: #f8e8e4;
+      --one: #3f5c4a;
+      --zero: #7a4a42;
+      --bd: #3a342d;
+      --ring: #8a9a7b;
+      --sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --disp: "Amiri", "Traditional Arabic", serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); }
+    body { font-family: var(--sans); text-align: right; -webkit-font-smoothing: antialiased; }
+    button { font-family: inherit; }
+    .wrap { max-width: 44rem; margin: 0 auto; padding: 1rem 0.9rem 3rem; }
+    header { margin-bottom: 0.9rem; }
+    .kicker { margin: 0; font-size: 0.72rem; color: var(--muted); }
+    h1 { margin: 0.15rem 0 0; font-family: var(--disp); font-size: 1.85rem; line-height: 1.2; }
+    .lede { margin: 0.4rem 0 0; font-size: 0.82rem; line-height: 1.7; color: var(--muted); }
+    .panel { background: var(--surf); border: 1px solid var(--bd); border-radius: 0.85rem; padding: 0.85rem; }
+    label { display: block; margin: 0 0 0.4rem; font-size: 0.85rem; font-weight: 600; }
+    textarea {
+      width: 100%; min-height: 5.4rem; resize: vertical; border: 1px solid var(--bd);
+      border-radius: 0.55rem; background: var(--elev); color: var(--fg);
+      font-family: var(--disp); font-size: 1.2rem; line-height: 1.85;
+      padding: 0.65rem 0.8rem; outline: none;
+    }
+    textarea:focus { border-color: var(--ring); }
+    .meters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
+    .mchip {
+      border: 1px solid var(--bd); background: var(--elev); color: var(--fg);
+      border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.82rem;
+    }
+    .mchip.on { background: var(--paper); color: var(--ink); border-color: var(--paper); font-weight: 600; }
+    .actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+    .btn {
+      flex: 1; height: 2.8rem; border: 0; border-radius: 0.55rem;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-go { background: var(--paper); color: var(--ink); }
+    .btn-reset { background: var(--elev); color: var(--fg); border: 1px solid var(--bd); flex: 0 0 auto; padding: 0 0.9rem; font-weight: 500; font-size: 0.85rem; }
+    .hint { margin: 0.55rem 0 0; font-size: 0.72rem; color: var(--subtle); line-height: 1.55; }
+    .err { margin-top: 0.8rem; padding: 0.8rem; background: #3a1f1c; color: #f3d0c8; border-radius: 0.55rem; font-size: 0.85rem; }
+    .results { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.85rem; }
+    .paper { background: var(--paper); color: var(--ink); border-radius: 0.85rem; overflow: hidden; }
+    .phd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--edge); align-items: center; }
+    .lbl { font-size: 0.72rem; color: var(--soft); }
+    .mname { font-family: var(--disp); font-size: 1.15rem; font-weight: 700; }
+    .pill { border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.75rem; font-weight: 600; }
+    .ok { background: var(--ok); color: var(--okfg); }
+    .bad { background: var(--brk); color: var(--brkfg); }
+    .dim { background: #ddd2be; color: var(--soft); }
+    .letters { padding: 0.85rem 0.7rem 0.5rem; }
+    .words { display: flex; flex-wrap: wrap; gap: 0.7rem 0.9rem; }
+    .word { display: flex; gap: 0.12rem; }
+    .tile {
+      min-width: 2.15rem; min-height: 3.1rem; padding: 0.2rem 0.2rem 0.3rem;
+      border: 0; background: transparent; border-radius: 0.35rem; color: var(--ink);
+    }
+    .tile:active { background: #e7dcc6; }
+    .glyph { display: block; font-family: var(--disp); font-size: 1.55rem; line-height: 1; }
+    .bit { display: block; margin-top: 0.2rem; font-size: 0.78rem; font-weight: 700; }
+    .one { color: var(--one); }
+    .zero { color: var(--zero); }
+    .la { margin: 0.35rem 0.9rem 0; font-family: var(--disp); font-size: 1.15rem; color: var(--soft); }
+    .bits { margin: 0.1rem 0.9rem 0.7rem; font-family: ui-monospace, monospace; font-size: 0.72rem; letter-spacing: .12em; color: var(--subtle); direction: ltr; text-align: left; }
+    .boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: 0.7rem; border-top: 1px solid var(--edge); }
+    @media (min-width: 640px) { .boxes { grid-template-columns: repeat(4, 1fr); } }
+    .box { background: #efe6d3; border: 1px solid var(--edge); border-radius: 0.5rem; padding: 0.55rem; }
+    .box.broken { background: #f3ddd6; border-color: var(--brk); }
+    .bn { font-family: var(--disp); font-weight: 700; }
+    .bz { font-size: 0.7rem; color: var(--soft); }
+    .ln { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; }
+    .ln i { font-style: normal; border-radius: 0.25rem; padding: 0.05rem 0.4rem; font-size: 0.72rem; font-weight: 600; }
+    .naam { background: var(--one); color: var(--okfg); }
+    .laa { background: #2a241f; color: var(--paper); }
+    .broke { margin: 0.35rem 0 0; font-size: 0.72rem; font-weight: 700; color: var(--brk); }
+    .alts { padding: 0.65rem 0.9rem; border-top: 1px solid var(--edge); font-size: 0.82rem; }
+    .alts b { display: block; font-size: 0.72rem; color: var(--soft); margin-bottom: 0.3rem; }
+    .fasih { margin: 0; padding: 0.45rem 0.9rem; border-top: 1px solid var(--edge); font-size: 0.72rem; color: var(--subtle); }
+    .ex { margin-top: 1rem; }
+    .ex h2 { margin: 0 0 0.45rem; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+    .exrow { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .exb { border: 1px solid var(--bd); background: var(--surf); color: var(--fg); border-radius: 0.5rem; padding: 0.4rem 0.65rem; font-size: 0.78rem; text-align: right; }
+    .exb small { display: block; color: var(--muted); font-size: 0.68rem; }
+    .warn { text-align: center; color: var(--muted); font-size: 0.82rem; }
+    footer { margin-top: 1.2rem; text-align: center; font-size: 0.72rem; color: var(--subtle); line-height: 1.7; }
+    footer a { color: var(--muted); }
+    noscript { display: block; padding: 1rem; background: #3a1f1c; color: #f3d0c8; }
+  </style>
+</head>
+<body>
+  <noscript>فعّل جافاسكربت حتى يشتغل الميزان.</noscript>
+  <div class="wrap">
+    <header>
+      <p class="kicker">شعر نبطي · من غير تشكيل</p>
+      <h1>ميزان النبط</h1>
+      <p class="lede">الصق الشطر. البرنامج يولّد تقطيعات ويقيسها على البحور. اضغط الحرف لقلب 1 و 0 إذا أخطأ السكون.</p>
+    </header>
 
-      <section class="panel">
-        <label for="verse">البيت</label>
-        <textarea id="verse" rows="3" placeholder="الصق الشطر هنا، بلا حركات. افصل الصدر عن العجز بنجمة أو سطر.">يا ما حلا بعد العشا شرب الفنجال</textarea>
-        <div class="chips" id="chips"></div>
-        <div class="row">
-          <div class="grow">
-            <label for="meter">البحر</label>
-            <select id="meter"></select>
-          </div>
-          <button type="button" class="reset" id="reset">أعد التخمين</button>
-        </div>
-        <p class="hint" id="mode-hint"></p>
-      </section>
+    <section class="panel">
+      <label for="verse">البيت</label>
+      <textarea id="verse" rows="3" placeholder="صدر في سطر، عجز في سطر. بلا حركات.">هو الدهر يا حماد ليس له مدى
+فكم قص من قرم على غرة يدى</textarea>
 
-      <section id="results" class="results"></section>
-      <p class="warn" id="same-warn" hidden></p>
-      <footer>
-        القياس على النطق النجدي لا على الرسم. الله سببان لا وتد. ال الشمسية تُدغم.
-        <br />
-        <a href="https://github.com/khaledSoq/mizan-alnabt">المصدر على GitHub</a>
-      </footer>
-    </div>
-    <script>
-"use strict";var Arud=(()=>{var B=Object.defineProperty;var ee=Object.getOwnPropertyDescriptor;var te=Object.getOwnPropertyNames;var ne=Object.prototype.hasOwnProperty;var se=(i,e)=>{for(var s in e)B(i,s,{get:e[s],enumerable:!0})},ie=(i,e,s,t)=>{if(e&&typeof e=="object"||typeof e=="function")for(let n of te(e))!ne.call(i,n)&&n!==s&&B(i,n,{get:()=>e[n],enumerable:!(t=ee(e,n))||t.enumerable});return i};var ae=i=>ie(B({},"__esModule",{value:!0}),i);var De={};se(De,{meterList:()=>L,splitBayt:()=>H,weigh:()=>$,weighHemistich:()=>P});var F={feet:{mustafcilun:{bits:"1010110",name:"\u0645\u0633\u062A\u0641\u0639\u0644\u0646",la_naam:["\u0644\u0627","\u0644\u0627","\u0646\u0639\u0645"]},mutafcilun:{bits:"110110",name:"\u0645\u062A\u0641\u0639\u0644\u0646",la_naam:["\u0646\u0639\u0645","\u0644\u0627","\u0646\u0639\u0645"],zihaf_of:"mustafcilun",zihaf:"\u062E\u0628\u0646"},muftacilun:{bits:"101110",name:"\u0645\u0641\u062A\u0639\u0644\u0646",la_naam:["\u0644\u0627","\u0646\u0639\u0645","\u0646\u0639\u0645"],zihaf_of:"mustafcilun",zihaf:"\u0637\u064A"},failun:{bits:"10110",name:"\u0641\u0627\u0639\u0644\u0646",la_naam:["\u0644\u0627","\u0646\u0639\u0645"]},failatun:{bits:"1011010",name:"\u0641\u0627\u0639\u0644\u0627\u062A\u0646",la_naam:["\u0644\u0627","\u0646\u0639\u0645","\u0644\u0627"]},faulun:{bits:"11010",name:"\u0641\u0639\u0648\u0644\u0646",la_naam:["\u0646\u0639\u0645","\u0644\u0627"]},faulu:{bits:"1110",name:"\u0641\u0639\u0648\u0644",la_naam:["\u0646\u0639\u0645"],zihaf_of:"faulun",zihaf:"\u0642\u0628\u0636"},mafailun:{bits:"1101010",name:"\u0645\u0641\u0627\u0639\u064A\u0644\u0646",la_naam:["\u0646\u0639\u0645","\u0644\u0627","\u0644\u0627"]},failun_short:{bits:"1010",name:"\u0641\u0639\u0644\u0646",la_naam:["\u0644\u0627","\u0644\u0627"],zihaf_of:"failun",zihaf:"\u062E\u0628\u0646"}},meters:[{id:"mashub",name:"\u0627\u0644\u0645\u0633\u062D\u0648\u0628",fasih:"\u0627\u0644\u0633\u0631\u064A\u0639",priority:1,feet:["mustafcilun","mustafcilun","failatun"],note:"\u0623\u0643\u062B\u0631 \u0628\u062D\u0631 \u0646\u0628\u0637\u064A. \u0627\u0644\u0635\u062F\u0631 \u0648\u0627\u0644\u0639\u062C\u0632 \u0628\u0646\u0641\u0633 \u0627\u0644\u0642\u0627\u0644\u0628."},{id:"arda",name:"\u0627\u0644\u0639\u0631\u0636\u0629",fasih:"\u0627\u0644\u0631\u0645\u0644",priority:2,feet:["failatun","failatun","failun"],note:"\u0628\u062D\u0631 \u0627\u0644\u0637\u0628\u0644 \u0648\u0627\u0644\u0633\u0644\u0627\u062D. \u0646\u062D\u0645\u062F \u0627\u0644\u0644\u0647 \u062A\u0645\u0634\u064A \u0647\u0646\u0627."},{id:"ramal",name:"\u0627\u0644\u0631\u0645\u0644",fasih:"\u0627\u0644\u0631\u0645\u0644",priority:12,feet:["failatun","failatun","failun"],note:"\u0645\u0642\u0627\u0628\u0644 \u0641\u0635\u064A\u062D \u0644\u0644\u0639\u0631\u0636\u0629. \u0646\u0641\u0633 \u0627\u0644\u0642\u0627\u0644\u0628 \u0627\u0644\u0631\u0642\u0645\u064A."},{id:"hajini_tamm",name:"\u0627\u0644\u0647\u062C\u064A\u0646\u064A \u0627\u0644\u062A\u0627\u0645",fasih:"\u0645\u062C\u0632\u0648\u0621 \u0627\u0644\u0628\u0633\u064A\u0637",priority:3,feet:["mustafcilun","failun","mustafcilun","failun"],note:"\u0623\u062E\u0641 \u0645\u0646 \u0627\u0644\u0645\u0633\u062D\u0648\u0628 \u0648\u0623\u0648\u0633\u0639 \u0645\u0646 \u0627\u0644\u0642\u0635\u064A\u0631."},{id:"hajini_qasir",name:"\u0627\u0644\u0647\u062C\u064A\u0646\u064A \u0627\u0644\u0642\u0635\u064A\u0631",fasih:"\u0645\u062C\u0632\u0648\u0621 \u0627\u0644\u0628\u0633\u064A\u0637",priority:4,feet:["mustafcilun","failun","failun"],note:"\u0623\u0633\u0631\u0639 \u0635\u0648\u0631 \u0627\u0644\u0647\u062C\u064A\u0646\u064A."},{id:"hilali",name:"\u0627\u0644\u0647\u0644\u0627\u0644\u064A",fasih:"\u0627\u0644\u0637\u0648\u064A\u0644",priority:5,feet:["faulun","mafailun","faulun","mafailun"],note:"\u0623\u0637\u0648\u0644 \u0646\u0641\u0633\u0627\u064B. \u0641\u0639\u0648\u0644\u0646 \u0645\u0641\u0627\u0639\u064A\u0644\u0646 \u0645\u0631\u062A\u064A\u0646."},{id:"sakhri",name:"\u0627\u0644\u0635\u062E\u0631\u064A",fasih:"\u0627\u0644\u0647\u0632\u062C / \u0627\u0644\u0648\u0627\u0641\u0631",priority:6,feet:["mafailun","mafailun","faulun"],note:"\u064A\u0645\u064A\u0644 \u0644\u0644\u0648\u0627\u0641\u0631 \u0641\u064A \u062D\u0633\u0651\u0647."},{id:"hida",name:"\u0627\u0644\u062D\u062F\u0627\u0621",fasih:"\u0627\u0644\u0631\u062C\u0632",priority:7,feet:["mustafcilun","mustafcilun","mustafcilun"],note:"\u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u062B\u0644\u0627\u062B \u0645\u0631\u0627\u062A."},{id:"madid",name:"\u0627\u0644\u0645\u062F\u064A\u062F",fasih:"\u0627\u0644\u0645\u062F\u064A\u062F",priority:8,feet:["failatun","failun","failatun","failun"],note:"\u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0646."},{id:"mumtadd",name:"\u0627\u0644\u0645\u0645\u062A\u062F",fasih:"\u0627\u0644\u0631\u0645\u0644 \u0627\u0644\u062A\u0627\u0645",priority:9,feet:["failatun","failatun","failatun","failun"],note:"\u0639\u0631\u0636\u0629 \u0645\u0645\u062F\u0648\u062F\u0629: \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u062B\u0644\u0627\u062B \u062B\u0645 \u0641\u0627\u0639\u0644\u0646."}]};var re={mustafcilun:["mustafcilun","mutafcilun","muftacilun"],faulun:["faulun","faulu"],failun:["failun","failun_short"]};function le(i){return i.reduce((e,s)=>e.flatMap(t=>s.map(n=>[...t,n])),[[]])}var y=null;function C(){if(y)return y;let i={};for(let[s,t]of Object.entries(F.feet))i[s]={key:s,bits:t.bits,name:t.name,laNaam:[...t.la_naam],zihaf:"zihaf"in t?t.zihaf:void 0};let e=[];for(let s of F.meters){let t={id:s.id,name:s.name,fasih:s.fasih??"",priority:s.priority??99,footKeys:[...s.feet],note:s.note??"",templates:[],templateFeet:[]},n=t.footKeys.map(o=>re[o]??[o]);for(let o of le(n)){let r=o.map(a=>i[a]);t.templates.push(r.map(a=>a.bits).join("")),t.templateFeet.push(r)}e.push(t)}return e.sort((s,t)=>s.priority-t.priority),y={feet:i,meters:e},y}function ue(i,e){if(!i&&!e)return{score:0,hamm:0,first:null};let s=Math.max(i.length,e.length),t=Math.min(i.length,e.length),n=0,o=null;for(let r=0;r<t;r++)i[r]!==e[r]&&(n+=1,o===null&&(o=r));return n+=Math.abs(i.length-e.length),i.length!==e.length&&o===null&&(o=t),{score:1-n/s,hamm:n,first:o}}function W(i,e){let s=0;for(let t=0;t<e.length;t++)if(s+=e[t].bits.length,i<s)return t;return Math.max(0,e.length-1)}function v(i,e,s){let t=s&&s!=="auto"?e.filter(r=>r.id===s):e,n=t.length?t:e,o=[];for(let r of n){let a=null;for(let u=0;u<r.templates.length;u++){let l=r.templates[u],d=r.templateFeet[u],h=[l],A=[d],p=0,M=[];for(let _ of d)M.push(_),p+=_.bits.length,p<l.length&&(A.push([...M]),h.push(l.slice(0,p)));for(let _=0;_<h.length;_++){let b=h[_],g=A[_];if(b!==l&&Math.abs(i.length-b.length)>2||b!==l&&i.length>=l.length-1)continue;let{score:x,hamm:m,first:c}=ue(i,b);b!==l&&(x-=.04);let k=g.filter(R=>R.zihaf).length;x-=.055*k,k>=2&&(x-=.05),g[0]?.zihaf&&(x-=.04);let T={meter:r,template:b,feet:g,score:x,hamm:m,firstDiff:c,bits:i};(!a||x>a.score+1e-9||a&&Math.abs(x-a.score)<1e-9&&b.length>a.template.length||a&&Math.abs(x-a.score)<1e-9&&k<a.feet.filter(R=>R.zihaf).length)&&(a=T)}}a&&o.push(a)}return o.sort((r,a)=>a.score-r.score||r.meter.priority-a.meter.priority||r.hamm-a.hamm),o}function fe(i){return i.kind==="wasl"?i.fixed===1?[1]:i.fixed===0?[-1]:[-1,1]:i.kind==="collapsed"?[-1]:i.kind==="alif_madd"?[0]:i.fixed!==null?[i.fixed]:i.kind==="waw"||i.kind==="ya"?[0,1]:[1,0]}function ce(i,e){return e!==0&&e!==1?null:i===0?e===1?1:null:i===1?e===0?0:2:i===2&&e===0?0:null}function he(i){let e=[],s=0;for(;s<i.length;)if(i.startsWith("110",s))e.push("\u0646\u0639\u0645"),s+=3;else if(i.startsWith("10",s))e.push("\u0644\u0627"),s+=2;else break;return e}var O=class{data=[];less(e,s){return e.cost!==s.cost?e.cost<s.cost:e.seq<s.seq}push(e){this.data.push(e),this.up(this.data.length-1)}pop(){if(!this.data.length)return;let e=this.data[0],s=this.data.pop();return this.data.length&&(this.data[0]=s,this.down(0)),e}up(e){for(;e>0;){let s=e-1>>1;if(!this.less(this.data[e],this.data[s]))break;[this.data[e],this.data[s]]=[this.data[s],this.data[e]],e=s}}down(e){let s=this.data.length;for(;;){let t=e,n=e*2+1,o=n+1;if(n<s&&this.less(this.data[n],this.data[t])&&(t=n),o<s&&this.less(this.data[o],this.data[t])&&(t=o),t===e)break;[this.data[e],this.data[t]]=[this.data[t],this.data[e]],e=t}}};function K(i){let e=i.phonemes;if(!e.length)return[];let s=[],t=new Set,n=0,o=0,r=new O;for(r.push({cost:0,seq:0,i:0,bits:"",state:0,assign:[]});r.data.length&&s.length<3e3&&o<12e3;){let a=r.pop();if(o+=1,a.i===e.length){a.state===0&&a.bits.endsWith("0")&&!t.has(a.bits)&&a.bits.length>=4&&a.bits.length<=32&&(t.add(a.bits),s.push({bits:a.bits,assign:a.assign,cost:a.cost,laNaam:he(a.bits)}));continue}let u=e[a.i];for(let l of fe(u)){if(l===-1){r.push({cost:a.cost+(u.kind==="wasl"?.15:0),seq:n++,i:a.i+1,bits:a.bits,state:a.state,assign:[...a.assign,-1]});continue}let d=ce(a.state,l);if(d===null||a.bits.length+1>32)continue;let h=0;u.kind==="cons"&&u.fixed===null&&l===0&&(h+=1),(u.kind==="waw"||u.kind==="ya")&&u.fixed===null&&l===1&&(h+=.35),u.kind==="wasl"&&l===1&&(h+=.4),u.kind==="ta_marbuta"&&l===1&&(h+=.8),r.push({cost:a.cost+h,seq:n++,i:a.i+1,bits:a.bits+String(l),state:d,assign:[...a.assign,l]})}}return s.sort((a,u)=>a.cost-u.cost||u.bits.length-a.bits.length),s}var me=new Set([..."\u062A\u062B\u062F\u0630\u0631\u0632\u0633\u0634\u0635\u0636\u0637\u0638\u0644\u0646"]),w=new Set(["\u0627","\u0671"]),N="\u0622",X="\u0648",j="\u064A",de="\u0629",pe="\u0644",U="\u0651",q="\u0652",I="\u064E",V="\u064F",Z="\u0650",D="\u0640",ge="\u0670",be="\u064B",ke="\u064C",_e="\u064D",z=new Set([U,q,I,V,Z,be,ke,_e,ge]),Ae=new Set([I,V,Z]),xe=new Set([..."\u0648\u0641\u0628\u0643\u0644"]),Me=new Set(["\u064A\u0627","\u0645\u0646","\u0639\u0646","\u0641\u064A","\u0644\u0645","\u0647\u0644","\u0628\u0644","\u0642\u062F","\u0625\u0646","\u0623\u0646","\u0627\u0648","\u0623\u0648","\u0645\u0627","\u0644\u0627"]),ye=new Set(["\u0627\u0644\u0644\u0647","\u0627\u0644\u0644\u0651\u0647","\u0627\u0644\u0644\u064E\u0651\u0647","\u0627\u0644\u0644\u0651\u0670\u0647","\u0644\u0644\u0647","\u0648\u0627\u0644\u0644\u0647","\u0628\u0627\u0644\u0644\u0647","\u062A\u0627\u0644\u0644\u0647","\u0641\u0627\u0644\u0644\u0647"]);function we(i){let e=i.codePointAt(0)??0;return e>=1569&&e<=1594||e>=1601&&e<=1610||"\u0629\u0649\u0622\u0623\u0625\u0624\u0626\u0621\u0671".includes(i)}function E(i){return[...i].filter(e=>!z.has(e)&&e!==D).join("")}var Ne=/[^\u0600-\u06FF\s*]+/g,He=/\s+/g,Se=/^[\d٠-٩]+[.\-)\]]\s*/;function H(i){if(!i||!i.trim())return[];let e=i.replace(/\r\n/g,`
-`).replace(/\r/g,`
-`),s;return e.includes("***")?s=e.split("***").map(t=>t.trim()):e.includes(`
-`)?s=e.split(`
-`).map(t=>t.trim()):e.includes(" * ")?s=e.split(" * ").map(t=>t.trim()):(e.match(/\*/g)||[]).length===1?s=e.split("*").map(t=>t.trim()):s=[e.trim()],s.filter(Boolean)}function Le(i){let e=i.trim().replaceAll(D,"");return e=e.replace(Se,""),e=e.replace(Ne," ").replaceAll("*"," "),e.replace(He," ").trim()}function G(i){let e=[],s=0;for(;s<i.length;){let t=i[s];if(z.has(t)||t===D||t===" "){s+=1;continue}if(!we(t)&&!"\u0622\u0623\u0625\u0624\u0626\u0621\u0649\u0629\u0671".includes(t)){s+=1;continue}let n=s+1,o=!1,r=!1,a=!1;for(;n<i.length&&z.has(i[n]);)i[n]===U?o=!0:i[n]===q?r=!0:Ae.has(i[n])&&(a=!0),n+=1;o?(e.push({ch:t,sukun:!0,vowel:!1}),e.push({ch:t,sukun:!1,vowel:!0})):e.push({ch:t,sukun:r,vowel:a}),s=n}return e}function Te(i){return ye.has(i)||i.endsWith("\u0627\u0644\u0644\u0647")||i==="\u0627\u0644\u0644\u0647"}function f(i,e,s,t,n,o){return{char:i,kind:e,fixed:s,display:t,wordI:n,hint:o}}function Re(i,e,s){let t=E(i),n="";for(let r of["\u0648","\u0628","\u0641","\u062A","\u0644"])if(t.startsWith(r+"\u0627\u0644\u0644\u0647")||t===r+"\u0644\u0647"){n=r,t=t.slice(r.length);break}t==="\u0644\u0647"&&(n=n||"\u0644");let o=[];return n&&o.push(f(n,"cons",1,!0,e,"prefix")),s&&!n?o.push(f("\u0627","cons",1,!0,e,"allah_alif")):o.push(f("\u0627","wasl",null,!0,e,"allah_alif")),o.push(f("\u0644","cons",0,!0,e,"allah_lam1")),o.push(f("\u0644","cons",1,!0,e,"allah_lam2")),o.push(f("\u0627","alif_madd",0,!0,e,"allah_madd")),o.push(f("\u0647","collapsed",0,!0,e,"allah_ha")),o}function Be(i,e){let s=G(i).map(n=>n.ch);if(s.length||(s=[...E(i)]),s.length===1){let n=s[0];return w.has(n)||n==="\u0649"?[f(n,"alif_madd",0,!0,e,"fn")]:[f(n,"cons",1,!0,e,"fn"),f("","collapsed",0,!1,e,"fn_sukun")]}let t=[];return s.forEach((n,o)=>{if(o===0){let r="cons";n===X?r="waw":(n===j||n==="\u0649")&&(r="ya"),t.push(f(n,r,1,!0,e,"fn10"))}else w.has(n)||n==="\u0649"||n===N?t.push(f(n===N?"\u0627":n,"alif_madd",0,!0,e,"fn10")):t.push(f(n,"cons",0,!0,e,"fn10"))}),t}function Fe(i){let e=i.phonemes;for(let s=0;s<e.length;s++){let t=e[s];if(t.kind==="alif_madd"){let n=s-1;for(;n>=0&&(e[n].kind==="wasl"||e[n].kind==="collapsed");)n-=1;n>=0&&e[n].kind!=="alif_madd"&&e[n].fixed===null&&(e[n].fixed=1)}s>0&&e[s-1].kind==="alif_madd"&&t.fixed===0&&(t.kind==="cons"||t.kind==="ta_marbuta"||t.kind==="collapsed")&&(t.kind="collapsed")}}function Y(i){let e=Le(i),s=e.split(" ").filter(Boolean),t={raw:i,cleaned:e,words:s,phonemes:[]};if(!s.length)return t;for(let n=0;n<s.length;n++){let o=s[n],r=E(o),a=n===0;if(Te(r)){t.phonemes.push(...Re(o,n,a));continue}if(Me.has(r)){t.phonemes.push(...Be(o,n));continue}let u=G(o),l=0;if(u.length>=3&&(w.has(u[0].ch)||"\u0623\u0625\u0671\u0622".includes(u[0].ch))&&u[1].ch===pe){let h=me.has(u[2].ch);if(u[0].ch===N?(t.phonemes.push(f("\u0622","cons",1,!0,n,"hamza")),t.phonemes.push(f("\u0627","alif_madd",0,!0,n,"madda"))):a?t.phonemes.push(f("\u0627","cons",1,!0,n,"al_alif")):t.phonemes.push(f("\u0627","wasl",null,!0,n,"al_wasl")),h){let p=u[2].ch;t.phonemes.push(f(p,"cons",0,!0,n,"shamsi_sukun")),t.phonemes.push(f(p,"cons",1,!1,n,"shamsi_move")),l=3}else t.phonemes.push(f("\u0644","cons",0,!0,n,"qamari_lam")),l=2}let d=u.slice(l);d.forEach((h,A)=>{let p=h.ch,_=A===d.length-1&&n===s.length-1;if(p===N){t.phonemes.push(f("\u0623","cons",1,!0,n,"madda_h")),t.phonemes.push(f("\u0627","alif_madd",0,!0,n,"madda_a"));return}if(w.has(p)){t.phonemes.push(f("\u0627","alif_madd",0,!0,n,"madd"));return}if(p==="\u0649"){t.phonemes.push(f("\u0649","alif_madd",0,!0,n,"maqsur"));return}if(p===de){t.phonemes.push(f("\u0629","ta_marbuta",_?0:null,!0,n,"ta"));return}let b="cons";p===X?b="waw":p===j&&(b="ya");let g=null;h.sukun?g=0:h.vowel&&(g=1),_&&(g=0),(b==="waw"||b==="ya")&&!_&&!a&&A>0&&(h.vowel?g=1:h.sukun?g=0:g=null),A===0&&l===0&&d.length===1&&xe.has(p)&&!_&&(g=1),t.phonemes.push(f(p,b,g,!0,n,b))})}if(t.phonemes.length)for(let n=t.phonemes.length-1;n>=0;n--){let o=t.phonemes[n];if(o.display||o.kind!=="collapsed"){o.kind!=="wasl"&&(o.fixed=0);break}}return Fe(t),t}var Q=.9,Ce=6;function S(i,e,s,t,n,o=[],r="",a=[]){return{ok:!1,message:n,text:i,cleaned:e,meterId:s,meterName:"",fasih:"",score:0,accepted:!1,bits:r,laNaam:a,letters:o,boxes:[],firstDiff:null,brokenBox:null,alts:[],mode:t}}function J(i,e){let s=[];return i.phonemes.forEach((t,n)=>{let o=e.assign[n]??-1;!t.display&&o===-1||!t.display&&(o===0||o===1)||s.push({char:t.char||"\xB7",bit:o===-1?null:o,skipped:o===-1,kind:t.kind,wordI:t.wordI,locked:t.fixed!==null&&t.kind!=="wasl"})}),s}function Oe(i){let e=null;return i.firstDiff!==null&&(e=W(i.firstDiff,i.feet)),{boxes:i.feet.map((t,n)=>({index:n,name:t.name,laNaam:[...t.laNaam],bits:t.bits,broken:e===n&&i.score<Q,zihaf:t.zihaf??null})),brokenBox:e}}function ze(i,e){if(!e)return;let s=0;for(let t of i.phonemes)if(t.display){if(s in e){let n=e[s];(n===0||n===1)&&(t.kind==="wasl"&&n===0?(t.kind="collapsed",t.fixed=0,t.hint="user_drop"):t.kind==="collapsed"?n===1&&(t.kind="cons",t.fixed=1,t.hint="user"):(t.fixed=n,t.hint="user"))}s+=1}}function P(i,e="auto",s){let{meters:t}=C(),n=Y(i);ze(n,s);let o=e===""||e==="auto"?"discover":"check",r=n.phonemes.filter(m=>m.display).length;if(!n.phonemes.length||r<2)return S(i,n.cleaned,e,o,"\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641");let a=K(n);if(!a.length){let m=n.phonemes.filter(c=>c.display).map(c=>({char:c.char||"\xB7",bit:c.fixed===0||c.fixed===1?c.fixed:null,skipped:!1,kind:c.kind,wordI:c.wordI,locked:c.fixed!==null}));return S(i,n.cleaned,e,o,r<6?"\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641":"\u0644\u0627 \u062A\u0642\u0637\u064A\u0639 \u064A\u062A\u062C\u0645\u0651\u0639 \u0625\u0644\u0649 \u0623\u0633\u0628\u0627\u0628 \u0648\u0623\u0648\u062A\u0627\u062F (10 \u0648 110). \u0627\u0636\u063A\u0637 \u062D\u0631\u0641\u0627\u064B \u0644\u0642\u0644\u0628 \u0627\u0644\u0633\u0643\u0648\u0646.",m)}if(Math.max(...a.map(m=>m.bits.length))<Ce)return S(i,n.cleaned,e,o,"\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641",J(n,a[0]),a[0].bits,a[0].laNaam);let u=o==="discover"?null:e,l=null,d=null,h=[];for(let m of a.slice(0,400)){let c=v(m.bits,t,u);if(!c.length)continue;let k=c[0];k.score=k.score-.002*m.cost,h.push({hit:k,cand:m}),(!l||k.score>l.score+1e-12||l&&Math.abs(k.score-l.score)<1e-9&&m.cost<(d?.cost??1e9))&&(l=k,d=m)}if(!l||!d)return S(i,n.cleaned,e,o,"\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641");let A=[],p=new Set([d.bits]),M=[...h].sort((m,c)=>c.hit.score-m.hit.score);for(let{hit:m,cand:c}of M)if(!p.has(c.bits)&&m.score>=l.score-.08&&A.length<3){let k="";(c.bits.startsWith("1010110")||c.bits==="1010110")&&(k="\u0647\u062C\u0631 \u0633\u0627\u0643\u0646\u0629 \u2192 \u0645\u0633\u062A\u0641\u0639\u0644\u0646"),(c.bits.endsWith("1011010")||c.bits==="1011010")&&(k="\u0647\u062C\u0631 \u0645\u0641\u062A\u0648\u062D\u0629 \u2192 \u0641\u0627\u0639\u0644\u0627\u062A\u0646"),A.push({bits:c.bits,laNaam:c.laNaam,meterName:m.meter.name,score:Math.round(m.score*1e4)/1e4,note:k}),p.add(c.bits)}let{boxes:_,brokenBox:b}=Oe(l),g=l.score>=Q;return{ok:!0,message:o==="check"?g?"\u0645\u0648\u0632\u0648\u0646":"\u0645\u0643\u0633\u0648\u0631":g?"\u0645\u0648\u0632\u0648\u0646":"\u0623\u0642\u0631\u0628 \u0628\u062D\u0631 \u2014 \u0627\u0644\u0645\u0637\u0627\u0628\u0642\u0629 \u062F\u0648\u0646 \u0627\u0644\u0639\u062A\u0628\u0629",text:i,cleaned:n.cleaned,meterId:l.meter.id,meterName:l.meter.name,fasih:l.meter.fasih,score:Math.round(Math.min(1,Math.max(0,l.score))*1e4)/1e4,accepted:g,bits:d.bits,laNaam:d.laNaam,letters:J(n,d),boxes:_,firstDiff:l.firstDiff,brokenBox:g?null:b,alts:A,mode:o}}function L(){let{meters:i}=C(),e=[{id:"auto",name:"\u062A\u0644\u0642\u0627\u0626\u064A",feet:[],bits:""}];for(let s of i)e.push({id:s.id,name:s.name,fasih:s.fasih,feet:s.templateFeet[0]?.map(t=>t.name)??[],bits:s.templates[0]??"",note:s.note});return e}function $(i,e="auto",s){let t=H(i);if(!t.length)return{ok:!1,message:"\u0623\u062F\u062E\u0644 \u0635\u062F\u0631\u0627\u064B \u0623\u0648 \u0639\u062C\u0632\u0627\u064B \u0623\u0648 \u0628\u064A\u062A\u0627\u064B \u0645\u0641\u0635\u0648\u0644\u0627\u064B \u0628\u0646\u062C\u0645\u0629 \u0623\u0648 \u0633\u0637\u0631.",hemistichs:[],meters:L(),mode:e==="auto"||!e?"discover":"check",selected:e};let n=t.map((u,l)=>P(u,e,s?.[l])),o=n.filter(u=>u.ok&&u.meterName).map(u=>u.meterName),r=new Set(o).size<=1,a=n.length&&n.every(u=>u.accepted)?"\u0645\u0648\u0632\u0648\u0646":"\u0631\u0627\u062C\u0639 \u0627\u0644\u0643\u0633\u0631";return n.length===1&&n[0]&&!n[0].ok&&n[0].message==="\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641"&&(a="\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641"),{ok:!0,message:a,sameMeter:r,hemistichs:n,meters:L(),mode:e==="auto"||!e?"discover":"check",selected:e}}return ae(De);})();
+      <label style="margin-top:.75rem">البحر</label>
+      <div class="meters" id="meters"></div>
 
-    </script>
-    <script>
-      const EXAMPLES = [
-        { label: "يا ما حلا", text: "يا ما حلا بعد العشا شرب الفنجال", meter: "mashub" },
-        { label: "نحمد الله", text: "نحمد الله جت على ما تمنى", meter: "auto" },
-        { label: "من هجركم", text: "من هجركم", meter: "auto" },
-        { label: "بيت صدر وعجز", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب", meter: "arda" },
+      <div class="actions">
+        <button type="button" class="btn btn-go" id="go">زِن البيت</button>
+        <button type="button" class="btn btn-reset" id="reset">صفّر القلب</button>
+      </div>
+      <p class="hint" id="hint">1 متحرك · 0 ساكن · لا = 10 · نعم = 110. إذا انكسر الاسم المشدد (حمّاد) اضغط الميم.</p>
+    </section>
+
+    <div id="boot" class="err" hidden></div>
+    <section class="results" id="results"></section>
+    <p class="warn" id="same" hidden></p>
+
+    <section class="ex">
+      <h2>أمثلة من كل بحر — اضغط للتجربة</h2>
+      <div class="exrow" id="ex"></div>
+    </section>
+
+    <footer>
+      القياس على النطق النجدي لا الرسم. الله سببان لا وتد. ال الشمسية تُدغم.
+      <br /><a href="https://github.com/khaledSoq/mizan-alnabt">المصدر</a>
+    </footer>
+  </div>
+  <script src="./engine.js"></script>
+  <script>
+    (function () {
+      var boot = document.getElementById("boot");
+      function fail(msg) {
+        boot.hidden = false;
+        boot.textContent = msg;
+      }
+      var Arud = window.Arud;
+      if (!Arud || typeof Arud.weigh !== "function") {
+        fail("المحرك ما تحمّل. حدّث الصفحة أو افتح الرابط في كروم.");
+        return;
+      }
+
+      var EXAMPLES = [
+        { meter: "mashub", label: "المسحوب", text: "يا ما حلا بعد العشا شرب الفنجال" },
+        { meter: "arda", label: "العرضة", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب" },
+        { meter: "hilali", label: "الهلالي", text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى" },
+        { meter: "sakhri", label: "الصخري", text: "أقول لها وقد طارت شعاعا\nمن الأبطال ويحك لن تراعى" },
+        { meter: "hajini_tamm", label: "الهجيني", text: "يا نديبي لا تلام على الهوى\n القلب ماله في زمانك حيله" },
+        { meter: "hida", label: "الحداء", text: "يا راكبن من عندنا فوق حرباب\nبلغ سلامٍ للي توالي دياره" },
+        { meter: "auto", label: "من هجركم", text: "من هجركم" }
       ];
-      const LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
+      var LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
+      var verseEl = document.getElementById("verse");
+      var metersEl = document.getElementById("meters");
+      var resultsEl = document.getElementById("results");
+      var sameEl = document.getElementById("same");
+      var hintEl = document.getElementById("hint");
+      var exEl = document.getElementById("ex");
+      var meterId = "auto";
+      var locks = [];
 
-      const verseEl = document.getElementById("verse");
-      const meterEl = document.getElementById("meter");
-      const chipsEl = document.getElementById("chips");
-      const resultsEl = document.getElementById("results");
-      const hintEl = document.getElementById("mode-hint");
-      const warnEl = document.getElementById("same-warn");
-      const resetEl = document.getElementById("reset");
+      function esc(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&").replace(/</g, "<")
+          .replace(/>/g, ">").replace(/"/g, """);
+      }
 
-      let locks = [];
-
-      EXAMPLES.forEach((ex) => {
-        const b = document.createElement("button");
+      var meters = Arud.meterList();
+      meters.forEach(function (m) {
+        var b = document.createElement("button");
         b.type = "button";
-        b.className = "chip";
-        b.textContent = ex.label;
-        b.addEventListener("click", () => {
-          verseEl.value = ex.text;
-          meterEl.value = ex.meter;
-          locks = [];
+        b.className = "mchip" + (m.id === meterId ? " on" : "");
+        b.textContent = m.name;
+        b.setAttribute("data-id", m.id);
+        b.addEventListener("click", function () {
+          meterId = m.id;
+          Array.prototype.forEach.call(metersEl.children, function (el) {
+            el.className = "mchip" + (el.getAttribute("data-id") === meterId ? " on" : "");
+          });
           render();
         });
-        chipsEl.appendChild(b);
+        metersEl.appendChild(b);
       });
 
-      Arud.meterList().forEach((m) => {
-        const o = document.createElement("option");
-        o.value = m.id;
-        o.textContent = m.feet && m.feet.length ? `${m.name} — ${m.feet.join(" ")}` : m.name;
-        meterEl.appendChild(o);
+      EXAMPLES.forEach(function (ex) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "exb";
+        b.innerHTML = esc(ex.text.split("\n")[0].slice(0, 22)) + "<small>" + esc(ex.label) + "</small>";
+        b.addEventListener("click", function () {
+          verseEl.value = ex.text;
+          meterId = ex.meter;
+          locks = [];
+          Array.prototype.forEach.call(metersEl.children, function (el) {
+            el.className = "mchip" + (el.getAttribute("data-id") === meterId ? " on" : "");
+          });
+          render();
+          resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        exEl.appendChild(b);
       });
-      meterEl.value = "mashub";
-
-      verseEl.addEventListener("input", () => { locks = []; render(); });
-      meterEl.addEventListener("change", render);
-      resetEl.addEventListener("click", () => { locks = []; render(); });
 
       function groupLetters(letters) {
-        const words = [];
-        let cur = [];
-        let wi = letters[0] ? letters[0].wordI : 0;
-        for (const L of letters) {
-          if (L.wordI !== wi) {
-            if (cur.length) words.push(cur);
-            cur = [L];
-            wi = L.wordI;
-          } else cur.push(L);
+        var words = [], cur = [], wi = letters[0] ? letters[0].wordI : 0;
+        for (var i = 0; i < letters.length; i++) {
+          var L = letters[i];
+          if (L.wordI !== wi) { if (cur.length) words.push(cur); cur = [L]; wi = L.wordI; }
+          else cur.push(L);
         }
         if (cur.length) words.push(cur);
         return words;
       }
-
-      function letterOffset(wi, li, words) {
-        let n = 0;
-        for (let i = 0; i < wi; i++) n += words[i].length;
+      function offset(wi, li, words) {
+        var n = 0;
+        for (var i = 0; i < wi; i++) n += words[i].length;
         return n + li;
       }
 
-      function esc(s) {
-        return String(s ?? "")
-          .replace(/&/g, "&")
-          .replace(/</g, "<")
-          .replace(/>/g, ">")
-          .replace(/"/g, """);
-      }
-
       function hemistichHTML(h, label, hi) {
-        const words = groupLetters(h.letters || []);
-        const status = !h.ok ? "empty" : h.accepted ? "ok" : "break";
-        const score = Number.isFinite(h.score) ? ` · ${Math.round(h.score * 100)}٪` : "";
-        const pill = h.ok
-          ? `<span class="pill ${status}">${esc(h.message)}${score}</span>`
-          : `<span class="pill muted">${esc(h.message)}</span>`;
-
-        let letters = "";
+        var words = groupLetters(h.letters || []);
+        var pillCls = !h.ok ? "dim" : h.accepted ? "ok" : "bad";
+        var score = isFinite(h.score) ? " · " + Math.round(h.score * 100) + "٪" : "";
+        var tiles = "";
         if (!h.letters || !h.letters.length) {
-          letters = `<p class="lede" style="color:var(--ink-soft);margin:0">${esc(h.message || "أدخل شطراً ليظهر التقطيع.")}</p>`;
+          tiles = "<p class='lede' style='color:var(--soft);margin:0'>" + esc(h.message) + "</p>";
         } else {
-          letters = `<div class="words">${words
-            .map(
-              (word, wi) =>
-                `<div class="word">${word
-                  .map((L, li) => {
-                    const global = letterOffset(wi, li, words);
-                    const cls = [
-                      "tile",
-                      L.skipped ? "skipped" : "",
-                      L.locked && !L.skipped ? "locked" : "",
-                    ].join(" ");
-                    const bitCls = L.bit === 1 ? "one" : L.bit === 0 ? "zero" : "none";
-                    const bitTxt = L.bit === null || L.bit === undefined ? "—" : L.bit;
-                    return `<button type="button" class="${cls}" data-hi="${hi}" data-li="${global}" data-bit="${L.bit}" title="اضغط لقلب المتحرك/الساكن">
-                      <span class="glyph">${esc(L.char)}</span>
-                      <span class="bit ${bitCls}">${bitTxt}</span>
-                    </button>`;
-                  })
-                  .join("")}</div>`,
-            )
-            .join("")}</div>`;
+          tiles = "<div class='words'>" + words.map(function (word, wi) {
+            return "<div class='word'>" + word.map(function (L, li) {
+              var g = offset(wi, li, words);
+              var bit = L.bit;
+              var bcls = bit === 1 ? "one" : bit === 0 ? "zero" : "";
+              var bt = bit === 1 || bit === 0 ? bit : "—";
+              return "<button type='button' class='tile' data-hi='" + hi + "' data-li='" + g + "' data-bit='" + bit + "'>" +
+                "<span class='glyph'>" + esc(L.char) + "</span>" +
+                "<span class='bit " + bcls + "'>" + bt + "</span></button>";
+            }).join("") + "</div>";
+          }).join("") + "</div>";
         }
-
-        const la = h.ok && h.laNaam && h.laNaam.length
-          ? `<p class="la" dir="rtl">${h.laNaam.map(esc).join(" · ")}</p>`
-          : "";
-        const bits = h.ok && h.bits ? `<p class="bits" dir="ltr">${esc(h.bits)}</p>` : "";
-
-        const boxes = (h.boxes || []).length
-          ? `<div class="boxes">${h.boxes
-              .map(
-                (box) => `<div class="box ${box.broken ? "broken" : ""}">
-                  <div class="box-top">
-                    <span class="box-name">${esc(box.name)}</span>
-                    ${box.zihaf ? `<span class="box-zihaf">${esc(box.zihaf)}</span>` : ""}
-                  </div>
-                  <div class="ln">${(box.laNaam || [])
-                    .map((ln) => `<span class="${ln === "نعم" ? "naam" : "laa"}">${esc(ln)}</span>`)
-                    .join("")}</div>
-                  ${box.broken ? `<p class="broke">موضع الكسر</p>` : ""}
-                </div>`,
-              )
-              .join("")}</div>`
-          : "";
-
-        const alts = (h.alts || []).length
-          ? `<div class="alts"><p>أوجه أخرى قريبة</p><ul>${h.alts
-              .map(
-                (a) => `<li><span>${esc(a.meterName)}</span>${
-                  a.note ? `<span class="note"> — ${esc(a.note)}</span>` : ""
-                }<span class="mono" dir="ltr">${esc(a.bits)}</span></li>`,
-              )
-              .join("")}</ul></div>`
-          : "";
-
-        const fasih = h.fasih && h.ok ? `<p class="fasih">مقابله في الفصيح: ${esc(h.fasih)}</p>` : "";
-
-        return `<article class="paper">
-          <header class="paper-head">
-            <div class="meta">
-              <span class="lbl">${esc(label)}</span>
-              ${h.meterName ? `<span class="meter-name">${esc(h.meterName)}</span>` : ""}
-            </div>
-            ${pill}
-          </header>
-          <div class="letters">${letters}${la}${bits}</div>
-          ${boxes}${alts}${fasih}
-        </article>`;
+        var la = h.ok && h.laNaam && h.laNaam.length ? "<p class='la'>" + h.laNaam.map(esc).join(" · ") + "</p>" : "";
+        var bits = h.ok && h.bits ? "<p class='bits' dir='ltr'>" + esc(h.bits) + "</p>" : "";
+        var boxes = "";
+        if (h.boxes && h.boxes.length) {
+          boxes = "<div class='boxes'>" + h.boxes.map(function (box) {
+            return "<div class='box" + (box.broken ? " broken" : "") + "'><div class='bn'>" + esc(box.name) +
+              (box.zihaf ? " <span class='bz'>" + esc(box.zihaf) + "</span>" : "") + "</div>" +
+              "<div class='ln'>" + (box.laNaam || []).map(function (ln) {
+                return "<i class='" + (ln === "نعم" ? "naam" : "laa") + "'>" + esc(ln) + "</i>";
+              }).join("") + "</div>" +
+              (box.broken ? "<p class='broke'>موضع الكسر</p>" : "") + "</div>";
+          }).join("") + "</div>";
+        }
+        var alts = "";
+        if (h.alts && h.alts.length) {
+          alts = "<div class='alts'><b>أوجه قريبة</b>" + h.alts.map(function (a) {
+            return "<div>" + esc(a.meterName) + (a.note ? " — " + esc(a.note) : "") +
+              " <span dir='ltr'>" + esc(a.bits) + "</span></div>";
+          }).join("") + "</div>";
+        }
+        var fasih = h.fasih && h.ok ? "<p class='fasih'>مقابله في الفصيح: " + esc(h.fasih) + "</p>" : "";
+        return "<article class='paper'><header class='phd'><div><span class='lbl'>" + esc(label) +
+          "</span> " + (h.meterName ? "<span class='mname'>" + esc(h.meterName) + "</span>" : "") +
+          "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" +
+          "<div class='letters'>" + tiles + la + bits + "</div>" + boxes + alts + fasih + "</article>";
       }
 
       function render() {
-        const text = verseEl.value;
-        const meterId = meterEl.value;
-        const result = Arud.weigh(text, meterId, locks);
-        hintEl.textContent =
-          `الوضع ${result.mode === "discover" ? "اكتشاف تلقائي لأقرب بحر" : "فحص البحر المختار"}. افصل الشطرين بـ *** أو سطر جديد. يعمل بعد التشغيل بلا شبكة.`;
+        try {
+          var result = Arud.weigh(verseEl.value, meterId, locks);
+          hintEl.textContent = (result.mode === "discover"
+            ? "اكتشاف تلقائي لأقرب بحر. "
+            : "فحص البحر المختار. ") + "اضغط الحرف لقلب المتحرك/الساكن.";
+          if (!result.hemistichs || !result.hemistichs.length) {
+            resultsEl.innerHTML = "<div class='err' style='background:var(--surf);color:var(--muted)'>" + esc(result.message) + "</div>";
+          } else {
+            resultsEl.innerHTML = result.hemistichs.map(function (h, i) {
+              var lab = result.hemistichs.length === 1 ? "الشطر" : (LABELS[i] || ("شطر " + (i + 1)));
+              return hemistichHTML(h, lab, i);
+            }).join("");
+          }
+          if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
+            sameEl.hidden = false;
+            sameEl.textContent = "الشطران على بحرين مختلفين. ثبّت بحراً واحداً للقصيدة.";
+          } else sameEl.hidden = true;
 
-        if (!result.hemistichs || result.hemistichs.length === 0) {
-          resultsEl.innerHTML = `<div class="empty">${esc(result.message)}</div>`;
-        } else {
-          resultsEl.innerHTML = result.hemistichs
-            .map((h, i) =>
-              hemistichHTML(
-                h,
-                result.hemistichs.length === 1 ? "الشطر" : LABELS[i] || `شطر ${i + 1}`,
-                i,
-              ),
-            )
-            .join("");
-        }
-
-        if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
-          warnEl.hidden = false;
-          warnEl.textContent = "الشطران على بحرين مختلفين. راجع الوزن أو ثبّت بحراً واحداً للقصيدة.";
-        } else {
-          warnEl.hidden = true;
-        }
-
-        resultsEl.querySelectorAll(".tile").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const hi = Number(btn.dataset.hi);
-            const li = Number(btn.dataset.li);
-            const cur = btn.dataset.bit === "1" ? 1 : 0;
-            const next = cur === 1 ? 0 : 1;
-            while (locks.length <= hi) locks.push({});
-            locks[hi] = { ...locks[hi], [li]: next };
-            render();
+          Array.prototype.forEach.call(resultsEl.querySelectorAll(".tile"), function (btn) {
+            btn.addEventListener("click", function () {
+              var hi = +btn.getAttribute("data-hi");
+              var li = +btn.getAttribute("data-li");
+              var cur = btn.getAttribute("data-bit") === "1" ? 1 : 0;
+              while (locks.length <= hi) locks.push({});
+              locks[hi][li] = cur === 1 ? 0 : 1;
+              render();
+            });
           });
-        });
+        } catch (e) {
+          fail("خطأ أثناء الوزن: " + (e && e.message ? e.message : e));
+        }
       }
 
+      document.getElementById("go").addEventListener("click", function () {
+        render();
+        resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      document.getElementById("reset").addEventListener("click", function () {
+        locks = [];
+        render();
+      });
+      verseEl.addEventListener("input", function () { locks = []; });
       render();
-    </script>
-  </body>
+    })();
+  </script>
+</body>
 </html>

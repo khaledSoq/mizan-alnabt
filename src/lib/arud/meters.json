@@ -8,6 +8,7 @@
     "faulun": { "bits": "11010", "name": "فعولن", "la_naam": ["نعم", "لا"] },
     "faulu": { "bits": "1110", "name": "فعول", "la_naam": ["نعم"], "zihaf_of": "faulun", "zihaf": "قبض" },
     "mafailun": { "bits": "1101010", "name": "مفاعيلن", "la_naam": ["نعم", "لا", "لا"] },
+    "mafailu": { "bits": "110110", "name": "مفاعلن", "la_naam": ["نعم", "نعم"], "zihaf_of": "mafailun", "zihaf": "قبض" },
     "failun_short": { "bits": "1010", "name": "فعلن", "la_naam": ["لا", "لا"], "zihaf_of": "failun", "zihaf": "خبن" }
   },
   "meters": [
@@ -17,7 +18,7 @@
       "fasih": "السريع",
       "priority": 1,
       "feet": ["mustafcilun", "mustafcilun", "failatun"],
-      "note": "أكثر بحر نبطي. الصدر والعجز بنفس القالب."
+      "note": "أكثر بحر نبطي. مستفعلن مستفعلن فاعلاتن."
     },
     {
       "id": "arda",
@@ -25,15 +26,7 @@
       "fasih": "الرمل",
       "priority": 2,
       "feet": ["failatun", "failatun", "failun"],
-      "note": "بحر الطبل والسلاح. نحمد الله تمشي هنا."
-    },
-    {
-      "id": "ramal",
-      "name": "الرمل",
-      "fasih": "الرمل",
-      "priority": 12,
-      "feet": ["failatun", "failatun", "failun"],
-      "note": "مقابل فصيح للعرضة. نفس القالب الرقمي."
+      "note": "بحر الطبل والسلاح. فاعلاتن فاعلاتن فاعلن."
     },
     {
       "id": "hajini_tamm",
@@ -41,7 +34,7 @@
       "fasih": "مجزوء البسيط",
       "priority": 3,
       "feet": ["mustafcilun", "failun", "mustafcilun", "failun"],
-      "note": "أخف من المسحوب وأوسع من القصير."
+      "note": "مستفعلن فاعلن مستفعلن فاعلن."
     },
     {
       "id": "hajini_qasir",
@@ -49,7 +42,7 @@
       "fasih": "مجزوء البسيط",
       "priority": 4,
       "feet": ["mustafcilun", "failun", "failun"],
-      "note": "أسرع صور الهجيني."
+      "note": "مستفعلن فاعلن فاعلن."
     },
     {
       "id": "hilali",
@@ -57,7 +50,7 @@
       "fasih": "الطويل",
       "priority": 5,
       "feet": ["faulun", "mafailun", "faulun", "mafailun"],
-      "note": "أطول نفساً. فعولن مفاعيلن مرتين."
+      "note": "فعولن مفاعيلن فعولن مفاعيلن. العروض كثيراً مفاعلن."
     },
     {
       "id": "sakhri",
@@ -65,7 +58,7 @@
       "fasih": "الهزج / الوافر",
       "priority": 6,
       "feet": ["mafailun", "mafailun", "faulun"],
-      "note": "يميل للوافر في حسّه."
+      "note": "مفاعيلن مفاعيلن فعولن."
     },
     {
       "id": "hida",
@@ -89,7 +82,7 @@
       "fasih": "الرمل التام",
       "priority": 9,
       "feet": ["failatun", "failatun", "failatun", "failun"],
-      "note": "عرضة ممدودة: فاعلاتن ثلاث ثم فاعلن."
+      "note": "فاعلاتن فاعلاتن فاعلاتن فاعلن."
     }
   ]
 }

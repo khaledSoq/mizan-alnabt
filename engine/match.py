@@ -14,9 +14,9 @@ DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "meters.json"
 ZIHAF_ALT = {
     "mustafcilun": ["mustafcilun", "mutafcilun", "muftacilun"],
     "faulun": ["faulun", "faulu"],
-    "failun": ["failun", "failun_short"],  # خبن فاعلن → فعلن، شائع في العرضة
+    "failun": ["failun", "failun_short"],
+    "mafailun": ["mafailun", "mafailu"],
 }
-
 
 
 @dataclass
@@ -133,7 +133,6 @@ def match_candidate(
     for meter in pool:
         best: Optional[MeterHit] = None
         for tmpl, feet in zip(meter.templates, meter.template_feet):
-            # شطر قصير: طابق بادئة القالب أيضاً
             candidates_tmpl = [tmpl]
             acc = 0
             prefix_feet: list[list[Foot]] = []
@@ -146,21 +145,24 @@ def match_candidate(
                     candidates_tmpl.append(tmpl[:acc])
             all_feet = [feet] + prefix_feet
             for t, fs in zip(candidates_tmpl, all_feet):
-                # لا نكافئ بادئة قصيرة جداً إلا إذا السلسلة نفسها قصيرة
                 if t != tmpl and abs(len(bits) - len(t)) > 2:
                     continue
                 if t != tmpl and len(bits) >= len(tmpl) - 1:
                     continue
                 sc, hamm, first = score_bits(bits, t)
-                # عقوبة خفيفة للبادئة حتى لا تهزم قالباً تاماً قريباً
                 if t != tmpl:
                     sc -= 0.04
+                else:
+                    if len(bits) == len(t):
+                        sc += 0.03
+                    elif abs(len(bits) - len(t)) >= 3:
+                        sc -= 0.02 * abs(len(bits) - len(t))
                 n_zihaf = sum(1 for f in fs if f.zihaf)
                 sc -= 0.055 * n_zihaf
                 if n_zihaf >= 2:
                     sc -= 0.05
                 if fs and fs[0].zihaf:
-                    sc -= 0.04  # بداية البحر تميّزه؛ الزحاف في الصدر أضعف دليلاً
+                    sc -= 0.04
                 hit = MeterHit(
                     meter=meter,
                     template=t,

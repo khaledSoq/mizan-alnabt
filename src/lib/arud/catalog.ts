@@ -5,6 +5,7 @@ const ZIHAF_ALT: Record<string, string[]> = {
   mustafcilun: ["mustafcilun", "mutafcilun", "muftacilun"],
   faulun: ["faulun", "faulu"],
   failun: ["failun", "failun_short"],
+  mafailun: ["mafailun", "mafailu"],
 };
 
 function cartesian<T>(arrays: T[][]): T[][] {
@@ -129,6 +130,10 @@ export function matchCandidate(
         if (t !== tmpl && bits.length >= tmpl.length - 1) continue;
         let { score: sc, hamm, first } = scoreBits(bits, t);
         if (t !== tmpl) sc -= 0.04;
+        else {
+          if (bits.length === t.length) sc += 0.03;
+          else if (Math.abs(bits.length - t.length) >= 3) sc -= 0.02 * Math.abs(bits.length - t.length);
+        }
         const nZihaf = fs.filter((f) => f.zihaf).length;
         sc -= 0.055 * nZihaf;
         if (nZihaf >= 2) sc -= 0.05;
