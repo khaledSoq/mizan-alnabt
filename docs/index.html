@@ -1,340 +1,1354 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ميزان النبط</title>
-  <meta name="description" content="وزن الشعر النبطي من غير تشكيل" />
-  <meta name="theme-color" content="#12100e" />
-  <meta name="color-scheme" content="dark" />
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #12100e;
-      --elev: #1a1714;
-      --surf: #211d18;
-      --paper: #f3ead8;
-      --edge: #e4d7c0;
-      --ink: #1c1612;
-      --soft: #3a322b;
-      --fg: #f4efe6;
-      --muted: #9a9186;
-      --subtle: #6e675f;
-      --ok: #6b7f63;
-      --okfg: #ecf3e8;
-      --brk: #9a5347;
-      --brkfg: #f8e8e4;
-      --one: #3f5c4a;
-      --zero: #7a4a42;
-      --bd: #3a342d;
-      --ring: #8a9a7b;
-      --sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
-      --disp: "Amiri", "Traditional Arabic", serif;
-    }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); }
-    body { font-family: var(--sans); text-align: right; -webkit-font-smoothing: antialiased; }
-    button { font-family: inherit; }
-    .wrap { max-width: 44rem; margin: 0 auto; padding: 1rem 0.9rem 3rem; }
-    header { margin-bottom: 0.9rem; }
-    .kicker { margin: 0; font-size: 0.72rem; color: var(--muted); }
-    h1 { margin: 0.15rem 0 0; font-family: var(--disp); font-size: 1.85rem; line-height: 1.2; }
-    .lede { margin: 0.4rem 0 0; font-size: 0.82rem; line-height: 1.7; color: var(--muted); }
-    .panel { background: var(--surf); border: 1px solid var(--bd); border-radius: 0.85rem; padding: 0.85rem; }
-    label { display: block; margin: 0 0 0.4rem; font-size: 0.85rem; font-weight: 600; }
-    textarea {
-      width: 100%; min-height: 5.4rem; resize: vertical; border: 1px solid var(--bd);
-      border-radius: 0.55rem; background: var(--elev); color: var(--fg);
-      font-family: var(--disp); font-size: 1.2rem; line-height: 1.85;
-      padding: 0.65rem 0.8rem; outline: none;
-    }
-    textarea:focus { border-color: var(--ring); }
-    .meters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.35rem; }
-    .mchip {
-      border: 1px solid var(--bd); background: var(--elev); color: var(--fg);
-      border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.82rem;
-    }
-    .mchip.on { background: var(--paper); color: var(--ink); border-color: var(--paper); font-weight: 600; }
-    .actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
-    .btn {
-      flex: 1; height: 2.8rem; border: 0; border-radius: 0.55rem;
-      font-size: 1rem; font-weight: 700; cursor: pointer;
-    }
-    .btn-go { background: var(--paper); color: var(--ink); }
-    .btn-reset { background: var(--elev); color: var(--fg); border: 1px solid var(--bd); flex: 0 0 auto; padding: 0 0.9rem; font-weight: 500; font-size: 0.85rem; }
-    .hint { margin: 0.55rem 0 0; font-size: 0.72rem; color: var(--subtle); line-height: 1.55; }
-    .err { margin-top: 0.8rem; padding: 0.8rem; background: #3a1f1c; color: #f3d0c8; border-radius: 0.55rem; font-size: 0.85rem; }
-    .results { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.85rem; }
-    .paper { background: var(--paper); color: var(--ink); border-radius: 0.85rem; overflow: hidden; }
-    .phd { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--edge); align-items: center; }
-    .lbl { font-size: 0.72rem; color: var(--soft); }
-    .mname { font-family: var(--disp); font-size: 1.15rem; font-weight: 700; }
-    .pill { border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.75rem; font-weight: 600; }
-    .ok { background: var(--ok); color: var(--okfg); }
-    .bad { background: var(--brk); color: var(--brkfg); }
-    .dim { background: #ddd2be; color: var(--soft); }
-    .letters { padding: 0.85rem 0.7rem 0.5rem; }
-    .words { display: flex; flex-wrap: wrap; gap: 0.7rem 0.9rem; }
-    .word { display: flex; gap: 0.12rem; }
-    .tile {
-      min-width: 2.15rem; min-height: 3.1rem; padding: 0.2rem 0.2rem 0.3rem;
-      border: 0; background: transparent; border-radius: 0.35rem; color: var(--ink);
-    }
-    .tile:active { background: #e7dcc6; }
-    .glyph { display: block; font-family: var(--disp); font-size: 1.55rem; line-height: 1; }
-    .bit { display: block; margin-top: 0.2rem; font-size: 0.78rem; font-weight: 700; }
-    .one { color: var(--one); }
-    .zero { color: var(--zero); }
-    .la { margin: 0.35rem 0.9rem 0; font-family: var(--disp); font-size: 1.15rem; color: var(--soft); }
-    .bits { margin: 0.1rem 0.9rem 0.7rem; font-family: ui-monospace, monospace; font-size: 0.72rem; letter-spacing: .12em; color: var(--subtle); direction: ltr; text-align: left; }
-    .boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: 0.7rem; border-top: 1px solid var(--edge); }
-    @media (min-width: 640px) { .boxes { grid-template-columns: repeat(4, 1fr); } }
-    .box { background: #efe6d3; border: 1px solid var(--edge); border-radius: 0.5rem; padding: 0.55rem; }
-    .box.broken { background: #f3ddd6; border-color: var(--brk); }
-    .bn { font-family: var(--disp); font-weight: 700; }
-    .bz { font-size: 0.7rem; color: var(--soft); }
-    .ln { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; }
-    .ln i { font-style: normal; border-radius: 0.25rem; padding: 0.05rem 0.4rem; font-size: 0.72rem; font-weight: 600; }
-    .naam { background: var(--one); color: var(--okfg); }
-    .laa { background: #2a241f; color: var(--paper); }
-    .broke { margin: 0.35rem 0 0; font-size: 0.72rem; font-weight: 700; color: var(--brk); }
-    .alts { padding: 0.65rem 0.9rem; border-top: 1px solid var(--edge); font-size: 0.82rem; }
-    .alts b { display: block; font-size: 0.72rem; color: var(--soft); margin-bottom: 0.3rem; }
-    .fasih { margin: 0; padding: 0.45rem 0.9rem; border-top: 1px solid var(--edge); font-size: 0.72rem; color: var(--subtle); }
-    .ex { margin-top: 1rem; }
-    .ex h2 { margin: 0 0 0.45rem; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
-    .exrow { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-    .exb { border: 1px solid var(--bd); background: var(--surf); color: var(--fg); border-radius: 0.5rem; padding: 0.4rem 0.65rem; font-size: 0.78rem; text-align: right; }
-    .exb small { display: block; color: var(--muted); font-size: 0.68rem; }
-    .warn { text-align: center; color: var(--muted); font-size: 0.82rem; }
-    footer { margin-top: 1.2rem; text-align: center; font-size: 0.72rem; color: var(--subtle); line-height: 1.7; }
-    footer a { color: var(--muted); }
-    noscript { display: block; padding: 1rem; background: #3a1f1c; color: #f3d0c8; }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>ميزان النبط</title>
+<meta name="description" content="وزن الشعر النبطي من غير تشكيل"/>
+<meta name="theme-color" content="#12100e"/>
+<meta name="color-scheme" content="dark"/>
+<meta name="referrer" content="no-referrer"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23f3ead8'/><text x='32' y='44' text-anchor='middle' font-size='36' fill='%231c1612'>م</text></svg>"/>
+<style>
+:root {
+  --bg:#12100e; --elev:#1a1714; --surf:#211d18; --paper:#f3ead8; --edge:#e4d7c0;
+  --ink:#1c1612; --soft:#3a322b; --fg:#f4efe6; --muted:#9a9186; --subtle:#6e675f;
+  --ok:#6b7f63; --okfg:#ecf3e8; --brk:#9a5347; --brkfg:#f8e8e4;
+  --one:#3f5c4a; --zero:#7a4a42; --bd:#3a342d; --ring:#8a9a7b;
+  --sans: "Noto Naskh Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --disp: "Amiri","Traditional Arabic","Noto Naskh Arabic",serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; min-height:100%; background:var(--bg); color:var(--fg); }
+body { font-family:var(--sans); text-align:right; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+button { font-family:inherit; appearance:none; -webkit-appearance:none; cursor:pointer; }
+.wrap { max-width:44rem; margin:0 auto; padding:0.85rem 0.85rem 2.5rem; }
+.kicker { margin:0; font-size:0.72rem; color:var(--muted); }
+h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:1.25; }
+.lede { margin:0.35rem 0 0.8rem; font-size:0.82rem; line-height:1.7; color:var(--muted); }
+.panel { background:var(--surf); border:1px solid var(--bd); border-radius:0.85rem; padding:0.85rem; }
+label { display:block; margin:0 0 0.35rem; font-size:0.85rem; font-weight:700; }
+textarea {
+  width:100%; min-height:5.6rem; resize:vertical; border:1px solid var(--bd);
+  border-radius:0.55rem; background:var(--elev); color:var(--fg);
+  font-family:var(--disp); font-size:1.25rem; line-height:1.9;
+  padding:0.65rem 0.8rem; outline:none;
+}
+textarea:focus { border-color:var(--ring); }
+.meters { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.2rem 0 0.15rem; }
+.mchip {
+  border:1px solid var(--bd); background:var(--elev); color:var(--fg);
+  border-radius:999px; padding:0.45rem 0.8rem; font-size:0.82rem; min-height:2.4rem;
+}
+.mchip.on { background:var(--paper); color:var(--ink); border-color:var(--paper); font-weight:700; }
+.actions { display:flex; gap:0.5rem; margin-top:0.75rem; }
+.btn {
+  flex:1; min-height:3rem; border:0; border-radius:0.55rem;
+  font-size:1.05rem; font-weight:800;
+}
+.btn-go { background:var(--paper); color:var(--ink); }
+.btn-go:active { filter:brightness(0.92); }
+.btn-reset { background:var(--elev); color:var(--fg); border:1px solid var(--bd); flex:0 0 auto; padding:0 0.95rem; font-weight:600; font-size:0.88rem; }
+.hint { margin:0.55rem 0 0; font-size:0.72rem; color:var(--subtle); line-height:1.55; }
+.err { margin-top:0.75rem; padding:0.8rem; background:#3a1f1c; color:#f3d0c8; border-radius:0.55rem; font-size:0.85rem; }
+.results { display:flex; flex-direction:column; gap:0.75rem; margin-top:0.85rem; min-height:2rem; }
+.paper { background:var(--paper); color:var(--ink); border-radius:0.85rem; overflow:hidden; }
+.phd { display:flex; flex-wrap:wrap; justify-content:space-between; gap:0.5rem; padding:0.65rem 0.9rem; border-bottom:1px solid var(--edge); align-items:center; }
+.lbl { font-size:0.72rem; color:var(--soft); }
+.mname { font-family:var(--disp); font-size:1.2rem; font-weight:700; }
+.pill { border-radius:999px; padding:0.22rem 0.65rem; font-size:0.75rem; font-weight:700; }
+.ok { background:var(--ok); color:var(--okfg); }
+.bad { background:var(--brk); color:var(--brkfg); }
+.dim { background:#ddd2be; color:var(--soft); }
+.letters { padding:0.85rem 0.7rem 0.45rem; }
+.words { display:flex; flex-wrap:wrap; gap:0.7rem 0.9rem; }
+.word { display:flex; gap:0.1rem; }
+.tile {
+  min-width:2.25rem; min-height:3.2rem; padding:0.2rem 0.15rem 0.25rem;
+  border:0; background:transparent; border-radius:0.35rem; color:var(--ink);
+}
+.tile:active { background:#e7dcc6; }
+.glyph { display:block; font-family:var(--disp); font-size:1.55rem; line-height:1; }
+.bit { display:block; margin-top:0.15rem; font-size:0.75rem; font-weight:700; }
+.one { color:var(--one); }
+.zero { color:var(--zero); }
+.la { margin:0.35rem 0.9rem 0; font-family:var(--disp); font-size:1.15rem; color:var(--soft); }
+.bits { margin:0.1rem 0.9rem 0.65rem; font-family:ui-monospace,monospace; font-size:0.7rem; letter-spacing:.12em; color:var(--subtle); direction:ltr; text-align:left; }
+.boxes { display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; padding:0.7rem; border-top:1px solid var(--edge); }
+@media (min-width:640px) { .boxes { grid-template-columns:repeat(4,1fr); } }
+.box { background:#efe6d3; border:1px solid var(--edge); border-radius:0.5rem; padding:0.55rem; }
+.box.broken { background:#f3ddd6; border-color:var(--brk); }
+.bn { font-family:var(--disp); font-weight:700; }
+.bz { font-size:0.7rem; color:var(--soft); }
+.ln { display:flex; flex-wrap:wrap; gap:0.2rem; margin-top:0.35rem; }
+.ln i { font-style:normal; border-radius:0.25rem; padding:0.05rem 0.4rem; font-size:0.72rem; font-weight:700; }
+.naam { background:var(--one); color:var(--okfg); }
+.laa { background:#2a241f; color:var(--paper); }
+.broke { margin:0.35rem 0 0; font-size:0.72rem; font-weight:700; color:var(--brk); }
+.alts { padding:0.65rem 0.9rem; border-top:1px solid var(--edge); font-size:0.82rem; }
+.alts b { display:block; font-size:0.72rem; color:var(--soft); margin-bottom:0.3rem; }
+.fasih { margin:0; padding:0.45rem 0.9rem; border-top:1px solid var(--edge); font-size:0.72rem; color:var(--subtle); }
+.ex { margin-top:1rem; }
+.ex h2 { margin:0 0 0.45rem; font-size:0.8rem; color:var(--muted); font-weight:700; }
+.exrow { display:flex; flex-wrap:wrap; gap:0.4rem; }
+.exb { border:1px solid var(--bd); background:var(--surf); color:var(--fg); border-radius:0.5rem; padding:0.45rem 0.7rem; font-size:0.8rem; text-align:right; min-height:2.6rem; }
+.exb small { display:block; color:var(--muted); font-size:0.68rem; }
+.warn { text-align:center; color:var(--muted); font-size:0.82rem; }
+footer { margin-top:1.2rem; text-align:center; font-size:0.72rem; color:var(--subtle); line-height:1.7; }
+footer a { color:var(--muted); }
+noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color:#f3d0c8; border-radius:0.5rem; }
+</style>
 </head>
 <body>
-  <noscript>فعّل جافاسكربت حتى يشتغل الميزان.</noscript>
-  <div class="wrap">
-    <header>
-      <p class="kicker">شعر نبطي · من غير تشكيل</p>
-      <h1>ميزان النبط</h1>
-      <p class="lede">الصق الشطر. البرنامج يولّد تقطيعات ويقيسها على البحور. اضغط الحرف لقلب 1 و 0 إذا أخطأ السكون.</p>
-    </header>
+<noscript>فعّل جافاسكربت حتى يشتغل الميزان.</noscript>
+<div class="wrap">
+  <header>
+    <p class="kicker">شعر نبطي · من غير تشكيل</p>
+    <h1>ميزان النبط</h1>
+    <p class="lede">الصق الشطر ثم اضغط «زِن البيت». البرنامج يولّد تقطيعات ويقارنها بالبحور. اضغط الحرف: متحرك ← ساكن ← شدة.</p>
+  </header>
 
-    <section class="panel">
-      <label for="verse">البيت</label>
-      <textarea id="verse" rows="3" placeholder="صدر في سطر، عجز في سطر. بلا حركات.">هو الدهر يا حماد ليس له مدى
-فكم قص من قرم على غرة يدى</textarea>
+  <section class="panel">
+    <label for="verse">البيت</label>
+    <textarea id="verse" rows="3" placeholder="صدر في سطر، عجز في سطر. بلا حركات.">يا ما حلا بعد العشا شرب الفنجال</textarea>
 
-      <label style="margin-top:.75rem">البحر</label>
-      <div class="meters" id="meters"></div>
+    <label style="margin-top:.75rem">البحر</label>
+    <div class="meters" id="meters">
+      <button type="button" class="mchip on" data-id="auto">تلقائي</button>
+      <button type="button" class="mchip" data-id="mashub">المسحوب</button>
+      <button type="button" class="mchip" data-id="arda">العرضة</button>
+      <button type="button" class="mchip" data-id="hajini_tamm">الهجيني التام</button>
+      <button type="button" class="mchip" data-id="hajini_qasir">الهجيني القصير</button>
+      <button type="button" class="mchip" data-id="hilali">الهلالي</button>
+      <button type="button" class="mchip" data-id="sakhri">الصخري</button>
+      <button type="button" class="mchip" data-id="hida">الحداء</button>
+      <button type="button" class="mchip" data-id="madid">المديد</button>
+      <button type="button" class="mchip" data-id="mumtadd">الممتد</button>
+    </div>
 
-      <div class="actions">
-        <button type="button" class="btn btn-go" id="go">زِن البيت</button>
-        <button type="button" class="btn btn-reset" id="reset">صفّر القلب</button>
-      </div>
-      <p class="hint" id="hint">1 متحرك · 0 ساكن · لا = 10 · نعم = 110. إذا انكسر الاسم المشدد (حمّاد) اضغط الميم.</p>
-    </section>
+    <div class="actions">
+      <button type="button" class="btn btn-go" id="go">زِن البيت</button>
+      <button type="button" class="btn btn-reset" id="reset">صفّر القلب</button>
+    </div>
+    <p class="hint" id="hint">1 متحرك · 0 ساكن · لا = 10 · نعم = 110. الاسم المشدد (حمّاد): اضغط الميم حتى تظهر الشدة.</p>
+  </section>
 
-    <div id="boot" class="err" hidden></div>
-    <section class="results" id="results"></section>
-    <p class="warn" id="same" hidden></p>
+  <div id="boot" class="err" style="display:none"></div>
+  <section class="results" id="results"></section>
+  <p class="warn" id="same" style="display:none"></p>
 
-    <section class="ex">
-      <h2>أمثلة من كل بحر — اضغط للتجربة</h2>
-      <div class="exrow" id="ex"></div>
-    </section>
+  <section class="ex">
+    <h2>أمثلة من كل بحر — اضغط للتجربة</h2>
+    <div class="exrow" id="ex"></div>
+  </section>
 
-    <footer>
-      القياس على النطق النجدي لا الرسم. الله سببان لا وتد. ال الشمسية تُدغم.
-      <br /><a href="https://github.com/khaledSoq/mizan-alnabt">المصدر</a>
-    </footer>
-  </div>
-  <script src="./engine.js"></script>
-  <script>
-    (function () {
-      var boot = document.getElementById("boot");
-      function fail(msg) {
-        boot.hidden = false;
-        boot.textContent = msg;
+  <footer>
+    القياس على النطق النجدي لا الرسم. الله سببان لا وتد. ال الشمسية تُدغم.
+    <br/><a href="https://github.com/khaledSoq/mizan-alnabt">المصدر</a>
+  </footer>
+</div>
+
+<script>
+"use strict";
+var Arud = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+
+  // src/lib/arud/index.ts
+  var index_exports = {};
+  __export(index_exports, {
+    meterList: () => meterList,
+    splitBayt: () => splitBayt,
+    weigh: () => weigh,
+    weighHemistich: () => weighHemistich
+  });
+
+  // src/lib/arud/meters.json
+  var meters_default = {
+    feet: {
+      mustafcilun: { bits: "1010110", name: "\u0645\u0633\u062A\u0641\u0639\u0644\u0646", la_naam: ["\u0644\u0627", "\u0644\u0627", "\u0646\u0639\u0645"] },
+      mutafcilun: { bits: "110110", name: "\u0645\u062A\u0641\u0639\u0644\u0646", la_naam: ["\u0646\u0639\u0645", "\u0644\u0627", "\u0646\u0639\u0645"], zihaf_of: "mustafcilun", zihaf: "\u062E\u0628\u0646" },
+      muftacilun: { bits: "101110", name: "\u0645\u0641\u062A\u0639\u0644\u0646", la_naam: ["\u0644\u0627", "\u0646\u0639\u0645", "\u0646\u0639\u0645"], zihaf_of: "mustafcilun", zihaf: "\u0637\u064A" },
+      failun: { bits: "10110", name: "\u0641\u0627\u0639\u0644\u0646", la_naam: ["\u0644\u0627", "\u0646\u0639\u0645"] },
+      failatun: { bits: "1011010", name: "\u0641\u0627\u0639\u0644\u0627\u062A\u0646", la_naam: ["\u0644\u0627", "\u0646\u0639\u0645", "\u0644\u0627"] },
+      faulun: { bits: "11010", name: "\u0641\u0639\u0648\u0644\u0646", la_naam: ["\u0646\u0639\u0645", "\u0644\u0627"] },
+      faulu: { bits: "1110", name: "\u0641\u0639\u0648\u0644", la_naam: ["\u0646\u0639\u0645"], zihaf_of: "faulun", zihaf: "\u0642\u0628\u0636" },
+      mafailun: { bits: "1101010", name: "\u0645\u0641\u0627\u0639\u064A\u0644\u0646", la_naam: ["\u0646\u0639\u0645", "\u0644\u0627", "\u0644\u0627"] },
+      mafailu: { bits: "110110", name: "\u0645\u0641\u0627\u0639\u0644\u0646", la_naam: ["\u0646\u0639\u0645", "\u0646\u0639\u0645"], zihaf_of: "mafailun", zihaf: "\u0642\u0628\u0636" },
+      failun_short: { bits: "1010", name: "\u0641\u0639\u0644\u0646", la_naam: ["\u0644\u0627", "\u0644\u0627"], zihaf_of: "failun", zihaf: "\u062E\u0628\u0646" }
+    },
+    meters: [
+      {
+        id: "mashub",
+        name: "\u0627\u0644\u0645\u0633\u062D\u0648\u0628",
+        fasih: "\u0627\u0644\u0633\u0631\u064A\u0639",
+        priority: 1,
+        feet: ["mustafcilun", "mustafcilun", "failatun"],
+        note: "\u0623\u0643\u062B\u0631 \u0628\u062D\u0631 \u0646\u0628\u0637\u064A. \u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0627\u062A\u0646."
+      },
+      {
+        id: "arda",
+        name: "\u0627\u0644\u0639\u0631\u0636\u0629",
+        fasih: "\u0627\u0644\u0631\u0645\u0644",
+        priority: 2,
+        feet: ["failatun", "failatun", "failun"],
+        note: "\u0628\u062D\u0631 \u0627\u0644\u0637\u0628\u0644 \u0648\u0627\u0644\u0633\u0644\u0627\u062D. \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0646."
+      },
+      {
+        id: "hajini_tamm",
+        name: "\u0627\u0644\u0647\u062C\u064A\u0646\u064A \u0627\u0644\u062A\u0627\u0645",
+        fasih: "\u0645\u062C\u0632\u0648\u0621 \u0627\u0644\u0628\u0633\u064A\u0637",
+        priority: 3,
+        feet: ["mustafcilun", "failun", "mustafcilun", "failun"],
+        note: "\u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646 \u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646."
+      },
+      {
+        id: "hajini_qasir",
+        name: "\u0627\u0644\u0647\u062C\u064A\u0646\u064A \u0627\u0644\u0642\u0635\u064A\u0631",
+        fasih: "\u0645\u062C\u0632\u0648\u0621 \u0627\u0644\u0628\u0633\u064A\u0637",
+        priority: 4,
+        feet: ["mustafcilun", "failun", "failun"],
+        note: "\u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0646."
+      },
+      {
+        id: "hilali",
+        name: "\u0627\u0644\u0647\u0644\u0627\u0644\u064A",
+        fasih: "\u0627\u0644\u0637\u0648\u064A\u0644",
+        priority: 5,
+        feet: ["faulun", "mafailun", "faulun", "mafailun"],
+        note: "\u0641\u0639\u0648\u0644\u0646 \u0645\u0641\u0627\u0639\u064A\u0644\u0646 \u0641\u0639\u0648\u0644\u0646 \u0645\u0641\u0627\u0639\u064A\u0644\u0646. \u0627\u0644\u0639\u0631\u0648\u0636 \u0643\u062B\u064A\u0631\u0627\u064B \u0645\u0641\u0627\u0639\u0644\u0646."
+      },
+      {
+        id: "sakhri",
+        name: "\u0627\u0644\u0635\u062E\u0631\u064A",
+        fasih: "\u0627\u0644\u0647\u0632\u062C / \u0627\u0644\u0648\u0627\u0641\u0631",
+        priority: 6,
+        feet: ["mafailun", "mafailun", "faulun"],
+        note: "\u0645\u0641\u0627\u0639\u064A\u0644\u0646 \u0645\u0641\u0627\u0639\u064A\u0644\u0646 \u0641\u0639\u0648\u0644\u0646."
+      },
+      {
+        id: "hida",
+        name: "\u0627\u0644\u062D\u062F\u0627\u0621",
+        fasih: "\u0627\u0644\u0631\u062C\u0632",
+        priority: 7,
+        feet: ["mustafcilun", "mustafcilun", "mustafcilun"],
+        note: "\u0645\u0633\u062A\u0641\u0639\u0644\u0646 \u062B\u0644\u0627\u062B \u0645\u0631\u0627\u062A."
+      },
+      {
+        id: "madid",
+        name: "\u0627\u0644\u0645\u062F\u064A\u062F",
+        fasih: "\u0627\u0644\u0645\u062F\u064A\u062F",
+        priority: 8,
+        feet: ["failatun", "failun", "failatun", "failun"],
+        note: "\u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0646 \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0646."
+      },
+      {
+        id: "mumtadd",
+        name: "\u0627\u0644\u0645\u0645\u062A\u062F",
+        fasih: "\u0627\u0644\u0631\u0645\u0644 \u0627\u0644\u062A\u0627\u0645",
+        priority: 9,
+        feet: ["failatun", "failatun", "failatun", "failun"],
+        note: "\u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0627\u062A\u0646 \u0641\u0627\u0639\u0644\u0646."
       }
-      var Arud = window.Arud;
-      if (!Arud || typeof Arud.weigh !== "function") {
-        fail("المحرك ما تحمّل. حدّث الصفحة أو افتح الرابط في كروم.");
-        return;
-      }
+    ]
+  };
 
-      var EXAMPLES = [
-        { meter: "mashub", label: "المسحوب", text: "يا ما حلا بعد العشا شرب الفنجال" },
-        { meter: "arda", label: "العرضة", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب" },
-        { meter: "hilali", label: "الهلالي", text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى" },
-        { meter: "sakhri", label: "الصخري", text: "أقول لها وقد طارت شعاعا\nمن الأبطال ويحك لن تراعى" },
-        { meter: "hajini_tamm", label: "الهجيني", text: "يا نديبي لا تلام على الهوى\n القلب ماله في زمانك حيله" },
-        { meter: "hida", label: "الحداء", text: "يا راكبن من عندنا فوق حرباب\nبلغ سلامٍ للي توالي دياره" },
-        { meter: "auto", label: "من هجركم", text: "من هجركم" }
-      ];
-      var LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
-      var verseEl = document.getElementById("verse");
-      var metersEl = document.getElementById("meters");
-      var resultsEl = document.getElementById("results");
-      var sameEl = document.getElementById("same");
-      var hintEl = document.getElementById("hint");
-      var exEl = document.getElementById("ex");
-      var meterId = "auto";
-      var locks = [];
-
-      function esc(s) {
-        return String(s == null ? "" : s)
-          .replace(/&/g, "&").replace(/</g, "<")
-          .replace(/>/g, ">").replace(/"/g, """);
-      }
-
-      var meters = Arud.meterList();
-      meters.forEach(function (m) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.className = "mchip" + (m.id === meterId ? " on" : "");
-        b.textContent = m.name;
-        b.setAttribute("data-id", m.id);
-        b.addEventListener("click", function () {
-          meterId = m.id;
-          Array.prototype.forEach.call(metersEl.children, function (el) {
-            el.className = "mchip" + (el.getAttribute("data-id") === meterId ? " on" : "");
-          });
-          render();
-        });
-        metersEl.appendChild(b);
+  // src/lib/arud/catalog.ts
+  var ZIHAF_ALT = {
+    mustafcilun: ["mustafcilun", "mutafcilun", "muftacilun"],
+    faulun: ["faulun", "faulu"],
+    failun: ["failun", "failun_short"],
+    mafailun: ["mafailun", "mafailu"]
+  };
+  function cartesian(arrays) {
+    return arrays.reduce(
+      (acc, curr) => acc.flatMap((a) => curr.map((c) => [...a, c])),
+      [[]]
+    );
+  }
+  var cached = null;
+  function loadCatalog() {
+    var _a, _b, _c;
+    if (cached) return cached;
+    const feet = {};
+    for (const [k, v] of Object.entries(meters_default.feet)) {
+      feet[k] = {
+        key: k,
+        bits: v.bits,
+        name: v.name,
+        laNaam: [...v.la_naam],
+        zihaf: "zihaf" in v ? v.zihaf : void 0
+      };
+    }
+    const meters = [];
+    for (const m of meters_default.meters) {
+      const meter = {
+        id: m.id,
+        name: m.name,
+        fasih: (_a = m.fasih) != null ? _a : "",
+        priority: (_b = m.priority) != null ? _b : 99,
+        footKeys: [...m.feet],
+        note: (_c = m.note) != null ? _c : "",
+        templates: [],
+        templateFeet: []
+      };
+      const alts = meter.footKeys.map((fk) => {
+        var _a2;
+        return (_a2 = ZIHAF_ALT[fk]) != null ? _a2 : [fk];
       });
-
-      EXAMPLES.forEach(function (ex) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.className = "exb";
-        b.innerHTML = esc(ex.text.split("\n")[0].slice(0, 22)) + "<small>" + esc(ex.label) + "</small>";
-        b.addEventListener("click", function () {
-          verseEl.value = ex.text;
-          meterId = ex.meter;
-          locks = [];
-          Array.prototype.forEach.call(metersEl.children, function (el) {
-            el.className = "mchip" + (el.getAttribute("data-id") === meterId ? " on" : "");
-          });
-          render();
-          resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        exEl.appendChild(b);
-      });
-
-      function groupLetters(letters) {
-        var words = [], cur = [], wi = letters[0] ? letters[0].wordI : 0;
-        for (var i = 0; i < letters.length; i++) {
-          var L = letters[i];
-          if (L.wordI !== wi) { if (cur.length) words.push(cur); cur = [L]; wi = L.wordI; }
-          else cur.push(L);
-        }
-        if (cur.length) words.push(cur);
-        return words;
+      for (const combo of cartesian(alts)) {
+        const fs = combo.map((k) => feet[k]);
+        meter.templates.push(fs.map((f) => f.bits).join(""));
+        meter.templateFeet.push(fs);
       }
-      function offset(wi, li, words) {
-        var n = 0;
-        for (var i = 0; i < wi; i++) n += words[i].length;
-        return n + li;
+      meters.push(meter);
+    }
+    meters.sort((a, b) => a.priority - b.priority);
+    cached = { feet, meters };
+    return cached;
+  }
+  function scoreBits(seq, template) {
+    if (!seq && !template) return { score: 0, hamm: 0, first: null };
+    const n = Math.max(seq.length, template.length);
+    const m = Math.min(seq.length, template.length);
+    let hamm = 0;
+    let first = null;
+    for (let i = 0; i < m; i++) {
+      if (seq[i] !== template[i]) {
+        hamm += 1;
+        if (first === null) first = i;
       }
-
-      function hemistichHTML(h, label, hi) {
-        var words = groupLetters(h.letters || []);
-        var pillCls = !h.ok ? "dim" : h.accepted ? "ok" : "bad";
-        var score = isFinite(h.score) ? " · " + Math.round(h.score * 100) + "٪" : "";
-        var tiles = "";
-        if (!h.letters || !h.letters.length) {
-          tiles = "<p class='lede' style='color:var(--soft);margin:0'>" + esc(h.message) + "</p>";
-        } else {
-          tiles = "<div class='words'>" + words.map(function (word, wi) {
-            return "<div class='word'>" + word.map(function (L, li) {
-              var g = offset(wi, li, words);
-              var bit = L.bit;
-              var bcls = bit === 1 ? "one" : bit === 0 ? "zero" : "";
-              var bt = bit === 1 || bit === 0 ? bit : "—";
-              return "<button type='button' class='tile' data-hi='" + hi + "' data-li='" + g + "' data-bit='" + bit + "'>" +
-                "<span class='glyph'>" + esc(L.char) + "</span>" +
-                "<span class='bit " + bcls + "'>" + bt + "</span></button>";
-            }).join("") + "</div>";
-          }).join("") + "</div>";
-        }
-        var la = h.ok && h.laNaam && h.laNaam.length ? "<p class='la'>" + h.laNaam.map(esc).join(" · ") + "</p>" : "";
-        var bits = h.ok && h.bits ? "<p class='bits' dir='ltr'>" + esc(h.bits) + "</p>" : "";
-        var boxes = "";
-        if (h.boxes && h.boxes.length) {
-          boxes = "<div class='boxes'>" + h.boxes.map(function (box) {
-            return "<div class='box" + (box.broken ? " broken" : "") + "'><div class='bn'>" + esc(box.name) +
-              (box.zihaf ? " <span class='bz'>" + esc(box.zihaf) + "</span>" : "") + "</div>" +
-              "<div class='ln'>" + (box.laNaam || []).map(function (ln) {
-                return "<i class='" + (ln === "نعم" ? "naam" : "laa") + "'>" + esc(ln) + "</i>";
-              }).join("") + "</div>" +
-              (box.broken ? "<p class='broke'>موضع الكسر</p>" : "") + "</div>";
-          }).join("") + "</div>";
-        }
-        var alts = "";
-        if (h.alts && h.alts.length) {
-          alts = "<div class='alts'><b>أوجه قريبة</b>" + h.alts.map(function (a) {
-            return "<div>" + esc(a.meterName) + (a.note ? " — " + esc(a.note) : "") +
-              " <span dir='ltr'>" + esc(a.bits) + "</span></div>";
-          }).join("") + "</div>";
-        }
-        var fasih = h.fasih && h.ok ? "<p class='fasih'>مقابله في الفصيح: " + esc(h.fasih) + "</p>" : "";
-        return "<article class='paper'><header class='phd'><div><span class='lbl'>" + esc(label) +
-          "</span> " + (h.meterName ? "<span class='mname'>" + esc(h.meterName) + "</span>" : "") +
-          "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" +
-          "<div class='letters'>" + tiles + la + bits + "</div>" + boxes + alts + fasih + "</article>";
-      }
-
-      function render() {
-        try {
-          var result = Arud.weigh(verseEl.value, meterId, locks);
-          hintEl.textContent = (result.mode === "discover"
-            ? "اكتشاف تلقائي لأقرب بحر. "
-            : "فحص البحر المختار. ") + "اضغط الحرف لقلب المتحرك/الساكن.";
-          if (!result.hemistichs || !result.hemistichs.length) {
-            resultsEl.innerHTML = "<div class='err' style='background:var(--surf);color:var(--muted)'>" + esc(result.message) + "</div>";
-          } else {
-            resultsEl.innerHTML = result.hemistichs.map(function (h, i) {
-              var lab = result.hemistichs.length === 1 ? "الشطر" : (LABELS[i] || ("شطر " + (i + 1)));
-              return hemistichHTML(h, lab, i);
-            }).join("");
+    }
+    hamm += Math.abs(seq.length - template.length);
+    if (seq.length !== template.length && first === null) first = m;
+    return { score: 1 - hamm / n, hamm, first };
+  }
+  function bitToBox(index, feet) {
+    let acc = 0;
+    for (let i = 0; i < feet.length; i++) {
+      acc += feet[i].bits.length;
+      if (index < acc) return i;
+    }
+    return Math.max(0, feet.length - 1);
+  }
+  function matchCandidate(bits, meters, selectedId) {
+    const pool = selectedId && selectedId !== "auto" ? meters.filter((m) => m.id === selectedId) : meters;
+    const use = pool.length ? pool : meters;
+    const hits = [];
+    for (const meter of use) {
+      let best = null;
+      for (let ti = 0; ti < meter.templates.length; ti++) {
+        const tmpl = meter.templates[ti];
+        const feet = meter.templateFeet[ti];
+        const candidatesTmpl = [tmpl];
+        const allFeet = [feet];
+        let acc = 0;
+        const built = [];
+        for (const f of feet) {
+          built.push(f);
+          acc += f.bits.length;
+          if (acc < tmpl.length) {
+            allFeet.push([...built]);
+            candidatesTmpl.push(tmpl.slice(0, acc));
           }
-          if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
-            sameEl.hidden = false;
-            sameEl.textContent = "الشطران على بحرين مختلفين. ثبّت بحراً واحداً للقصيدة.";
-          } else sameEl.hidden = true;
-
-          Array.prototype.forEach.call(resultsEl.querySelectorAll(".tile"), function (btn) {
-            btn.addEventListener("click", function () {
-              var hi = +btn.getAttribute("data-hi");
-              var li = +btn.getAttribute("data-li");
-              var cur = btn.getAttribute("data-bit") === "1" ? 1 : 0;
-              while (locks.length <= hi) locks.push({});
-              locks[hi][li] = cur === 1 ? 0 : 1;
-              render();
-            });
-          });
-        } catch (e) {
-          fail("خطأ أثناء الوزن: " + (e && e.message ? e.message : e));
+        }
+        for (let k = 0; k < candidatesTmpl.length; k++) {
+          const t = candidatesTmpl[k];
+          const fs = allFeet[k];
+          if (t !== tmpl && Math.abs(bits.length - t.length) > 2) continue;
+          if (t !== tmpl && bits.length >= tmpl.length - 1) continue;
+          let { score: sc, hamm, first } = scoreBits(bits, t);
+          if (t !== tmpl) sc -= 0.04;
+          else {
+            if (bits.length === t.length) sc += 0.05;
+            else if (Math.abs(bits.length - t.length) >= 3) sc -= 0.025 * Math.abs(bits.length - t.length);
+          }
+          if (bits.slice(0, 2) === "11" && t.slice(0, 2) === "11") sc += 0.05;
+          else if (bits.slice(0, 2) === "10" && t.slice(0, 2) === "10") sc += 0.02;
+          const nZihaf = fs.filter((f) => f.zihaf).length;
+          sc -= 0.055 * nZihaf;
+          if (nZihaf >= 2) sc -= 0.05;
+          if (fs.length && fs[0] && fs[0].zihaf) sc -= 0.04;
+          const hit = {
+            meter,
+            template: t,
+            feet: fs,
+            score: sc,
+            hamm,
+            firstDiff: first,
+            bits
+          };
+          if (!best || sc > best.score + 1e-9) best = hit;
+          else if (best && Math.abs(sc - best.score) < 1e-9 && t.length > best.template.length)
+            best = hit;
+          else if (best && Math.abs(sc - best.score) < 1e-9 && nZihaf < best.feet.filter((f) => f.zihaf).length)
+            best = hit;
         }
       }
+      if (best) hits.push(best);
+    }
+    hits.sort((a, b) => b.score - a.score || a.meter.priority - b.meter.priority || a.hamm - b.hamm);
+    return hits;
+  }
 
-      document.getElementById("go").addEventListener("click", function () {
-        render();
-        resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  // src/lib/arud/search.ts
+  var MAX_CANDIDATES = 3e3;
+  var MAX_EXPANSIONS = 12e3;
+  var MAX_BITS = 32;
+  function choices(p) {
+    if (p.kind === "wasl") {
+      if (p.fixed === 1) return [1];
+      if (p.fixed === 0) return [-1];
+      return [-1, 1];
+    }
+    if (p.kind === "collapsed") return [-1];
+    if (p.kind === "alif_madd") return [0];
+    if (p.fixed !== null) return [p.fixed];
+    if (p.kind === "waw" || p.kind === "ya") return [0, 1];
+    return [1, 0];
+  }
+  function trans(state, bit) {
+    if (bit !== 0 && bit !== 1) return null;
+    if (state === 0) return bit === 1 ? 1 : null;
+    if (state === 1) return bit === 0 ? 0 : 2;
+    if (state === 2) return bit === 0 ? 0 : null;
+    return null;
+  }
+  function bitsToLaNaam(bits) {
+    const out = [];
+    let i = 0;
+    while (i < bits.length) {
+      if (bits.startsWith("110", i)) {
+        out.push("\u0646\u0639\u0645");
+        i += 3;
+      } else if (bits.startsWith("10", i)) {
+        out.push("\u0644\u0627");
+        i += 2;
+      } else break;
+    }
+    return out;
+  }
+  var MinHeap = class {
+    constructor() {
+      __publicField(this, "data", []);
+    }
+    less(a, b) {
+      if (a.cost !== b.cost) return a.cost < b.cost;
+      return a.seq < b.seq;
+    }
+    push(n) {
+      this.data.push(n);
+      this.up(this.data.length - 1);
+    }
+    pop() {
+      if (!this.data.length) return void 0;
+      const top = this.data[0];
+      const last = this.data.pop();
+      if (this.data.length) {
+        this.data[0] = last;
+        this.down(0);
+      }
+      return top;
+    }
+    up(i) {
+      while (i > 0) {
+        const p = i - 1 >> 1;
+        if (!this.less(this.data[i], this.data[p])) break;
+        [this.data[i], this.data[p]] = [this.data[p], this.data[i]];
+        i = p;
+      }
+    }
+    down(i) {
+      const n = this.data.length;
+      for (; ; ) {
+        let s = i;
+        const l = i * 2 + 1;
+        const r = l + 1;
+        if (l < n && this.less(this.data[l], this.data[s])) s = l;
+        if (r < n && this.less(this.data[r], this.data[s])) s = r;
+        if (s === i) break;
+        [this.data[i], this.data[s]] = [this.data[s], this.data[i]];
+        i = s;
+      }
+    }
+  };
+  function generate(h) {
+    const ph2 = h.phonemes;
+    if (!ph2.length) return [];
+    const results = [];
+    const seen = /* @__PURE__ */ new Set();
+    let seq = 0;
+    let expansions = 0;
+    const heap = new MinHeap();
+    heap.push({ cost: 0, seq: 0, i: 0, bits: "", state: 0, assign: [] });
+    while (heap.data.length && results.length < MAX_CANDIDATES && expansions < MAX_EXPANSIONS) {
+      const node = heap.pop();
+      expansions += 1;
+      if (node.i === ph2.length) {
+        if (node.state === 0 && node.bits.endsWith("0") && !seen.has(node.bits)) {
+          if (node.bits.length >= 4 && node.bits.length <= MAX_BITS) {
+            seen.add(node.bits);
+            results.push({
+              bits: node.bits,
+              assign: node.assign,
+              cost: node.cost,
+              laNaam: bitsToLaNaam(node.bits)
+            });
+          }
+        }
+        continue;
+      }
+      const p = ph2[node.i];
+      for (const ch of choices(p)) {
+        if (ch === -1) {
+          heap.push({
+            cost: node.cost + (p.kind === "wasl" ? 0.15 : 0),
+            seq: seq++,
+            i: node.i + 1,
+            bits: node.bits,
+            state: node.state,
+            assign: [...node.assign, -1]
+          });
+          continue;
+        }
+        const newState = trans(node.state, ch);
+        if (newState === null) continue;
+        if (node.bits.length + 1 > MAX_BITS) continue;
+        let extra = 0;
+        if (p.kind === "cons" && p.fixed === null && ch === 0) extra += 1;
+        if ((p.kind === "waw" || p.kind === "ya") && p.fixed === null && ch === 1) extra += 0.35;
+        if (p.kind === "wasl" && ch === 1) extra += 0.4;
+        if (p.kind === "ta_marbuta" && ch === 1) extra += 0.8;
+        heap.push({
+          cost: node.cost + extra,
+          seq: seq++,
+          i: node.i + 1,
+          bits: node.bits + String(ch),
+          state: newState,
+          assign: [...node.assign, ch]
+        });
+      }
+    }
+    results.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
+    return results;
+  }
+
+  // src/lib/arud/tokenize.ts
+  var SHAMSI = /* @__PURE__ */ new Set([..."\u062A\u062B\u062F\u0630\u0631\u0632\u0633\u0634\u0635\u0636\u0637\u0638\u0644\u0646"]);
+  var ALIF_MADD = /* @__PURE__ */ new Set(["\u0627", "\u0671"]);
+  var MADDA_ALIF = "\u0622";
+  var WAW = "\u0648";
+  var YA = "\u064A";
+  var TA_MARBUTA = "\u0629";
+  var LAM = "\u0644";
+  var SHADDA = "\u0651";
+  var SUKUN = "\u0652";
+  var FATHA = "\u064E";
+  var DAMMA = "\u064F";
+  var KASRA = "\u0650";
+  var TATWEEL = "\u0640";
+  var SUPERSCRIPT_ALIF = "\u0670";
+  var FATHATAN = "\u064B";
+  var DAMMATAN = "\u064C";
+  var KASRATAN = "\u064D";
+  var HARAKAT = /* @__PURE__ */ new Set([
+    SHADDA,
+    SUKUN,
+    FATHA,
+    DAMMA,
+    KASRA,
+    FATHATAN,
+    DAMMATAN,
+    KASRATAN,
+    SUPERSCRIPT_ALIF
+  ]);
+  var VOWEL_MARKS = /* @__PURE__ */ new Set([FATHA, DAMMA, KASRA]);
+  var PREFIX_CONNECT = /* @__PURE__ */ new Set([..."\u0648\u0641\u0628\u0643\u0644"]);
+  var FUNCTION_10 = /* @__PURE__ */ new Set([
+    "\u064A\u0627",
+    "\u0645\u0646",
+    "\u0639\u0646",
+    "\u0641\u064A",
+    "\u0644\u0645",
+    "\u0647\u0644",
+    "\u0628\u0644",
+    "\u0642\u062F",
+    "\u0625\u0646",
+    "\u0623\u0646",
+    "\u0627\u0648",
+    "\u0623\u0648",
+    "\u0645\u0627",
+    "\u0644\u0627",
+    "\u0644\u0647",
+    "\u0628\u0647",
+    "\u0643\u0645",
+    "\u062B\u0645"
+  ]);
+  var PRONOUNS = /* @__PURE__ */ new Set(["\u0647\u0648", "\u0647\u064A", "\u0647\u0645", "\u0647\u0646", "\u0647\u0645\u0627"]);
+  var ALLAH_FORMS = /* @__PURE__ */ new Set([
+    "\u0627\u0644\u0644\u0647",
+    "\u0627\u0644\u0644\u0651\u0647",
+    "\u0627\u0644\u0644\u064E\u0651\u0647",
+    "\u0627\u0644\u0644\u0651\u0670\u0647",
+    "\u0644\u0644\u0647",
+    "\u0648\u0627\u0644\u0644\u0647",
+    "\u0628\u0627\u0644\u0644\u0647",
+    "\u062A\u0627\u0644\u0644\u0647",
+    "\u0641\u0627\u0644\u0644\u0647"
+  ]);
+  function isArabicLetter(ch) {
+    var _a;
+    const o = (_a = ch.codePointAt(0)) != null ? _a : 0;
+    return o >= 1569 && o <= 1594 || o >= 1601 && o <= 1610 || "\u0629\u0649\u0622\u0623\u0625\u0624\u0626\u0621\u0671".includes(ch);
+  }
+  function stripHarakat(text) {
+    return [...text].filter((ch) => !HARAKAT.has(ch) && ch !== TATWEEL).join("");
+  }
+  var KEEP_RE = /[^\u0600-\u06FF\s*]+/g;
+  var MULTI_SPACE = /\s+/g;
+  var NUMBERING = /^[\d٠-٩]+[.\-)\]]\s*/;
+  function splitBayt(text) {
+    if (!text || !text.trim()) return [];
+    const t = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    let parts;
+    if (t.includes("***")) parts = t.split("***").map((p) => p.trim());
+    else if (t.includes("\n")) parts = t.split("\n").map((p) => p.trim());
+    else if (t.includes(" * ")) parts = t.split(" * ").map((p) => p.trim());
+    else if ((t.match(/\*/g) || []).length === 1) parts = t.split("*").map((p) => p.trim());
+    else parts = [t.trim()];
+    return parts.filter(Boolean);
+  }
+  function cleanLine(text) {
+    let t = text.trim().replaceAll(TATWEEL, "");
+    t = t.replace(NUMBERING, "");
+    t = t.replace(KEEP_RE, " ").replaceAll("*", " ");
+    return t.replace(MULTI_SPACE, " ").trim();
+  }
+  function iterBaseLetters(word) {
+    const out = [];
+    let i = 0;
+    while (i < word.length) {
+      const ch = word[i];
+      if (HARAKAT.has(ch) || ch === TATWEEL || ch === " ") {
+        i += 1;
+        continue;
+      }
+      if (!isArabicLetter(ch) && !"\u0622\u0623\u0625\u0624\u0626\u0621\u0649\u0629\u0671".includes(ch)) {
+        i += 1;
+        continue;
+      }
+      let j = i + 1;
+      let hasShadda = false;
+      let hasSukun = false;
+      let hasVowel = false;
+      while (j < word.length && HARAKAT.has(word[j])) {
+        if (word[j] === SHADDA) hasShadda = true;
+        else if (word[j] === SUKUN) hasSukun = true;
+        else if (VOWEL_MARKS.has(word[j])) hasVowel = true;
+        j += 1;
+      }
+      if (hasShadda) {
+        out.push({ ch, sukun: true, vowel: false });
+        out.push({ ch, sukun: false, vowel: true });
+      } else {
+        out.push({ ch, sukun: hasSukun, vowel: hasVowel });
+      }
+      i = j;
+    }
+    return out;
+  }
+  function isAllahWord(bare) {
+    return ALLAH_FORMS.has(bare) || bare.endsWith("\u0627\u0644\u0644\u0647") || bare === "\u0627\u0644\u0644\u0647";
+  }
+  function ph(char, kind, fixed, display, wordI, hint) {
+    return { char, kind, fixed, display, wordI, hint };
+  }
+  function allahPhonemes(word, wordI, firstWord) {
+    let bare = stripHarakat(word);
+    let prefix = "";
+    for (const p of ["\u0648", "\u0628", "\u0641", "\u062A", "\u0644"]) {
+      if (bare.startsWith(p + "\u0627\u0644\u0644\u0647") || bare === p + "\u0644\u0647") {
+        prefix = p;
+        bare = bare.slice(p.length);
+        break;
+      }
+    }
+    if (bare === "\u0644\u0647") {
+      prefix = prefix || "\u0644";
+    }
+    const out = [];
+    if (prefix) out.push(ph(prefix, "cons", 1, true, wordI, "prefix"));
+    if (firstWord && !prefix) {
+      out.push(ph("\u0627", "cons", 1, true, wordI, "allah_alif"));
+    } else {
+      out.push(ph("\u0627", "wasl", null, true, wordI, "allah_alif"));
+    }
+    out.push(ph("\u0644", "cons", 0, true, wordI, "allah_lam1"));
+    out.push(ph("\u0644", "cons", 1, true, wordI, "allah_lam2"));
+    out.push(ph("\u0627", "alif_madd", 0, true, wordI, "allah_madd"));
+    out.push(ph("\u0647", "collapsed", 0, true, wordI, "allah_ha"));
+    return out;
+  }
+  function function10(word, wordI) {
+    let letters = iterBaseLetters(word).map((x) => x.ch);
+    if (!letters.length) letters = [...stripHarakat(word)];
+    if (letters.length === 1) {
+      const ch = letters[0];
+      if (ALIF_MADD.has(ch) || ch === "\u0649") return [ph(ch, "alif_madd", 0, true, wordI, "fn")];
+      return [ph(ch, "cons", 1, true, wordI, "fn"), ph("", "collapsed", 0, false, wordI, "fn_sukun")];
+    }
+    const out = [];
+    letters.forEach((ch, k) => {
+      if (k === 0) {
+        let kind = "cons";
+        if (ch === WAW) kind = "waw";
+        else if (ch === YA || ch === "\u0649") kind = "ya";
+        out.push(ph(ch, kind, 1, true, wordI, "fn10"));
+      } else if (ALIF_MADD.has(ch) || ch === "\u0649" || ch === MADDA_ALIF) {
+        out.push(ph(ch === MADDA_ALIF ? "\u0627" : ch, "alif_madd", 0, true, wordI, "fn10"));
+      } else {
+        out.push(ph(ch, "cons", 0, true, wordI, "fn10"));
+      }
+    });
+    return out;
+  }
+  function pronoun(word, wordI, lastWord) {
+    let letters = iterBaseLetters(word).map((x) => x.ch);
+    if (!letters.length) letters = [...stripHarakat(word)];
+    const out = [];
+    letters.forEach((ch, k) => {
+      const last = lastWord && k === letters.length - 1;
+      const fixed = last ? 0 : 1;
+      out.push(ph(ch, "cons", fixed, true, wordI, "pron"));
+    });
+    return out;
+  }
+  function applyMaddConstraints(h) {
+    const phs = h.phonemes;
+    for (let i = 0; i < phs.length; i++) {
+      const p = phs[i];
+      if (p.kind === "alif_madd") {
+        let j = i - 1;
+        while (j >= 0 && (phs[j].kind === "wasl" || phs[j].kind === "collapsed")) j -= 1;
+        if (j >= 0 && phs[j].kind !== "alif_madd") {
+          if (phs[j].fixed === null) phs[j].fixed = 1;
+        }
+      }
+      if (i > 0 && phs[i - 1].kind === "alif_madd" && p.fixed === 0) {
+        if (p.kind === "cons" || p.kind === "ta_marbuta" || p.kind === "collapsed") {
+          p.kind = "collapsed";
+        }
+      }
+    }
+  }
+  function tokenizeHemistich(text) {
+    const cleaned = cleanLine(text);
+    const words = cleaned.split(" ").filter(Boolean);
+    const h = { raw: text, cleaned, words, phonemes: [] };
+    if (!words.length) return h;
+    for (let wi = 0; wi < words.length; wi++) {
+      const word = words[wi];
+      const bare = stripHarakat(word);
+      const first = wi === 0;
+      if (isAllahWord(bare)) {
+        h.phonemes.push(...allahPhonemes(word, wi, first));
+        continue;
+      }
+      if (FUNCTION_10.has(bare)) {
+        h.phonemes.push(...function10(word, wi));
+        continue;
+      }
+      if (PRONOUNS.has(bare)) {
+        h.phonemes.push(...pronoun(word, wi, wi === words.length - 1));
+        continue;
+      }
+      const letters = iterBaseLetters(word);
+      let idx = 0;
+      if (letters.length >= 3 && (ALIF_MADD.has(letters[0].ch) || "\u0623\u0625\u0671\u0622".includes(letters[0].ch)) && letters[1].ch === LAM) {
+        const shamsi = SHAMSI.has(letters[2].ch);
+        const alifCh = letters[0].ch;
+        if (alifCh === MADDA_ALIF) {
+          h.phonemes.push(ph("\u0622", "cons", 1, true, wi, "hamza"));
+          h.phonemes.push(ph("\u0627", "alif_madd", 0, true, wi, "madda"));
+        } else if (first) {
+          h.phonemes.push(ph("\u0627", "cons", 1, true, wi, "al_alif"));
+        } else {
+          h.phonemes.push(ph("\u0627", "wasl", null, true, wi, "al_wasl"));
+        }
+        if (shamsi) {
+          const sham = letters[2].ch;
+          h.phonemes.push(ph(sham, "cons", 0, true, wi, "shamsi_sukun"));
+          h.phonemes.push(ph(sham, "cons", 1, false, wi, "shamsi_move"));
+          idx = 3;
+        } else {
+          h.phonemes.push(ph("\u0644", "cons", 0, true, wi, "qamari_lam"));
+          idx = 2;
+        }
+      }
+      const rest = letters.slice(idx);
+      rest.forEach((item, k) => {
+        const ch = item.ch;
+        const lastOfWord = k === rest.length - 1;
+        const lastOfLine = lastOfWord && wi === words.length - 1;
+        if (ch === MADDA_ALIF) {
+          h.phonemes.push(ph("\u0623", "cons", 1, true, wi, "madda_h"));
+          h.phonemes.push(ph("\u0627", "alif_madd", 0, true, wi, "madda_a"));
+          return;
+        }
+        if (ALIF_MADD.has(ch)) {
+          h.phonemes.push(ph("\u0627", "alif_madd", 0, true, wi, "madd"));
+          return;
+        }
+        if (ch === "\u0649") {
+          h.phonemes.push(ph("\u0649", "alif_madd", 0, true, wi, "maqsur"));
+          return;
+        }
+        if (ch === TA_MARBUTA) {
+          h.phonemes.push(ph("\u0629", "ta_marbuta", lastOfLine ? 0 : null, true, wi, "ta"));
+          return;
+        }
+        let kind = "cons";
+        if (ch === WAW) kind = "waw";
+        else if (ch === YA) kind = "ya";
+        let fixed = null;
+        if (item.sukun) fixed = 0;
+        else if (item.vowel) fixed = 1;
+        if (lastOfLine) fixed = 0;
+        if (kind === "waw" || kind === "ya") {
+          if (!lastOfLine && !first && k > 0) {
+            if (item.vowel) fixed = 1;
+            else if (item.sukun) fixed = 0;
+            else fixed = null;
+          }
+        }
+        if (k === 0 && idx === 0 && rest.length === 1 && PREFIX_CONNECT.has(ch) && !lastOfLine) {
+          fixed = 1;
+        }
+        h.phonemes.push(ph(ch, kind, fixed, true, wi, kind));
       });
-      document.getElementById("reset").addEventListener("click", function () {
+    }
+    if (h.phonemes.length) {
+      for (let i = h.phonemes.length - 1; i >= 0; i--) {
+        const p = h.phonemes[i];
+        if (p.display || p.kind !== "collapsed") {
+          if (p.kind !== "wasl") p.fixed = 0;
+          break;
+        }
+      }
+    }
+    applyMaddConstraints(h);
+    return h;
+  }
+
+  // src/lib/arud/engine.ts
+  var ACCEPT = 0.9;
+  var SHORT_MIN = 6;
+  function emptyResult(text, cleaned, meterId, mode, message, letters = [], bits = "", laNaam = []) {
+    return {
+      ok: false,
+      message,
+      text,
+      cleaned,
+      meterId,
+      meterName: "",
+      fasih: "",
+      score: 0,
+      accepted: false,
+      bits,
+      laNaam,
+      letters,
+      boxes: [],
+      firstDiff: null,
+      brokenBox: null,
+      alts: [],
+      mode
+    };
+  }
+  function lettersFor(h, cand) {
+    const out = [];
+    h.phonemes.forEach((p, i) => {
+      var _a, _b;
+      const a = (_a = cand.assign[i]) != null ? _a : -1;
+      if (!p.display && a === -1) return;
+      if (!p.display && (a === 0 || a === 1)) return;
+      let shadda = false;
+      if (i > 0) {
+        const prev = h.phonemes[i - 1];
+        const prevA = (_b = cand.assign[i - 1]) != null ? _b : -1;
+        if (prev.hint === "user_shadda" && prevA === 0) shadda = true;
+      }
+      out.push({
+        char: p.char || "\xB7",
+        bit: a === -1 ? null : a,
+        skipped: a === -1,
+        kind: p.kind,
+        wordI: p.wordI,
+        locked: p.fixed !== null && p.kind !== "wasl",
+        shadda
+      });
+    });
+    return out;
+  }
+  function boxesOf(hit) {
+    let brokenBox = null;
+    if (hit.firstDiff !== null) brokenBox = bitToBox(hit.firstDiff, hit.feet);
+    const boxes = hit.feet.map((f, i) => {
+      var _a;
+      return {
+        index: i,
+        name: f.name,
+        laNaam: [...f.laNaam],
+        bits: f.bits,
+        broken: brokenBox === i && hit.score < ACCEPT,
+        zihaf: (_a = f.zihaf) != null ? _a : null
+      };
+    });
+    return { boxes, brokenBox };
+  }
+  function applyLocks(h, locks) {
+    if (!locks) return;
+    const shownMap = [];
+    for (let i = 0; i < h.phonemes.length; i++) {
+      if (h.phonemes[i].display) shownMap.push(i);
+    }
+    const items = Object.keys(locks).map((k) => [Number(k), Number(locks[Number(k)])]);
+    items.sort((a, b) => b[0] - a[0]);
+    for (let n = 0; n < items.length; n++) {
+      const shown = items[n][0];
+      const bit = items[n][1];
+      if (shown < 0 || shown >= shownMap.length) continue;
+      const pi = shownMap[shown];
+      const p = h.phonemes[pi];
+      if (bit === 2) {
+        const hidden = {
+          char: p.char,
+          kind: "cons",
+          fixed: 0,
+          display: false,
+          wordI: p.wordI,
+          hint: "user_shadda"
+        };
+        if (p.kind === "waw" || p.kind === "ya" || p.kind === "alif_madd" || p.kind === "wasl" || p.kind === "collapsed") {
+          p.kind = "cons";
+        }
+        p.fixed = 1;
+        p.hint = "user_shadda_move";
+        h.phonemes.splice(pi, 0, hidden);
+        continue;
+      }
+      if (bit === 0 || bit === 1) {
+        if (p.kind === "wasl" && bit === 0) {
+          p.kind = "collapsed";
+          p.fixed = 0;
+          p.hint = "user_drop";
+        } else if (p.kind === "collapsed") {
+          if (bit === 1) {
+            p.kind = "cons";
+            p.fixed = 1;
+            p.hint = "user";
+          }
+        } else {
+          p.fixed = bit;
+          p.hint = "user";
+        }
+      }
+    }
+  }
+  function weighHemistich(text, meterId = "auto", locks) {
+    var _a;
+    const { meters } = loadCatalog();
+    const h = tokenizeHemistich(text);
+    applyLocks(h, locks);
+    const mode = meterId === "" || meterId === "auto" ? "discover" : "check";
+    const nDisp = h.phonemes.filter((p) => p.display).length;
+    if (!h.phonemes.length || nDisp < 2) {
+      return emptyResult(text, h.cleaned, meterId, mode, "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641");
+    }
+    const cands = generate(h);
+    if (!cands.length) {
+      const letters = h.phonemes.filter((p) => p.display).map((p) => ({
+        char: p.char || "\xB7",
+        bit: p.fixed === 0 || p.fixed === 1 ? p.fixed : null,
+        skipped: false,
+        kind: p.kind,
+        wordI: p.wordI,
+        locked: p.fixed !== null
+      }));
+      return emptyResult(
+        text,
+        h.cleaned,
+        meterId,
+        mode,
+        nDisp < 6 ? "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" : "\u0644\u0627 \u062A\u0642\u0637\u064A\u0639 \u064A\u062A\u062C\u0645\u0651\u0639 \u0625\u0644\u0649 \u0623\u0633\u0628\u0627\u0628 \u0648\u0623\u0648\u062A\u0627\u062F (10 \u0648 110). \u0627\u0636\u063A\u0637 \u062D\u0631\u0641\u0627\u064B \u0644\u0642\u0644\u0628 \u0627\u0644\u0633\u0643\u0648\u0646.",
+        letters
+      );
+    }
+    if (Math.max(...cands.map((c) => c.bits.length)) < SHORT_MIN) {
+      return emptyResult(
+        text,
+        h.cleaned,
+        meterId,
+        mode,
+        "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641",
+        lettersFor(h, cands[0]),
+        cands[0].bits,
+        cands[0].laNaam
+      );
+    }
+    const selected = mode === "discover" ? null : meterId;
+    let bestHit = null;
+    let bestCand = null;
+    const ranked = [];
+    for (const c of cands.slice(0, 400)) {
+      const hits = matchCandidate(c.bits, meters, selected);
+      if (!hits.length) continue;
+      const h0 = hits[0];
+      h0.score = h0.score - 2e-3 * c.cost;
+      ranked.push({ hit: h0, cand: c });
+      if (!bestHit || h0.score > bestHit.score + 1e-12) {
+        bestHit = h0;
+        bestCand = c;
+      } else if (bestHit && Math.abs(h0.score - bestHit.score) < 1e-9) {
+        if (c.cost < ((_a = bestCand == null ? void 0 : bestCand.cost) != null ? _a : 1e9)) {
+          bestHit = h0;
+          bestCand = c;
+        }
+      }
+    }
+    if (!bestHit || !bestCand) {
+      return emptyResult(text, h.cleaned, meterId, mode, "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641");
+    }
+    const alts = [];
+    const seenBits = /* @__PURE__ */ new Set([bestCand.bits]);
+    const sorted = [...ranked].sort((a, b) => b.hit.score - a.hit.score);
+    for (const { hit, cand } of sorted) {
+      if (seenBits.has(cand.bits)) continue;
+      if (hit.score >= bestHit.score - 0.08 && alts.length < 3) {
+        let note = "";
+        if (cand.bits.startsWith("1010110") || cand.bits === "1010110") note = "\u0647\u062C\u0631 \u0633\u0627\u0643\u0646\u0629 \u2192 \u0645\u0633\u062A\u0641\u0639\u0644\u0646";
+        if (cand.bits.endsWith("1011010") || cand.bits === "1011010") note = "\u0647\u062C\u0631 \u0645\u0641\u062A\u0648\u062D\u0629 \u2192 \u0641\u0627\u0639\u0644\u0627\u062A\u0646";
+        alts.push({
+          bits: cand.bits,
+          laNaam: cand.laNaam,
+          meterName: hit.meter.name,
+          score: Math.round(hit.score * 1e4) / 1e4,
+          note
+        });
+        seenBits.add(cand.bits);
+      }
+    }
+    const { boxes, brokenBox } = boxesOf(bestHit);
+    const accepted = bestHit.score >= ACCEPT;
+    const message = mode === "check" ? accepted ? "\u0645\u0648\u0632\u0648\u0646" : "\u0645\u0643\u0633\u0648\u0631" : accepted ? "\u0645\u0648\u0632\u0648\u0646" : "\u0623\u0642\u0631\u0628 \u0628\u062D\u0631 \u2014 \u0627\u0644\u0645\u0637\u0627\u0628\u0642\u0629 \u062F\u0648\u0646 \u0627\u0644\u0639\u062A\u0628\u0629";
+    return {
+      ok: true,
+      message,
+      text,
+      cleaned: h.cleaned,
+      meterId: bestHit.meter.id,
+      meterName: bestHit.meter.name,
+      fasih: bestHit.meter.fasih,
+      score: Math.round(Math.min(1, Math.max(0, bestHit.score)) * 1e4) / 1e4,
+      accepted,
+      bits: bestCand.bits,
+      laNaam: bestCand.laNaam,
+      letters: lettersFor(h, bestCand),
+      boxes,
+      firstDiff: bestHit.firstDiff,
+      brokenBox: accepted ? null : brokenBox,
+      alts,
+      mode
+    };
+  }
+  function meterList() {
+    var _a, _b, _c;
+    const { meters } = loadCatalog();
+    const out = [{ id: "auto", name: "\u062A\u0644\u0642\u0627\u0626\u064A", feet: [], bits: "" }];
+    for (const m of meters) {
+      out.push({
+        id: m.id,
+        name: m.name,
+        fasih: m.fasih,
+        feet: (_b = (_a = m.templateFeet[0]) == null ? void 0 : _a.map((f) => f.name)) != null ? _b : [],
+        bits: (_c = m.templates[0]) != null ? _c : "",
+        note: m.note
+      });
+    }
+    return out;
+  }
+  function weigh(text, meterId = "auto", locks) {
+    const parts = splitBayt(text);
+    if (!parts.length) {
+      return {
+        ok: false,
+        message: "\u0623\u062F\u062E\u0644 \u0635\u062F\u0631\u0627\u064B \u0623\u0648 \u0639\u062C\u0632\u0627\u064B \u0623\u0648 \u0628\u064A\u062A\u0627\u064B \u0645\u0641\u0635\u0648\u0644\u0627\u064B \u0628\u0646\u062C\u0645\u0629 \u0623\u0648 \u0633\u0637\u0631.",
+        hemistichs: [],
+        meters: meterList(),
+        mode: meterId === "auto" || !meterId ? "discover" : "check",
+        selected: meterId
+      };
+    }
+    const hemistichs = parts.map((p, i) => weighHemistich(p, meterId, locks == null ? void 0 : locks[i]));
+    const names = hemistichs.filter((r) => r.ok && r.meterName).map((r) => r.meterName);
+    const same = new Set(names).size <= 1;
+    let overall = hemistichs.length && hemistichs.every((r) => r.accepted) ? "\u0645\u0648\u0632\u0648\u0646" : "\u0631\u0627\u062C\u0639 \u0627\u0644\u0643\u0633\u0631";
+    if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641") {
+      overall = "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641";
+    }
+    return {
+      ok: true,
+      message: overall,
+      sameMeter: same,
+      hemistichs,
+      meters: meterList(),
+      mode: meterId === "auto" || !meterId ? "discover" : "check",
+      selected: meterId
+    };
+  }
+  return __toCommonJS(index_exports);
+})();
+
+if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = true; }
+</script>
+<script>
+(function () {
+  function fail(msg) {
+    var boot = document.getElementById("boot");
+    boot.style.display = "block";
+    boot.textContent = msg;
+  }
+  function esc(s) {
+    s = String(s == null ? "" : s);
+    return s.split("&").join("&" + "amp;")
+      .split("<").join("&" + "lt;")
+      .split(">").join("&" + "gt;")
+      .split('"').join("&" + "quot;");
+  }
+  var ArudRef = window.Arud;
+  if (!ArudRef || typeof ArudRef.weigh !== "function") {
+    fail("المحرك ما تحمّل. افتح الصفحة في كروم أو حدّث التطبيق.");
+    return;
+  }
+
+  var EXAMPLES = [
+    { meter: "mashub", label: "المسحوب", text: "يا ما حلا بعد العشا شرب الفنجال" },
+    { meter: "arda", label: "العرضة", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب" },
+    { meter: "hilali", label: "الهلالي", text: "على ما يفوت القلب لا تشمت العدا\nولا تشمت اللي ما درى بالذي جرى" },
+    { meter: "sakhri", label: "الصخري", text: "أقول لها وقد طارت شعاعا" },
+    { meter: "hida", label: "الحداء", text: "يا راكبن من عندنا فوق حرباب" },
+    { meter: "hajini_tamm", label: "الهجيني", text: "من يلوم القلب ما هو منصف" },
+    { meter: "auto", label: "من هجركم", text: "من هجركم" },
+    { meter: "hilali", label: "جرّب القلب", text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى" }
+  ];
+  var LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
+  var verseEl = document.getElementById("verse");
+  var metersEl = document.getElementById("meters");
+  var resultsEl = document.getElementById("results");
+  var sameEl = document.getElementById("same");
+  var hintEl = document.getElementById("hint");
+  var exEl = document.getElementById("ex");
+  var meterId = "mashub";
+  var locks = [];
+
+  function setMeter(id) {
+    meterId = id;
+    var kids = metersEl.children;
+    for (var i = 0; i < kids.length; i++) {
+      var on = kids[i].getAttribute("data-id") === meterId;
+      kids[i].className = on ? "mchip on" : "mchip";
+    }
+  }
+  setMeter("mashub");
+
+  metersEl.onclick = function (ev) {
+    var t = ev.target;
+    while (t && t !== metersEl && !t.getAttribute("data-id")) t = t.parentNode;
+    if (!t || t === metersEl) return;
+    setMeter(t.getAttribute("data-id"));
+    doWeigh();
+  };
+
+  for (var e = 0; e < EXAMPLES.length; e++) {
+    (function (ex) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "exb";
+      var first = ex.text.split("\n")[0];
+      if (first.length > 22) first = first.slice(0, 22);
+      b.innerHTML = esc(first) + "<small>" + esc(ex.label) + "</small>";
+      b.onclick = function () {
+        verseEl.value = ex.text;
         locks = [];
-        render();
-      });
-      verseEl.addEventListener("input", function () { locks = []; });
-      render();
-    })();
-  </script>
+        setMeter(ex.meter);
+        doWeigh();
+      };
+      exEl.appendChild(b);
+    })(EXAMPLES[e]);
+  }
+
+  function groupLetters(letters) {
+    var words = [], cur = [], wi = (letters[0] && letters[0].wordI) || 0;
+    for (var i = 0; i < letters.length; i++) {
+      var L = letters[i];
+      if (L.wordI !== wi) {
+        if (cur.length) words.push(cur);
+        cur = [L];
+        wi = L.wordI;
+      } else cur.push(L);
+    }
+    if (cur.length) words.push(cur);
+    return words;
+  }
+  function offset(wi, li, words) {
+    var n = 0;
+    for (var i = 0; i < wi; i++) n += words[i].length;
+    return n + li;
+  }
+
+  function hemistichHTML(h, label, hi) {
+    var words = groupLetters(h.letters || []);
+    var pillCls = !h.ok ? "dim" : h.accepted ? "ok" : "bad";
+    var score = (typeof h.score === "number") ? " · " + Math.round(h.score * 100) + "٪" : "";
+    var tiles = "";
+    if (!h.letters || !h.letters.length) {
+      tiles = "<p class='lede' style='color:var(--soft);margin:0'>" + esc(h.message) + "</p>";
+    } else {
+      tiles = "<div class='words'>";
+      for (var wi = 0; wi < words.length; wi++) {
+        tiles += "<div class='word'>";
+        var word = words[wi];
+        for (var li = 0; li < word.length; li++) {
+          var L = word[li];
+          var g = offset(wi, li, words);
+          var sh = !!L.shadda;
+          var bit = L.bit;
+          var bcls = sh || bit === 1 ? "one" : bit === 0 ? "zero" : "";
+          var bt = sh ? "01" : (bit === 1 || bit === 0 ? bit : "—");
+          var glyph = esc(L.char) + (sh ? "ّ" : "");
+          tiles += "<button type='button' class='tile' data-hi='" + hi + "' data-li='" + g + "' data-bit='" + bit + "' data-sh='" + (sh ? "1" : "0") + "'>" +
+            "<span class='glyph'>" + glyph + "</span>" +
+            "<span class='bit " + bcls + "'>" + bt + "</span></button>";
+        }
+        tiles += "</div>";
+      }
+      tiles += "</div>";
+    }
+    var la = "";
+    if (h.ok && h.laNaam && h.laNaam.length) {
+      la = "<p class='la'>" + h.laNaam.map(esc).join(" · ") + "</p>";
+    }
+    var bits = (h.ok && h.bits) ? "<p class='bits' dir='ltr'>" + esc(h.bits) + "</p>" : "";
+    var boxes = "";
+    if (h.boxes && h.boxes.length) {
+      boxes = "<div class='boxes'>";
+      for (var bi = 0; bi < h.boxes.length; bi++) {
+        var box = h.boxes[bi];
+        boxes += "<div class='box" + (box.broken ? " broken" : "") + "'><div class='bn'>" + esc(box.name) +
+          (box.zihaf ? " <span class='bz'>" + esc(box.zihaf) + "</span>" : "") + "</div><div class='ln'>";
+        var lns = box.laNaam || [];
+        for (var j = 0; j < lns.length; j++) {
+          boxes += "<i class='" + (lns[j] === "نعم" ? "naam" : "laa") + "'>" + esc(lns[j]) + "</i>";
+        }
+        boxes += "</div>" + (box.broken ? "<p class='broke'>موضع الكسر</p>" : "") + "</div>";
+      }
+      boxes += "</div>";
+    }
+    var alts = "";
+    if (h.alts && h.alts.length) {
+      alts = "<div class='alts'><b>أوجه قريبة</b>";
+      for (var ai = 0; ai < h.alts.length; ai++) {
+        var a = h.alts[ai];
+        alts += "<div>" + esc(a.meterName) + (a.note ? " — " + esc(a.note) : "") +
+          " <span dir='ltr'>" + esc(a.bits) + "</span></div>";
+      }
+      alts += "</div>";
+    }
+    var fasih = (h.fasih && h.ok) ? "<p class='fasih'>مقابله في الفصيح: " + esc(h.fasih) + "</p>" : "";
+    return "<article class='paper'><header class='phd'><div><span class='lbl'>" + esc(label) +
+      "</span> " + (h.meterName ? "<span class='mname'>" + esc(h.meterName) + "</span>" : "") +
+      "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" +
+      "<div class='letters'>" + tiles + la + bits + "</div>" + boxes + alts + fasih + "</article>";
+  }
+
+  function doWeigh() {
+    try {
+      document.getElementById("boot").style.display = "none";
+      var result = ArudRef.weigh(verseEl.value, meterId, locks);
+      hintEl.textContent = (result.mode === "discover"
+        ? "اكتشاف تلقائي لأقرب بحر. "
+        : "فحص البحر المختار. ") + "اضغط الحرف: 1 ثم 0 ثم شدة.";
+      if (!result.hemistichs || !result.hemistichs.length) {
+        resultsEl.innerHTML = "<div class='err' style='background:var(--surf);color:var(--muted)'>" + esc(result.message) + "</div>";
+      } else {
+        var html = "";
+        for (var i = 0; i < result.hemistichs.length; i++) {
+          var lab = result.hemistichs.length === 1 ? "الشطر" : (LABELS[i] || ("شطر " + (i + 1)));
+          html += hemistichHTML(result.hemistichs[i], lab, i);
+        }
+        resultsEl.innerHTML = html;
+      }
+      if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
+        sameEl.style.display = "block";
+        sameEl.textContent = "الشطران على بحرين مختلفين. ثبّت بحراً واحداً للقصيدة.";
+      } else {
+        sameEl.style.display = "none";
+      }
+    } catch (err) {
+      fail("خطأ أثناء الوزن: " + (err && err.message ? err.message : err));
+    }
+  }
+
+  resultsEl.onclick = function (ev) {
+    var btn = ev.target;
+    while (btn && btn !== resultsEl && !(btn.getAttribute && btn.getAttribute("data-li") != null)) {
+      btn = btn.parentNode;
+    }
+    if (!btn || btn === resultsEl) return;
+    var hi = +btn.getAttribute("data-hi");
+    var li = +btn.getAttribute("data-li");
+    var sh = btn.getAttribute("data-sh") === "1";
+    var cur = btn.getAttribute("data-bit") === "1" ? 1 : 0;
+    var next;
+    if (sh) next = 1;
+    else if (cur === 1) next = 0;
+    else next = 2;
+    while (locks.length <= hi) locks.push({});
+    locks[hi][li] = next;
+    doWeigh();
+  };
+
+  document.getElementById("go").onclick = function () {
+    doWeigh();
+    if (resultsEl.scrollIntoView) {
+      try { resultsEl.scrollIntoView({ behavior: "smooth", block: "start" }); }
+      catch (e) { resultsEl.scrollIntoView(); }
+    }
+  };
+  document.getElementById("reset").onclick = function () {
+    locks = [];
+    doWeigh();
+  };
+  verseEl.oninput = function () { locks = []; };
+
+  doWeigh();
+})();
+</script>
 </body>
 </html>
