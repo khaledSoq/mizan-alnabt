@@ -11,6 +11,7 @@ function choices(p: Phoneme): number[] {
     return [-1, 1];
   }
   if (p.kind === "collapsed") return [-1];
+  if (p.hint === "allah_madd") return [-1, 0];
   if (p.kind === "alif_madd") return [0];
   if (p.fixed !== null) return [p.fixed];
   if (p.kind === "waw" || p.kind === "ya") return [0, 1];
@@ -140,6 +141,14 @@ export function generate(h: Hemistich): Candidate[] {
       if ((p.kind === "waw" || p.kind === "ya") && p.fixed === null && ch === 1) extra += 0.35;
       if (p.kind === "wasl" && ch === 1) extra += 0.4;
       if (p.kind === "ta_marbuta" && ch === 1) extra += 0.8;
+      if (p.hint === "allah_ha" && ch === 1 && node.assign.length) {
+        const prev = ph[node.i - 1]!;
+        if (prev.hint === "allah_madd" && node.assign[node.assign.length - 1] === -1) extra += 0.6;
+      }
+      if (ch === 0 && node.assign.length) {
+        const prev = ph[node.i - 1]!;
+        if (prev.hint === "allah_ha" && node.assign[node.assign.length - 1] === 1) extra += 0.85;
+      }
       heap.push({
         cost: node.cost + extra,
         seq: seq++,

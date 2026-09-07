@@ -17,6 +17,7 @@ from engine.tokenize import split_bayt, tokenize_hemistich
 MASHUB = "يا ما حلا بعد العشا شرب الفنجال"
 ARDA = "نحمد الله جت على ما تمنى"
 HAJR = "من هجركم"
+AID = "العيد باكر أسعد الله ممساك"
 BAYT = "يا ما حلا بعد العشا شرب الفنجال *** ومن هجركم طال الزمان وما طال"
 
 
@@ -52,6 +53,24 @@ class MashubTests(unittest.TestCase):
         r = weigh_hemistich("ما يستريح القلب لا صار مشغول", "mashub")
         self.assertGreaterEqual(r.score, 0.80, f"{r.score} {r.bits}")
 
+    def test_aid_bakir_mashub(self):
+        r = weigh_hemistich(AID, "mashub")
+        self.assertTrue(r.ok, r.message)
+        self.assertGreaterEqual(r.score, 0.90, f"{r.score} {r.bits} {r.la_naam}")
+        names = [b.name for b in r.boxes]
+        self.assertEqual(names[-1], "فاعلاتن", names)
+        self.assertFalse(r.boxes[-1].broken)
+        self.assertTrue(r.bits.endswith("1011010") or r.bits == "101011010101101011010", r.bits)
+        ha = [L for L in r.letters if L.char == "ه"]
+        self.assertTrue(ha, "هاء الله غير معروضة")
+        self.assertFalse(ha[0].skipped)
+        self.assertEqual(ha[0].bit, 1)
+        auto = weigh_hemistich(AID, "auto")
+        self.assertEqual(auto.meter_id, "mashub")
+        out = weigh(AID, "mashub")
+        self.assertTrue(out["ok"])
+        self.assertGreaterEqual(out["hemistichs"][0]["score"], 0.90)
+
 
 class ArdaTests(unittest.TestCase):
     def test_auto_arda_not_mashub(self):
@@ -60,6 +79,15 @@ class ArdaTests(unittest.TestCase):
         self.assertIn(r.meter_id, {"arda", "ramal", "madid", "mumtadd"})
         self.assertNotEqual(r.meter_id, "mashub")
         self.assertGreaterEqual(r.score, 0.80, f"{r.meter_name} {r.score} {r.bits} {r.la_naam}")
+
+    def test_arda_selected(self):
+        r = weigh_hemistich(ARDA, "arda")
+        self.assertEqual(r.meter_id, "arda")
+        self.assertGreaterEqual(r.score, 0.80, f"{r.score} {r.bits}")
+        ha = [L for L in r.letters if L.char == "ه"]
+        self.assertTrue(ha)
+        self.assertFalse(ha[0].skipped)
+        self.assertIn(ha[0].bit, (0, 1))
 
 
 class HajrTests(unittest.TestCase):

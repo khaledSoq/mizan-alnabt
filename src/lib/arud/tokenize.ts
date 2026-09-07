@@ -150,7 +150,12 @@ function ph(
   return { char, kind, fixed, display, wordI, hint };
 }
 
-function allahPhonemes(word: string, wordI: number, firstWord: boolean): Phoneme[] {
+function allahPhonemes(
+  word: string,
+  wordI: number,
+  firstWord: boolean,
+  lastWord: boolean,
+): Phoneme[] {
   let bare = stripHarakat(word);
   let prefix = "";
   for (const p of ["و", "ب", "ف", "ت", "ل"]) {
@@ -172,8 +177,12 @@ function allahPhonemes(word: string, wordI: number, firstWord: boolean): Phoneme
   }
   out.push(ph("ل", "cons", 0, true, wordI, "allah_lam1"));
   out.push(ph("ل", "cons", 1, true, wordI, "allah_lam2"));
-  out.push(ph("ا", "alif_madd", 0, true, wordI, "allah_madd"));
-  out.push(ph("ه", "collapsed", 0, true, wordI, "allah_ha"));
+  if (!lastWord) {
+    out.push(ph("ا", "alif_madd", 0, false, wordI, "allah_madd"));
+    out.push(ph("ه", "cons", null, true, wordI, "allah_ha"));
+  } else {
+    out.push(ph("ه", "cons", 0, true, wordI, "allah_ha"));
+  }
   return out;
 }
 
@@ -225,6 +234,7 @@ function applyMaddConstraints(h: Hemistich) {
       }
     }
     if (i > 0 && phs[i - 1]!.kind === "alif_madd" && p.fixed === 0) {
+      if (p.hint === "allah_ha") continue;
       if (p.kind === "cons" || p.kind === "ta_marbuta" || p.kind === "collapsed") {
         p.kind = "collapsed";
       }
@@ -244,7 +254,7 @@ export function tokenizeHemistich(text: string): Hemistich {
     const first = wi === 0;
 
     if (isAllahWord(bare)) {
-      h.phonemes.push(...allahPhonemes(word, wi, first));
+      h.phonemes.push(...allahPhonemes(word, wi, first, wi === words.length - 1));
       continue;
     }
     if (FUNCTION_10.has(bare)) {

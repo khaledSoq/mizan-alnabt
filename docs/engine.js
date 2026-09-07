@@ -1,1 +1,1 @@
-/* inlined into index.html */
+/* inlined in index.html */

@@ -130,24 +130,26 @@ def _is_allah_word(bare: str) -> bool:
     return bare in ALLAH_FORMS or bare.endswith("الله") or bare == "الله"
 
 
-def _allah_phonemes(word: str, word_i: int, first_word: bool, src0: int) -> list[Phoneme]:
+def _allah_phonemes(
+    word: str, word_i: int, first_word: bool, last_word: bool, src0: int
+) -> list[Phoneme]:
     """
-    كلمة الله ≈ ألالاه: 10 ثم 10. ليست وتداً وحده.
-    بالوصل تُحذف ألف الله فيُلصق اللام السابق.
+    الله سببان لا وتد.
+    ألف الوصل تسقط غالباً وسط الشطر.
+    اللام الأولى 0، اللام الثانية 1.
+    الهاء تُعرض: 0 في الوقف، 1 إذا تبعها كلام (هَمِمْ = 110).
+    ألف المد المكتوبة بعد اللام المشددة لا تُعرض حرفاً برابع بشرطة؛
+    تُحسب بتّاً خفيّاً 0 فقط عندما الهاء متحركة حتى يتكوّن «لا».
     """
     bare = strip_harakat(word)
     prefix = ""
     core = bare
     for p in ("و", "ب", "ف", "ت", "ل"):
-        if bare.startswith(p) and bare[len(p) :] in ("له", "الله") or (
-            bare.startswith(p) and "الله" in bare[len(p) :]
-        ):
-            if bare.startswith(p + "الله") or bare == p + "له":
-                prefix = p
-                core = bare[len(p) :]
-                break
+        if bare.startswith(p + "الله") or bare == p + "له":
+            prefix = p
+            core = bare[len(p) :]
+            break
     if core == "له":
-        # لله
         prefix = prefix or "ل"
         core = "الله"
 
@@ -165,27 +167,30 @@ def _allah_phonemes(word: str, word_i: int, first_word: bool, src0: int) -> list
             )
         )
 
-    # أ ل ل ا ه
-    alif_fixed: Optional[int]
     if first_word and not prefix:
-        alif_fixed = 1
-        alif_kind: Kind = "cons"
-    else:
-        # همزة وصل محتملة
-        alif_fixed = None
-        alif_kind = "wasl"
-
-    out.append(
-        Phoneme(
-            char="ا",
-            kind=alif_kind,
-            fixed=alif_fixed if alif_kind != "wasl" else None,
-            display=True,
-            word_i=word_i,
-            src_index=src0,
-            hint="allah_alif",
+        out.append(
+            Phoneme(
+                char="ا",
+                kind="cons",
+                fixed=1,
+                display=True,
+                word_i=word_i,
+                src_index=src0,
+                hint="allah_alif",
+            )
         )
-    )
+    else:
+        out.append(
+            Phoneme(
+                char="ا",
+                kind="wasl",
+                fixed=None,
+                display=True,
+                word_i=word_i,
+                src_index=src0,
+                hint="allah_alif",
+            )
+        )
     out.append(
         Phoneme(
             char="ل",
@@ -208,22 +213,27 @@ def _allah_phonemes(word: str, word_i: int, first_word: bool, src0: int) -> list
             hint="allah_lam2",
         )
     )
-    out.append(
-        Phoneme(
-            char="ا",
-            kind="alif_madd",
-            fixed=0,
-            display=True,
-            word_i=word_i,
-            src_index=src0,
-            hint="allah_madd",
+    if not last_word:
+        # مد خفي اختياري: يُحسب 0 إذا الهاء 1 (لا + هَمِمْ)، ويُسقط إذا الهاء 0
+        out.append(
+            Phoneme(
+                char="ا",
+                kind="alif_madd",
+                fixed=0,
+                display=False,
+                word_i=word_i,
+                src_index=src0,
+                hint="allah_madd",
+            )
         )
-    )
+        ha_fixed = None
+    else:
+        ha_fixed = 0
     out.append(
         Phoneme(
             char="ه",
-            kind="collapsed",
-            fixed=0,
+            kind="cons",
+            fixed=ha_fixed,
             display=True,
             word_i=word_i,
             src_index=src0,
@@ -301,7 +311,11 @@ def tokenize_hemistich(text: str) -> Hemistich:
         first = wi == 0
 
         if _is_allah_word(bare):
-            h.phonemes.extend(_allah_phonemes(word, wi, first, src))
+            h.phonemes.extend(
+                _allah_phonemes(
+                    word, wi, first, last_word=(wi == len(words) - 1), src0=src
+                )
+            )
             src += len(word) + 1
             continue
 
@@ -437,7 +451,9 @@ def _apply_madd_constraints(h: Hemistich) -> None:
                 elif ph[j].fixed == 0 and ph[j].hint not in ("fn10", "qamari_lam", "allah_lam1"):
                     # تعارض نادر: نترك البحث يفشل هذا الفرع
                     pass
-        # سكون بعد ألف مد (جال، لاه، تمنى) لا يضيف بتّاً
+        # سكون بعد ألف مد (جال، لاه، تمنى) لا يضيف بتّاً — إلا هاء لفظ الجلالة المعروضة
         if i > 0 and ph[i - 1].kind == "alif_madd" and p.fixed == 0:
+            if p.hint == "allah_ha":
+                continue
             if p.kind in ("cons", "ta_marbuta", "collapsed"):
                 p.kind = "collapsed"

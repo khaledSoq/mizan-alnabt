@@ -419,6 +419,7 @@ var Arud = (() => {
       return [-1, 1];
     }
     if (p.kind === "collapsed") return [-1];
+    if (p.hint === "allah_madd") return [-1, 0];
     if (p.kind === "alif_madd") return [0];
     if (p.fixed !== null) return [p.fixed];
     if (p.kind === "waw" || p.kind === "ya") return [0, 1];
@@ -536,6 +537,14 @@ var Arud = (() => {
         if ((p.kind === "waw" || p.kind === "ya") && p.fixed === null && ch === 1) extra += 0.35;
         if (p.kind === "wasl" && ch === 1) extra += 0.4;
         if (p.kind === "ta_marbuta" && ch === 1) extra += 0.8;
+        if (p.hint === "allah_ha" && ch === 1 && node.assign.length) {
+          const prev = ph2[node.i - 1];
+          if (prev.hint === "allah_madd" && node.assign[node.assign.length - 1] === -1) extra += 0.6;
+        }
+        if (ch === 0 && node.assign.length) {
+          const prev = ph2[node.i - 1];
+          if (prev.hint === "allah_ha" && node.assign[node.assign.length - 1] === 1) extra += 0.85;
+        }
         heap.push({
           cost: node.cost + extra,
           seq: seq++,
@@ -680,7 +689,7 @@ var Arud = (() => {
   function ph(char, kind, fixed, display, wordI, hint) {
     return { char, kind, fixed, display, wordI, hint };
   }
-  function allahPhonemes(word, wordI, firstWord) {
+  function allahPhonemes(word, wordI, firstWord, lastWord) {
     let bare = stripHarakat(word);
     let prefix = "";
     for (const p of ["\u0648", "\u0628", "\u0641", "\u062A", "\u0644"]) {
@@ -702,8 +711,12 @@ var Arud = (() => {
     }
     out.push(ph("\u0644", "cons", 0, true, wordI, "allah_lam1"));
     out.push(ph("\u0644", "cons", 1, true, wordI, "allah_lam2"));
-    out.push(ph("\u0627", "alif_madd", 0, true, wordI, "allah_madd"));
-    out.push(ph("\u0647", "collapsed", 0, true, wordI, "allah_ha"));
+    if (!lastWord) {
+      out.push(ph("\u0627", "alif_madd", 0, false, wordI, "allah_madd"));
+      out.push(ph("\u0647", "cons", null, true, wordI, "allah_ha"));
+    } else {
+      out.push(ph("\u0647", "cons", 0, true, wordI, "allah_ha"));
+    }
     return out;
   }
   function function10(word, wordI) {
@@ -752,6 +765,7 @@ var Arud = (() => {
         }
       }
       if (i > 0 && phs[i - 1].kind === "alif_madd" && p.fixed === 0) {
+        if (p.hint === "allah_ha") continue;
         if (p.kind === "cons" || p.kind === "ta_marbuta" || p.kind === "collapsed") {
           p.kind = "collapsed";
         }
@@ -768,7 +782,7 @@ var Arud = (() => {
       const bare = stripHarakat(word);
       const first = wi === 0;
       if (isAllahWord(bare)) {
-        h.phonemes.push(...allahPhonemes(word, wi, first));
+        h.phonemes.push(...allahPhonemes(word, wi, first, wi === words.length - 1));
         continue;
       }
       if (FUNCTION_10.has(bare)) {
@@ -1149,6 +1163,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
 
   var EXAMPLES = [
     { meter: "mashub", label: "المسحوب", text: "يا ما حلا بعد العشا شرب الفنجال" },
+    { meter: "mashub", label: "العيد باكر", text: "العيد باكر أسعد الله ممساك" },
     { meter: "arda", label: "العرضة", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب" },
     { meter: "hilali", label: "الهلالي", text: "على ما يفوت القلب لا تشمت العدا\nولا تشمت اللي ما درى بالذي جرى" },
     { meter: "sakhri", label: "الصخري", text: "أقول لها وقد طارت شعاعا" },

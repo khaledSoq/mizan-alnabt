@@ -14,6 +14,11 @@ const EXAMPLES: { label: string; text: string; meter: string }[] = [
     meter: "mashub",
   },
   {
+    label: "العيد باكر",
+    text: "العيد باكر أسعد الله ممساك",
+    meter: "mashub",
+  },
+  {
     label: "العرضة",
     text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب",
     meter: "arda",

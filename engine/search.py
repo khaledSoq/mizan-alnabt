@@ -23,6 +23,9 @@ def _choices(p: Phoneme) -> list[int]:
         return [-1, 1]  # إسقاط الوصل أرجح في النبطي بعد كلمة سابقة
     if p.kind == "collapsed":
         return [-1]  # لا يُحسب بتّاً مستقلاً (مد+سكون = سكون واحد)
+    if p.hint == "allah_madd":
+        # مد لفظ الجلالة: يُحسب 0 مع هاء متحركة، أو يُسقط إن كانت الهاء ساكنة
+        return [-1, 0]
     if p.kind == "alif_madd":
         return [0]
     if p.fixed is not None:
@@ -148,6 +151,16 @@ def generate(h: Hemistich) -> list[Candidate]:
                 extra += 0.4  # تحقيق همزة الوصل أثقل من حذفها
             if p.kind == "ta_marbuta" and ch == 1:
                 extra += 0.8
+            # لفظ الجلالة سببان لا وتد: إسقاط المد مع هاء 1 يجعل اللام+الهاء 11
+            if p.hint == "allah_ha" and ch == 1 and node.assign:
+                prev = ph[node.i - 1]
+                if prev.hint == "allah_madd" and node.assign[-1] == -1:
+                    extra += 0.6
+            # بعد هاء متحركة فضّل وتد هَمِمْ (110) على سبب هَمْ (10)
+            if ch == 0 and node.assign:
+                prev = ph[node.i - 1]
+                if prev.hint == "allah_ha" and node.assign[-1] == 1:
+                    extra += 0.85
 
             heapq.heappush(
                 heap,
