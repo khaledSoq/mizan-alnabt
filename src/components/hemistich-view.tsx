@@ -7,6 +7,18 @@ type Props = {
   onFlip: (letterIndex: number, nextBit: number) => void;
 };
 
+const FATHA = "\u064E";
+const SUKUN = "\u0652";
+const SHADDA = "\u0651";
+
+function haraka(letter: LetterOut): string {
+  if (letter.skipped || letter.bit === null) return "";
+  if (letter.shadda) return SHADDA + FATHA;
+  if (letter.bit === 1) return FATHA;
+  if (letter.bit === 0) return SUKUN;
+  return "";
+}
+
 function groupLetters(letters: LetterOut[]) {
   const words: LetterOut[][] = [];
   let cur: LetterOut[] = [];
@@ -22,6 +34,18 @@ function groupLetters(letters: LetterOut[]) {
   return words;
 }
 
+function recitedLine(letters: LetterOut[]): string {
+  return groupLetters(letters)
+    .map((word) =>
+      word
+        .filter((L) => !L.skipped)
+        .map((L) => (L.char || "") + haraka(L))
+        .join(""),
+    )
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function HemistichView({ result, label, onFlip }: Props) {
   const words = groupLetters(result.letters);
   const accepted = result.accepted;
@@ -30,6 +54,7 @@ export function HemistichView({ result, label, onFlip }: Props) {
     : accepted
       ? "ok"
       : "break";
+  const recited = recitedLine(result.letters);
 
   return (
     <article className="rounded-xl bg-paper text-ink shadow-paper ring-1 ring-paper-edge">
@@ -83,8 +108,15 @@ export function HemistichView({ result, label, onFlip }: Props) {
           </div>
         )}
 
+        {recited ? (
+          <div className="mt-5" dir="rtl">
+            <p className="text-xs font-medium text-ink-soft/70">النطق المستنتج</p>
+            <p className="mt-1 font-display text-xl leading-loose text-ink">{recited}</p>
+          </div>
+        ) : null}
+
         {result.ok && result.laNaam.length > 0 ? (
-          <p className="mt-5 font-display text-xl leading-relaxed text-ink-soft" dir="rtl">
+          <p className="mt-4 font-display text-xl leading-relaxed text-ink-soft" dir="rtl">
             {result.laNaam.join(" · ")}
           </p>
         ) : null}
@@ -174,7 +206,7 @@ function LetterTile({ letter, onClick }: { letter: LetterOut; onClick: () => voi
     <button
       type="button"
       onClick={onClick}
-      title="اضغط: متحرك ثم ساكن ثم شدة"
+      title="اضغط: حركة ثم سكون ثم شدة"
       className={cn(
         "flex min-h-11 min-w-9 flex-col items-center justify-center rounded-sm px-1.5 py-1 transition-colors duration-150",
         letter.skipped ? "opacity-45" : "hover:bg-ink/6",
@@ -183,7 +215,7 @@ function LetterTile({ letter, onClick }: { letter: LetterOut; onClick: () => voi
     >
       <span className="font-display text-2xl leading-none text-ink">
         {letter.char}
-        {letter.shadda ? "\u0651" : ""}
+        {haraka(letter)}
       </span>
       <span
         className={cn(

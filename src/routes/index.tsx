@@ -7,66 +7,60 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: Home });
 
-const EXAMPLES: { label: string; text: string; meter: string }[] = [
+const DEFAULT_SADR = "يا ما حلا الفنجال مع سيحة البال";
+
+const EXAMPLES: { label: string; sadr: string; ajz: string; meter: string }[] = [
   {
     label: "المسحوب",
-    text: "يا ما حلا بعد العشا شرب الفنجال",
+    sadr: "يا ما حلا الفنجال مع سيحة البال",
+    ajz: "",
     meter: "mashub",
   },
   {
-    label: "العيد باكر",
-    text: "العيد باكر أسعد الله ممساك",
+    label: "المسحوب — عابرة سبيل",
+    sadr: "العيد باكر أسعد الله ممساك",
+    ajz: "والله مادري وين حدٍ جلسته",
     meter: "mashub",
   },
   {
     label: "العرضة",
-    text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب",
+    sadr: "نحمد الله جت على ما تمنى",
+    ajz: "من ولي العرش جزل الوهايب",
     meter: "arda",
   },
   {
-    label: "الهلالي",
-    text: "على ما يفوت القلب لا تشمت العدا\nولا تشمت اللي ما درى بالذي جرى",
-    meter: "hilali",
-  },
-  {
-    label: "الصخري",
-    text: "أقول لها وقد طارت شعاعا",
-    meter: "sakhri",
-  },
-  {
-    label: "الحداء",
-    text: "يا راكبن من عندنا فوق حرباب",
-    meter: "hida",
-  },
-  {
-    label: "الهجيني",
-    text: "من يلوم القلب ما هو منصف",
+    label: "الهجيني التام",
+    sadr: "غريب الدار ومناي التسلي",
+    ajz: "أسلي خاطري عن حب خلي",
     meter: "hajini_tamm",
   },
   {
-    label: "من هجركم",
-    text: "من هجركم",
-    meter: "auto",
-  },
-  {
-    label: "جرّب القلب",
-    text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى",
+    label: "الهلالي",
+    sadr: "على ما يفوت القلب لا تشمت العدا",
+    ajz: "ولا تشمت اللي ما درى بالذي جرى",
     meter: "hilali",
   },
 ];
 
 const LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
 
+function joinBayt(sadr: string, ajz: string) {
+  return sadr + "\n" + ajz;
+}
+
 function Home() {
   const meters = useMemo(() => meterList(), []);
-  const [text, setText] = useState("يا ما حلا بعد العشا شرب الفنجال");
+  const [sadr, setSadr] = useState(DEFAULT_SADR);
+  const [ajz, setAjz] = useState("");
   const [meterId, setMeterId] = useState("mashub");
   const [locks, setLocks] = useState<Array<Record<number, number>>>([]);
 
-  const result: WeighResult = useMemo(() => weigh(text, meterId, locks), [text, meterId, locks]);
+  const verse = joinBayt(sadr, ajz);
+  const result: WeighResult = useMemo(() => weigh(verse, meterId, locks), [verse, meterId, locks]);
 
   function loadExample(ex: (typeof EXAMPLES)[number]) {
-    setText(ex.text);
+    setSadr(ex.sadr);
+    setAjz(ex.ajz);
     setMeterId(ex.meter);
     setLocks([]);
   }
@@ -78,6 +72,13 @@ function Home() {
       copy[hi] = { ...copy[hi], [li]: nextBit };
       return copy;
     });
+  }
+
+  function hemistichLabel(i: number) {
+    if (result.hemistichs.length === 1) {
+      return sadr.trim() ? "الصدر" : "العجز";
+    }
+    return LABELS[i] ?? `شطر ${i + 1}`;
   }
 
   return (
@@ -98,8 +99,8 @@ function Home() {
                 ميزان النبط
               </h1>
               <p className="mt-3 max-w-xl text-pretty text-sm leading-7 text-muted">
-                الصق صدراً أو عجزاً أو بيتاً. البرنامج لا يخمن سكوناً واحداً: يولّد تقطيعات
-                محتملة، يقيسها على قوالب البحور، ويأخذ الأعلى مطابقة. اضغط الحرف لقلب 1 و 0.
+                اكتب الصدر، وإن أحببت العجز. بلا حركات. البرنامج يولّد تقطيعات محتملة
+                ويقيسها على قوالب البحور. اضغط الحرف: حركة ثم سكون ثم شدة.
               </p>
             </div>
             <div className="hidden size-12 shrink-0 items-center justify-center rounded-lg bg-surface ring-1 ring-border sm:flex">
@@ -116,33 +117,41 @@ function Home() {
         </header>
 
         <section className="rounded-xl bg-surface p-4 ring-1 ring-border sm:p-5">
-          <label htmlFor="verse" className="mb-2 block text-sm font-medium text-fg">
-            البيت
-          </label>
-          <textarea
-            id="verse"
-            dir="rtl"
-            rows={3}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setLocks([]);
-            }}
-            placeholder="الصق الشطر هنا، بلا حركات. افصل الصدر عن العجز بنجمة أو سطر."
-            className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
-          />
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {EXAMPLES.map((ex) => (
-              <button
-                key={ex.label}
-                type="button"
-                onClick={() => loadExample(ex)}
-                className="rounded-full bg-bg px-3 py-1.5 text-sm text-muted ring-1 ring-border transition-colors hover:text-fg"
-              >
-                {ex.label}
-              </button>
-            ))}
+          <div className="flex flex-col gap-3">
+            <div>
+              <label htmlFor="sadr" className="mb-2 block text-sm font-medium text-fg">
+                الصدر
+              </label>
+              <textarea
+                id="sadr"
+                dir="rtl"
+                rows={2}
+                value={sadr}
+                onChange={(e) => {
+                  setSadr(e.target.value);
+                  setLocks([]);
+                }}
+                placeholder="الصدر، بلا حركات"
+                className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label htmlFor="ajz" className="mb-2 block text-sm font-medium text-fg">
+                العجز
+              </label>
+              <textarea
+                id="ajz"
+                dir="rtl"
+                rows={2}
+                value={ajz}
+                onChange={(e) => {
+                  setAjz(e.target.value);
+                  setLocks([]);
+                }}
+                placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده"
+                className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
+              />
+            </div>
           </div>
 
           <div className="mt-4">
@@ -182,10 +191,35 @@ function Home() {
               صفّر
             </button>
           </div>
-          <p className="mt-3 text-xs leading-5 text-subtle">
+          <p className="mt-2 text-xs leading-5 text-subtle">يمسح تعديلك على الحروف</p>
+          <p className="mt-2 text-xs leading-5 text-subtle">
             الوضع {result.mode === "discover" ? "اكتشاف تلقائي لأقرب بحر" : "فحص البحر المختار"}.
-            اضغط الحرف: متحرك ثم ساكن ثم شدة (لحمّاد وأمثالها).
+            اضغط الحرف: حركة ثم سكون ثم شدة.
           </p>
+
+          <div className="mt-5">
+            <p className="mb-2 text-sm font-medium text-fg">أمثلة</p>
+            <div className="flex flex-col gap-2">
+              {EXAMPLES.map((ex) => (
+                <button
+                  key={ex.label}
+                  type="button"
+                  onClick={() => loadExample(ex)}
+                  className="w-full rounded-md bg-bg px-3 py-3 text-right ring-1 ring-border transition-colors hover:bg-bg-elevated"
+                >
+                  <span className="block text-sm font-medium text-fg">{ex.label}</span>
+                  <span className="mt-1 block whitespace-normal break-words font-display text-base leading-7 text-muted">
+                    {ex.sadr}
+                  </span>
+                  {ex.ajz ? (
+                    <span className="block whitespace-normal break-words font-display text-base leading-7 text-muted">
+                      {ex.ajz}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="flex flex-col gap-4">
@@ -198,9 +232,7 @@ function Home() {
               <HemistichView
                 key={`${i}-${h.cleaned}`}
                 result={h}
-                label={
-                  result.hemistichs.length === 1 ? "الشطر" : (LABELS[i] ?? `شطر ${i + 1}`)
-                }
+                label={hemistichLabel(i)}
                 onFlip={(li, bit) => flip(i, li, bit)}
               />
             ))

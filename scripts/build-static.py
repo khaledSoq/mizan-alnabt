@@ -38,12 +38,13 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
 .panel { background:var(--surf); border:1px solid var(--bd); border-radius:0.85rem; padding:0.85rem; }
 label { display:block; margin:0 0 0.35rem; font-size:0.85rem; font-weight:700; }
 textarea {
-  width:100%; min-height:5.6rem; resize:vertical; border:1px solid var(--bd);
+  width:100%; min-height:3.4rem; resize:vertical; border:1px solid var(--bd);
   border-radius:0.55rem; background:var(--elev); color:var(--fg);
   font-family:var(--disp); font-size:1.25rem; line-height:1.9;
-  padding:0.65rem 0.8rem; outline:none;
+  padding:0.55rem 0.8rem; outline:none;
 }
 textarea:focus { border-color:var(--ring); }
+.fields { display:flex; flex-direction:column; gap:0.65rem; }
 .meters { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.2rem 0 0.15rem; }
 .mchip {
   border:1px solid var(--bd); background:var(--elev); color:var(--fg);
@@ -82,6 +83,9 @@ textarea:focus { border-color:var(--ring); }
 .one { color:var(--one); }
 .zero { color:var(--zero); }
 .la { margin:0.35rem 0.9rem 0; font-family:var(--disp); font-size:1.15rem; color:var(--soft); }
+.recite { margin:0.55rem 0.9rem 0; }
+.recite b { display:block; font-size:0.72rem; font-weight:700; color:var(--soft); margin-bottom:0.15rem; }
+.recite p { margin:0; font-family:var(--disp); font-size:1.2rem; line-height:1.9; }
 .bits { margin:0.1rem 0.9rem 0.65rem; font-family:ui-monospace,monospace; font-size:0.7rem; letter-spacing:.12em; color:var(--subtle); direction:ltr; text-align:left; }
 .boxes { display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; padding:0.7rem; border-top:1px solid var(--edge); }
 @media (min-width:640px) { .boxes { grid-template-columns:repeat(4,1fr); } }
@@ -99,9 +103,17 @@ textarea:focus { border-color:var(--ring); }
 .fasih { margin:0; padding:0.45rem 0.9rem; border-top:1px solid var(--edge); font-size:0.72rem; color:var(--subtle); }
 .ex { margin-top:1rem; }
 .ex h2 { margin:0 0 0.45rem; font-size:0.8rem; color:var(--muted); font-weight:700; }
-.exrow { display:flex; flex-wrap:wrap; gap:0.4rem; }
-.exb { border:1px solid var(--bd); background:var(--surf); color:var(--fg); border-radius:0.5rem; padding:0.45rem 0.7rem; font-size:0.8rem; text-align:right; min-height:2.6rem; }
-.exb small { display:block; color:var(--muted); font-size:0.68rem; }
+.exrow { display:flex; flex-direction:column; gap:0.45rem; }
+.exb {
+  border:1px solid var(--bd); background:var(--surf); color:var(--fg);
+  border-radius:0.5rem; padding:0.65rem 0.8rem; font-size:0.92rem; text-align:right;
+  width:100%; white-space:normal; overflow:visible;
+}
+.exb .mlabel { display:block; font-weight:700; font-size:0.82rem; margin-bottom:0.2rem; }
+.exb .sadr, .exb .ajz {
+  display:block; font-family:var(--disp); font-size:1.05rem; line-height:1.75;
+  color:var(--muted); white-space:normal; overflow:visible; word-break:break-word;
+}
 .warn { text-align:center; color:var(--muted); font-size:0.82rem; }
 footer { margin-top:1.2rem; text-align:center; font-size:0.72rem; color:var(--subtle); line-height:1.7; }
 footer a { color:var(--muted); }
@@ -114,12 +126,20 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
   <header>
     <p class="kicker">شعر نبطي · من غير تشكيل</p>
     <h1>ميزان النبط</h1>
-    <p class="lede">الصق الشطر ثم اضغط «زِن البيت». البرنامج يولّد تقطيعات ويقارنها بالبحور. اضغط الحرف: متحرك ← ساكن ← شدة.</p>
+    <p class="lede">اكتب الصدر، وإن أحببت العجز. بلا حركات. اضغط الحرف: حركة ثم سكون ثم شدة.</p>
   </header>
 
   <section class="panel">
-    <label for="verse">البيت</label>
-    <textarea id="verse" rows="3" placeholder="صدر في سطر، عجز في سطر. بلا حركات.">يا ما حلا بعد العشا شرب الفنجال</textarea>
+    <div class="fields">
+      <div>
+        <label for="sadr">الصدر</label>
+        <textarea id="sadr" rows="2" placeholder="الصدر، بلا حركات">يا ما حلا الفنجال مع سيحة البال</textarea>
+      </div>
+      <div>
+        <label for="ajz">العجز</label>
+        <textarea id="ajz" rows="2" placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده"></textarea>
+      </div>
+    </div>
 
     <label style="margin-top:.75rem">البحر</label>
     <div class="meters" id="meters">
@@ -139,7 +159,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
       <button type="button" class="btn btn-go" id="go">زِن البيت</button>
       <button type="button" class="btn btn-reset" id="reset">صفّر القلب</button>
     </div>
-    <p class="hint" id="hint">1 متحرك · 0 ساكن · لا = 10 · نعم = 110. الاسم المشدد (حمّاد): اضغط الميم حتى تظهر الشدة.</p>
+    <p class="hint" id="hint">يمسح تعديلك على الحروف. 1 متحرك · 0 ساكن · لا = 10 · نعم = 110.</p>
   </section>
 
   <div id="boot" class="err" style="display:none"></div>
@@ -147,7 +167,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
   <p class="warn" id="same" style="display:none"></p>
 
   <section class="ex">
-    <h2>أمثلة من كل بحر — اضغط للتجربة</h2>
+    <h2>أمثلة — اضغط للتجربة</h2>
     <div class="exrow" id="ex"></div>
   </section>
 
@@ -182,18 +202,15 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   }
 
   var EXAMPLES = [
-    { meter: "mashub", label: "المسحوب", text: "يا ما حلا بعد العشا شرب الفنجال" },
-    { meter: "mashub", label: "العيد باكر", text: "العيد باكر أسعد الله ممساك" },
-    { meter: "arda", label: "العرضة", text: "نحمد الله جت على ما تمنى\nمن ولي العرش جزل الوهايب" },
-    { meter: "hilali", label: "الهلالي", text: "على ما يفوت القلب لا تشمت العدا\nولا تشمت اللي ما درى بالذي جرى" },
-    { meter: "sakhri", label: "الصخري", text: "أقول لها وقد طارت شعاعا" },
-    { meter: "hida", label: "الحداء", text: "يا راكبن من عندنا فوق حرباب" },
-    { meter: "hajini_tamm", label: "الهجيني", text: "من يلوم القلب ما هو منصف" },
-    { meter: "auto", label: "من هجركم", text: "من هجركم" },
-    { meter: "hilali", label: "جرّب القلب", text: "هو الدهر يا حماد ليس له مدى\nفكم قص من قرم على غرة يدى" }
+    { meter: "mashub", label: "المسحوب", sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "" },
+    { meter: "mashub", label: "المسحوب — عابرة سبيل", sadr: "العيد باكر أسعد الله ممساك", ajz: "والله مادري وين حدٍ جلسته" },
+    { meter: "arda", label: "العرضة", sadr: "نحمد الله جت على ما تمنى", ajz: "من ولي العرش جزل الوهايب" },
+    { meter: "hajini_tamm", label: "الهجيني التام", sadr: "غريب الدار ومناي التسلي", ajz: "أسلي خاطري عن حب خلي" },
+    { meter: "hilali", label: "الهلالي", sadr: "على ما يفوت القلب لا تشمت العدا", ajz: "ولا تشمت اللي ما درى بالذي جرى" }
   ];
   var LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
-  var verseEl = document.getElementById("verse");
+  var sadrEl = document.getElementById("sadr");
+  var ajzEl = document.getElementById("ajz");
   var metersEl = document.getElementById("meters");
   var resultsEl = document.getElementById("results");
   var sameEl = document.getElementById("same");
@@ -225,11 +242,13 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
       var b = document.createElement("button");
       b.type = "button";
       b.className = "exb";
-      var first = ex.text.split("\n")[0];
-      if (first.length > 22) first = first.slice(0, 22);
-      b.innerHTML = esc(first) + "<small>" + esc(ex.label) + "</small>";
+      var html = "<span class='mlabel'>" + esc(ex.label) + "</span>";
+      html += "<span class='sadr'>" + esc(ex.sadr) + "</span>";
+      if (ex.ajz) html += "<span class='ajz'>" + esc(ex.ajz) + "</span>";
+      b.innerHTML = html;
       b.onclick = function () {
-        verseEl.value = ex.text;
+        sadrEl.value = ex.sadr;
+        ajzEl.value = ex.ajz;
         locks = [];
         setMeter(ex.meter);
         doWeigh();
@@ -250,6 +269,27 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     }
     if (cur.length) words.push(cur);
     return words;
+  }
+  function haraka(L) {
+    if (L.skipped || L.bit === null || typeof L.bit === "undefined") return "";
+    if (L.shadda) return "\u0651\u064e";
+    if (L.bit === 1) return "\u064e";
+    if (L.bit === 0) return "\u0652";
+    return "";
+  }
+  function recitedLine(letters) {
+    var words = groupLetters(letters);
+    var out = [];
+    for (var w = 0; w < words.length; w++) {
+      var chunk = "";
+      var word = words[w];
+      for (var i = 0; i < word.length; i++) {
+        if (word[i].skipped) continue;
+        chunk += (word[i].char || "") + haraka(word[i]);
+      }
+      if (chunk) out.push(chunk);
+    }
+    return out.join(" ");
   }
   function offset(wi, li, words) {
     var n = 0;
@@ -276,14 +316,21 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
           var bit = L.bit;
           var bcls = sh || bit === 1 ? "one" : bit === 0 ? "zero" : "";
           var bt = sh ? "01" : (bit === 1 || bit === 0 ? bit : "—");
-          var glyph = esc(L.char) + (sh ? "ّ" : "");
-          tiles += "<button type='button' class='tile' data-hi='" + hi + "' data-li='" + g + "' data-bit='" + bit + "' data-sh='" + (sh ? "1" : "0") + "'>" +
+          var glyph = esc(L.char) + haraka(L);
+          tiles += "<button type='button' class='tile' title='اضغط: حركة ثم سكون ثم شدة' data-hi='" + hi + "' data-li='" + g + "' data-bit='" + bit + "' data-sh='" + (sh ? "1" : "0") + "'>" +
             "<span class='glyph'>" + glyph + "</span>" +
             "<span class='bit " + bcls + "'>" + bt + "</span></button>";
         }
         tiles += "</div>";
       }
       tiles += "</div>";
+    }
+    var recited = "";
+    if (h.letters && h.letters.length) {
+      var rec = recitedLine(h.letters);
+      if (rec) {
+        recited = "<div class='recite'><b>النطق المستنتج</b><p>" + esc(rec) + "</p></div>";
+      }
     }
     var la = "";
     if (h.ok && h.laNaam && h.laNaam.length) {
@@ -319,22 +366,27 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     return "<article class='paper'><header class='phd'><div><span class='lbl'>" + esc(label) +
       "</span> " + (h.meterName ? "<span class='mname'>" + esc(h.meterName) + "</span>" : "") +
       "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" +
-      "<div class='letters'>" + tiles + la + bits + "</div>" + boxes + alts + fasih + "</article>";
+      "<div class='letters'>" + tiles + recited + la + bits + "</div>" + boxes + alts + fasih + "</article>";
   }
 
   function doWeigh() {
     try {
       document.getElementById("boot").style.display = "none";
-      var result = ArudRef.weigh(verseEl.value, meterId, locks);
+      var result = ArudRef.weigh(sadrEl.value + "\n" + ajzEl.value, meterId, locks);
       hintEl.textContent = (result.mode === "discover"
         ? "اكتشاف تلقائي لأقرب بحر. "
-        : "فحص البحر المختار. ") + "اضغط الحرف: 1 ثم 0 ثم شدة.";
+        : "فحص البحر المختار. ") + "يمسح تعديلك على الحروف. اضغط الحرف: حركة ثم سكون ثم شدة.";
       if (!result.hemistichs || !result.hemistichs.length) {
         resultsEl.innerHTML = "<div class='err' style='background:var(--surf);color:var(--muted)'>" + esc(result.message) + "</div>";
       } else {
         var html = "";
         for (var i = 0; i < result.hemistichs.length; i++) {
-          var lab = result.hemistichs.length === 1 ? "الشطر" : (LABELS[i] || ("شطر " + (i + 1)));
+          var lab;
+          if (result.hemistichs.length === 1) {
+            lab = (sadrEl.value || "").replace(/^\s+|\s+$/g, "") ? "الصدر" : "العجز";
+          } else {
+            lab = LABELS[i] || ("شطر " + (i + 1));
+          }
           html += hemistichHTML(result.hemistichs[i], lab, i);
         }
         resultsEl.innerHTML = html;
@@ -380,7 +432,8 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     locks = [];
     doWeigh();
   };
-  verseEl.oninput = function () { locks = []; };
+  sadrEl.oninput = function () { locks = []; };
+  ajzEl.oninput = function () { locks = []; };
 
   doWeigh();
 })();
