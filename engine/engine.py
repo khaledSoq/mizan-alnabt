@@ -11,7 +11,7 @@ from .match import (
     load_catalog,
     match_candidate,
 )
-from .search import Candidate, generate
+from .search import Candidate, generate, generate_towards
 from .tokenize import Hemistich, Phoneme, split_bayt, tokenize_hemistich
 
 ACCEPT = 0.90
@@ -73,6 +73,35 @@ def _letters_for(h: Hemistich, cand: Candidate) -> list[LetterOut]:
     out: list[LetterOut] = []
     for i, (p, a) in enumerate(zip(h.phonemes, cand.assign)):
         if not p.display and a == -1:
+            continue
+        if p.kind == "alif_madd" and a == -1 and p.display:
+            mora_bit = None
+            if i + 1 < len(h.phonemes) and h.phonemes[i + 1].hint == "madd_mora":
+                mora_bit = cand.assign[i + 1] if i + 1 < len(cand.assign) else -1
+            if mora_bit == 1:
+                out.append(
+                    LetterOut(
+                        char=p.char or "ا",
+                        bit=0,
+                        skipped=False,
+                        kind=p.kind,
+                        word_i=p.word_i,
+                        locked=True,
+                        shadda=False,
+                    )
+                )
+            else:
+                out.append(
+                    LetterOut(
+                        char=p.char or "ا",
+                        bit=None,
+                        skipped=True,
+                        kind=p.kind,
+                        word_i=p.word_i,
+                        locked=True,
+                        shadda=False,
+                    )
+                )
             continue
         if not p.display and a in (0, 1):
             continue
@@ -162,6 +191,25 @@ def _apply_locks(h: Hemistich, locks: dict[int, int]) -> None:
                 p.hint = "user"
 
 
+def _directed_candidates(h: Hemistich, meters, selected_id: Optional[str]) -> list[Candidate]:
+    pool = meters
+    if selected_id and selected_id != "auto":
+        pool = [m for m in meters if m.id == selected_id] or meters
+    out: list[Candidate] = []
+    seen: set[str] = set()
+    for meter in pool:
+        for tmpl, feet in zip(meter.templates, meter.template_feet):
+            if meter.id == "mashub" and any(getattr(f, "key", "") == "muftacilun" for f in feet):
+                continue
+            for c in generate_towards(h, tmpl):
+                if c.bits in seen:
+                    continue
+                seen.add(c.bits)
+                out.append(c)
+    out.sort(key=lambda c: (c.cost, -len(c.bits)))
+    return out
+
+
 def weigh_hemistich(
     text: str,
     meter_id: str = "auto",
@@ -193,7 +241,9 @@ def weigh_hemistich(
             mode="check" if meter_id not in ("", "auto") else "discover",
         )
 
-    cands = generate(h)
+    cands = _directed_candidates(h, meters, None if meter_id in ("", "auto") else meter_id)
+    if not cands:
+        cands = generate(h)
     mode = "discover" if meter_id in ("", "auto") else "check"
     n_disp = len([p for p in h.phonemes if p.display])
 

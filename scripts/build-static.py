@@ -137,7 +137,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
       </div>
       <div>
         <label for="ajz">العجز</label>
-        <textarea id="ajz" rows="2" placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده"></textarea>
+        <textarea id="ajz" rows="2" placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده">في مجلس ما فيه نفس ثقيلة</textarea>
       </div>
     </div>
 
@@ -202,7 +202,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   }
 
   var EXAMPLES = [
-    { meter: "mashub", label: "المسحوب", sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "" },
+    { meter: "mashub", label: "المسحوب", sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "في مجلس ما فيه نفس ثقيلة" },
     { meter: "mashub", label: "المسحوب — عابرة سبيل", sadr: "العيد باكر أسعد الله ممساك", ajz: "والله مادري وين حدٍ جلسته" },
     { meter: "arda", label: "العرضة", sadr: "نحمد الله جت على ما تمنى", ajz: "من ولي العرش جزل الوهايب" },
     { meter: "hajini_tamm", label: "الهجيني التام", sadr: "غريب الدار ومناي التسلي", ajz: "أسلي خاطري عن حب خلي" },
@@ -411,10 +411,11 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     var hi = +btn.getAttribute("data-hi");
     var li = +btn.getAttribute("data-li");
     var sh = btn.getAttribute("data-sh") === "1";
-    var cur = btn.getAttribute("data-bit") === "1" ? 1 : 0;
+    var raw = btn.getAttribute("data-bit");
     var next;
-    if (sh) next = 0;
-    else if (cur === 1) next = 2;
+    if (sh) next = 1;
+    else if (raw === "1") next = 0;
+    else if (raw === "0") next = 2;
     else next = 1;
     while (locks.length <= hi) locks.push({});
     locks[hi][li] = next;

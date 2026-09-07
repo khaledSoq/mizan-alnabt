@@ -51,6 +51,7 @@ const FUNCTION_10 = new Set([
   "به",
   "كم",
   "ثم",
+  "مع",
 ]);
 
 const PRONOUNS = new Set(["هو", "هي", "هم", "هن", "هما"]);
@@ -230,16 +231,102 @@ function applyMaddConstraints(h: Hemistich) {
       let j = i - 1;
       while (j >= 0 && (phs[j]!.kind === "wasl" || phs[j]!.kind === "collapsed")) j -= 1;
       if (j >= 0 && phs[j]!.kind !== "alif_madd") {
-        if (phs[j]!.fixed === null) phs[j]!.fixed = 1;
+        if (phs[j]!.hint === "foldable") {
+          /* keep free so last-word C+madd can fold */
+        } else if (phs[j]!.fixed === null) phs[j]!.fixed = 1;
       }
     }
     if (i > 0 && phs[i - 1]!.kind === "alif_madd" && p.fixed === 0) {
       if (p.hint === "allah_ha") continue;
+      if (phs[i - 1]!.wordI !== p.wordI) continue;
       if (p.kind === "cons" || p.kind === "ta_marbuta" || p.kind === "collapsed") {
         p.kind = "collapsed";
       }
     }
   }
+}
+
+function markFoldable(h: Hemistich) {
+  const phs = h.phonemes;
+  if (!phs.length) return;
+  const lastW = phs[phs.length - 1]!.wordI;
+  const hasAl = phs.some(
+    (p) => p.wordI === lastW && (p.hint === "qamari_lam" || p.hint === "shamsi_sukun" || p.hint === "al_wasl"),
+  );
+  if (!hasAl) return;
+  for (let i = 0; i < phs.length; i++) {
+    const p = phs[i]!;
+    if (p.kind !== "alif_madd" || p.wordI !== lastW || i === 0) continue;
+    const prev = phs[i - 1]!;
+    if (prev.wordI !== lastW) continue;
+    if (
+      (prev.kind === "cons" || prev.kind === "waw" || prev.kind === "ya") &&
+      prev.hint !== "qamari_lam" &&
+      prev.hint !== "shamsi_sukun" &&
+      prev.hint !== "fn10"
+    ) {
+      prev.hint = "foldable";
+      prev.fixed = null;
+    }
+  }
+}
+
+function insertMaddMorae(h: Hemistich) {
+  const out: Phoneme[] = [];
+  const phs = h.phonemes;
+  for (let i = 0; i < phs.length; i++) {
+    const p = phs[i]!;
+    out.push(p);
+    if (p.kind !== "alif_madd" || i + 1 >= phs.length) continue;
+    const nxt = phs[i + 1]!;
+    if (nxt.wordI !== p.wordI || nxt.kind === "collapsed") continue;
+    if (nxt.kind === "cons" || nxt.kind === "ta_marbuta" || nxt.kind === "waw" || nxt.kind === "ya") {
+      out.push(ph("", "cons", null, false, p.wordI, "madd_mora"));
+    }
+  }
+  h.phonemes = out;
+}
+
+function bindTaBeforeAl(h: Hemistich) {
+  const phs = h.phonemes;
+  for (let i = 0; i < phs.length; i++) {
+    const p = phs[i]!;
+    if (p.kind !== "ta_marbuta" || p.fixed !== null) continue;
+    if (i + 1 < phs.length && phs[i + 1]!.kind === "wasl" && phs[i + 1]!.hint === "al_wasl") {
+      p.hint = "ta_wasl";
+    }
+  }
+}
+
+function insertTanwin(h: Hemistich) {
+  const phs = h.phonemes;
+  if (!phs.length) return;
+  const lastW = phs[phs.length - 1]!.wordI;
+  const blocked = new Set<number>();
+  for (const p of phs) {
+    if (
+      p.hint === "al_alif" ||
+      p.hint === "al_wasl" ||
+      p.hint === "qamari_lam" ||
+      p.hint === "shamsi_sukun" ||
+      p.hint === "fn10" ||
+      p.hint === "fn" ||
+      p.hint === "pron" ||
+      p.hint.startsWith("allah")
+    ) {
+      blocked.add(p.wordI);
+    }
+  }
+  const out: Phoneme[] = [];
+  for (let i = 0; i < phs.length; i++) {
+    const p = phs[i]!;
+    out.push(p);
+    const lastOfWord = i === phs.length - 1 || phs[i + 1]!.wordI !== p.wordI;
+    if (!lastOfWord || p.wordI === lastW || blocked.has(p.wordI)) continue;
+    if (p.kind === "wasl" || p.kind === "collapsed" || !p.display) continue;
+    out.push(ph("", "cons", null, false, p.wordI, "tanwin"));
+  }
+  h.phonemes = out;
 }
 
 export function tokenizeHemistich(text: string): Hemistich {
@@ -346,6 +433,10 @@ export function tokenizeHemistich(text: string): Hemistich {
       }
     }
   }
+  markFoldable(h);
   applyMaddConstraints(h);
+  insertMaddMorae(h);
+  bindTaBeforeAl(h);
+  insertTanwin(h);
   return h;
 }

@@ -1,5 +1,5 @@
 import { bitToBox, loadCatalog, matchCandidate, type MeterHit } from "./catalog";
-import { generate } from "./search";
+import { generate, generateTowards } from "./search";
 import { splitBayt, tokenizeHemistich } from "./tokenize";
 import type {
   AltOut,
@@ -8,6 +8,7 @@ import type {
   Hemistich,
   HemistichResult,
   LetterOut,
+  Meter,
   MeterListItem,
   WeighResult,
 } from "./types";
@@ -51,11 +52,42 @@ function lettersFor(h: Hemistich, cand: Candidate): LetterOut[] {
   h.phonemes.forEach((p, i) => {
     const a = cand.assign[i] ?? -1;
     if (!p.display && a === -1) return;
+    if (p.kind === "alif_madd" && a === -1 && p.display) {
+      let moraBit: number | null = null;
+      if (i + 1 < h.phonemes.length && h.phonemes[i + 1]!.hint === "madd_mora") {
+        moraBit = i + 1 < cand.assign.length ? (cand.assign[i + 1] ?? -1) : -1;
+      }
+      if (moraBit === 1) {
+        out.push({
+          char: p.char || "ا",
+          bit: 0,
+          skipped: false,
+          kind: p.kind,
+          wordI: p.wordI,
+          locked: true,
+          shadda: false,
+        });
+      } else {
+        out.push({
+          char: p.char || "ا",
+          bit: null,
+          skipped: true,
+          kind: p.kind,
+          wordI: p.wordI,
+          locked: true,
+          shadda: false,
+        });
+      }
+      return;
+    }
     if (!p.display && (a === 0 || a === 1)) return;
     let shadda = false;
     if (i > 0) {
       const prev = h.phonemes[i - 1]!;
       const prevA = cand.assign[i - 1] ?? -1;
+      if (!prev.display && (prev.hint === "user_shadda" || prev.hint === "shamsi_sukun") && prevA === 0 && a === 1) {
+        shadda = prev.hint === "user_shadda";
+      }
       if (prev.hint === "user_shadda" && prevA === 0) shadda = true;
     }
     out.push({
@@ -135,6 +167,27 @@ function applyLocks(h: Hemistich, locks: Record<number, number> | undefined) {
   }
 }
 
+function directedCandidates(h: Hemistich, meters: Meter[], selectedId: string | null): Candidate[] {
+  const pool = selectedId && selectedId !== "auto" ? meters.filter((m) => m.id === selectedId) : meters;
+  const use = pool.length ? pool : meters;
+  const out: Candidate[] = [];
+  const seen = new Set<string>();
+  for (const meter of use) {
+    for (let ti = 0; ti < meter.templates.length; ti++) {
+      const tmpl = meter.templates[ti]!;
+      const feet = meter.templateFeet[ti]!;
+      if (meter.id === "mashub" && feet.some((f) => f.key === "muftacilun")) continue;
+      for (const c of generateTowards(h, tmpl)) {
+        if (seen.has(c.bits)) continue;
+        seen.add(c.bits);
+        out.push(c);
+      }
+    }
+  }
+  out.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
+  return out;
+}
+
 export function weighHemistich(
   text: string,
   meterId = "auto",
@@ -150,7 +203,8 @@ export function weighHemistich(
     return emptyResult(text, h.cleaned, meterId, mode, "طول غير كاف");
   }
 
-  const cands = generate(h);
+  let cands = directedCandidates(h, meters, mode === "discover" ? null : meterId);
+  if (!cands.length) cands = generate(h);
   if (!cands.length) {
     const letters: LetterOut[] = h.phonemes
       .filter((p) => p.display)

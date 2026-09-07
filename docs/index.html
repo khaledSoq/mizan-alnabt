@@ -128,7 +128,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
       </div>
       <div>
         <label for="ajz">العجز</label>
-        <textarea id="ajz" rows="2" placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده"></textarea>
+        <textarea id="ajz" rows="2" placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده">في مجلس ما فيه نفس ثقيلة</textarea>
       </div>
     </div>
 
@@ -432,18 +432,68 @@ var Arud = (() => {
   var MAX_CANDIDATES = 3e3;
   var MAX_EXPANSIONS = 12e3;
   var MAX_BITS = 32;
-  function choices(p) {
+  function nextReal(ph2, i) {
+    let j = i + 1;
+    while (j < ph2.length && ph2[j].kind === "collapsed" && ph2[j].hint !== "madd_mora") j += 1;
+    return j < ph2.length ? ph2[j] : null;
+  }
+  function choices(p, ph2, i, state, assign) {
     if (p.kind === "wasl") {
       if (p.fixed === 1) return [1];
       if (p.fixed === 0) return [-1];
+      if (i > 0 && ph2[i - 1].hint === "ta_wasl") return [-1];
+      if (state === 0) {
+        const nxt = nextReal(ph2, i);
+        if (nxt !== null && nxt.fixed === 0) return [1];
+      }
       return [-1, 1];
     }
     if (p.kind === "collapsed") return [-1];
     if (p.hint === "allah_madd") return [-1, 0];
-    if (p.kind === "alif_madd") return [0];
+    if (p.hint === "madd_mora") {
+      const prevA = assign.length ? assign[assign.length - 1] : 0;
+      if (prevA === 0) return [-1];
+      return [1, -1];
+    }
+    if (p.kind === "alif_madd") {
+      const nxt = i + 1 < ph2.length ? ph2[i + 1] : null;
+      if (nxt !== null && nxt.hint === "madd_mora") return [0, -1];
+      if (i > 0 && ph2[i - 1].hint === "foldable") {
+        const prevA = assign.length ? assign[assign.length - 1] : 1;
+        if (prevA === -1) return [-1];
+        return [0];
+      }
+      return [0];
+    }
+    if (p.hint === "tanwin") return [-1, 0, 1];
+    if (p.hint === "foldable") return [1, -1];
     if (p.fixed !== null) return [p.fixed];
     if (p.kind === "waw" || p.kind === "ya") return [0, 1];
     return [1, 0];
+  }
+  function extra(p, ch, ph2, i, assign) {
+    let e = 0;
+    if (p.kind === "cons" && p.fixed === null && ch === 0 && p.hint !== "madd_mora" && p.hint !== "foldable") {
+      e += 1;
+    }
+    if ((p.kind === "waw" || p.kind === "ya") && p.fixed === null && ch === 1) {
+      const between = i > 0 && i + 1 < ph2.length && ph2[i - 1].kind === "cons" && (ph2[i + 1].kind === "cons" || ph2[i + 1].kind === "ta_marbuta");
+      e += between ? 0.05 : 0.35;
+    }
+    if (p.kind === "wasl" && ch === 1) e += 0.4;
+    if (p.kind === "wasl" && ch === -1) e += 0.15;
+    if (p.kind === "ta_marbuta" && ch === 1 && p.hint !== "ta_wasl") e += 0.8;
+    if (p.hint === "foldable" && ch === -1) e += 0.25;
+    if (p.hint === "tanwin" && ch !== -1) e += 0.7;
+    if (p.hint === "allah_ha" && ch === 1 && assign.length) {
+      const prev = ph2[i - 1];
+      if (prev.hint === "allah_madd" && assign[assign.length - 1] === -1) e += 0.6;
+    }
+    if (ch === 0 && assign.length) {
+      const prev = ph2[i - 1];
+      if (prev.hint === "allah_ha" && assign[assign.length - 1] === 1) e += 0.85;
+    }
+    return e;
   }
   function trans(state, bit) {
     if (bit !== 0 && bit !== 1) return null;
@@ -518,7 +568,7 @@ var Arud = (() => {
     let seq = 0;
     let expansions = 0;
     const heap = new MinHeap();
-    heap.push({ cost: 0, seq: 0, i: 0, bits: "", state: 0, assign: [] });
+    heap.push({ cost: 0, seq: 0, i: 0, ti: 0, bits: "", state: 0, assign: [] });
     while (heap.data.length && results.length < MAX_CANDIDATES && expansions < MAX_EXPANSIONS) {
       const node = heap.pop();
       expansions += 1;
@@ -537,41 +587,93 @@ var Arud = (() => {
         continue;
       }
       const p = ph2[node.i];
-      for (const ch of choices(p)) {
+      for (const ch of choices(p, ph2, node.i, node.state, node.assign)) {
         if (ch === -1) {
           heap.push({
-            cost: node.cost + (p.kind === "wasl" ? 0.15 : 0),
+            cost: node.cost + extra(p, ch, ph2, node.i, node.assign),
             seq: seq++,
             i: node.i + 1,
+            ti: node.ti,
             bits: node.bits,
             state: node.state,
-            assign: [...node.assign, -1]
+            assign: node.assign.concat(-1)
           });
           continue;
         }
         const newState = trans(node.state, ch);
         if (newState === null) continue;
         if (node.bits.length + 1 > MAX_BITS) continue;
-        let extra = 0;
-        if (p.kind === "cons" && p.fixed === null && ch === 0) extra += 1;
-        if ((p.kind === "waw" || p.kind === "ya") && p.fixed === null && ch === 1) extra += 0.35;
-        if (p.kind === "wasl" && ch === 1) extra += 0.4;
-        if (p.kind === "ta_marbuta" && ch === 1) extra += 0.8;
-        if (p.hint === "allah_ha" && ch === 1 && node.assign.length) {
-          const prev = ph2[node.i - 1];
-          if (prev.hint === "allah_madd" && node.assign[node.assign.length - 1] === -1) extra += 0.6;
-        }
-        if (ch === 0 && node.assign.length) {
-          const prev = ph2[node.i - 1];
-          if (prev.hint === "allah_ha" && node.assign[node.assign.length - 1] === 1) extra += 0.85;
-        }
         heap.push({
-          cost: node.cost + extra,
+          cost: node.cost + extra(p, ch, ph2, node.i, node.assign),
           seq: seq++,
           i: node.i + 1,
+          ti: node.ti,
           bits: node.bits + String(ch),
           state: newState,
-          assign: [...node.assign, ch]
+          assign: node.assign.concat(ch)
+        });
+      }
+    }
+    results.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
+    return results;
+  }
+  function generateTowards(h, template) {
+    const ph2 = h.phonemes;
+    if (!ph2.length || !template) return [];
+    const results = [];
+    const seen = /* @__PURE__ */ new Set();
+    let seq = 0;
+    let expansions = 0;
+    const heap = new MinHeap();
+    heap.push({ cost: 0, seq: 0, i: 0, ti: 0, bits: "", state: 0, assign: [] });
+    const n = ph2.length;
+    const tlen = template.length;
+    while (heap.data.length && results.length < 80 && expansions < MAX_EXPANSIONS) {
+      const node = heap.pop();
+      expansions += 1;
+      if (node.i === n) {
+        if (node.ti === tlen && node.state === 0 && !seen.has(node.bits)) {
+          if (node.bits.endsWith("0")) {
+            seen.add(node.bits);
+            results.push({
+              bits: node.bits,
+              assign: node.assign,
+              cost: node.cost,
+              laNaam: bitsToLaNaam(node.bits)
+            });
+          }
+        }
+        continue;
+      }
+      const p = ph2[node.i];
+      const remainPh = n - node.i;
+      const remainT = tlen - node.ti;
+      for (const ch of choices(p, ph2, node.i, node.state, node.assign)) {
+        if (ch === -1) {
+          heap.push({
+            cost: node.cost + extra(p, ch, ph2, node.i, node.assign),
+            seq: seq++,
+            i: node.i + 1,
+            ti: node.ti,
+            bits: node.bits,
+            state: node.state,
+            assign: node.assign.concat(-1)
+          });
+          continue;
+        }
+        if (node.ti >= tlen) continue;
+        if (String(ch) !== template[node.ti]) continue;
+        const newState = trans(node.state, ch);
+        if (newState === null) continue;
+        const heur = Math.max(0, remainT - 1 - (remainPh - 1)) * 0.01;
+        heap.push({
+          cost: node.cost + extra(p, ch, ph2, node.i, node.assign) + heur,
+          seq: seq++,
+          i: node.i + 1,
+          ti: node.ti + 1,
+          bits: node.bits + String(ch),
+          state: newState,
+          assign: node.assign.concat(ch)
         });
       }
     }
@@ -628,7 +730,8 @@ var Arud = (() => {
     "\u0644\u0647",
     "\u0628\u0647",
     "\u0643\u0645",
-    "\u062B\u0645"
+    "\u062B\u0645",
+    "\u0645\u0639"
   ]);
   var PRONOUNS = /* @__PURE__ */ new Set(["\u0647\u0648", "\u0647\u064A", "\u0647\u0645", "\u0647\u0646", "\u0647\u0645\u0627"]);
   var ALLAH_FORMS = /* @__PURE__ */ new Set([
@@ -781,16 +884,83 @@ var Arud = (() => {
         let j = i - 1;
         while (j >= 0 && (phs[j].kind === "wasl" || phs[j].kind === "collapsed")) j -= 1;
         if (j >= 0 && phs[j].kind !== "alif_madd") {
-          if (phs[j].fixed === null) phs[j].fixed = 1;
+          if (phs[j].hint === "foldable") {
+          } else if (phs[j].fixed === null) phs[j].fixed = 1;
         }
       }
       if (i > 0 && phs[i - 1].kind === "alif_madd" && p.fixed === 0) {
         if (p.hint === "allah_ha") continue;
+        if (phs[i - 1].wordI !== p.wordI) continue;
         if (p.kind === "cons" || p.kind === "ta_marbuta" || p.kind === "collapsed") {
           p.kind = "collapsed";
         }
       }
     }
+  }
+  function markFoldable(h) {
+    const phs = h.phonemes;
+    if (!phs.length) return;
+    const lastW = phs[phs.length - 1].wordI;
+    const hasAl = phs.some(
+      (p) => p.wordI === lastW && (p.hint === "qamari_lam" || p.hint === "shamsi_sukun" || p.hint === "al_wasl")
+    );
+    if (!hasAl) return;
+    for (let i = 0; i < phs.length; i++) {
+      const p = phs[i];
+      if (p.kind !== "alif_madd" || p.wordI !== lastW || i === 0) continue;
+      const prev = phs[i - 1];
+      if (prev.wordI !== lastW) continue;
+      if ((prev.kind === "cons" || prev.kind === "waw" || prev.kind === "ya") && prev.hint !== "qamari_lam" && prev.hint !== "shamsi_sukun" && prev.hint !== "fn10") {
+        prev.hint = "foldable";
+        prev.fixed = null;
+      }
+    }
+  }
+  function insertMaddMorae(h) {
+    const out = [];
+    const phs = h.phonemes;
+    for (let i = 0; i < phs.length; i++) {
+      const p = phs[i];
+      out.push(p);
+      if (p.kind !== "alif_madd" || i + 1 >= phs.length) continue;
+      const nxt = phs[i + 1];
+      if (nxt.wordI !== p.wordI || nxt.kind === "collapsed") continue;
+      if (nxt.kind === "cons" || nxt.kind === "ta_marbuta" || nxt.kind === "waw" || nxt.kind === "ya") {
+        out.push(ph("", "cons", null, false, p.wordI, "madd_mora"));
+      }
+    }
+    h.phonemes = out;
+  }
+  function bindTaBeforeAl(h) {
+    const phs = h.phonemes;
+    for (let i = 0; i < phs.length; i++) {
+      const p = phs[i];
+      if (p.kind !== "ta_marbuta" || p.fixed !== null) continue;
+      if (i + 1 < phs.length && phs[i + 1].kind === "wasl" && phs[i + 1].hint === "al_wasl") {
+        p.hint = "ta_wasl";
+      }
+    }
+  }
+  function insertTanwin(h) {
+    const phs = h.phonemes;
+    if (!phs.length) return;
+    const lastW = phs[phs.length - 1].wordI;
+    const blocked = /* @__PURE__ */ new Set();
+    for (const p of phs) {
+      if (p.hint === "al_alif" || p.hint === "al_wasl" || p.hint === "qamari_lam" || p.hint === "shamsi_sukun" || p.hint === "fn10" || p.hint === "fn" || p.hint === "pron" || p.hint.startsWith("allah")) {
+        blocked.add(p.wordI);
+      }
+    }
+    const out = [];
+    for (let i = 0; i < phs.length; i++) {
+      const p = phs[i];
+      out.push(p);
+      const lastOfWord = i === phs.length - 1 || phs[i + 1].wordI !== p.wordI;
+      if (!lastOfWord || p.wordI === lastW || blocked.has(p.wordI)) continue;
+      if (p.kind === "wasl" || p.kind === "collapsed" || !p.display) continue;
+      out.push(ph("", "cons", null, false, p.wordI, "tanwin"));
+    }
+    h.phonemes = out;
   }
   function tokenizeHemistich(text) {
     const cleaned = cleanLine(text);
@@ -887,7 +1057,11 @@ var Arud = (() => {
         }
       }
     }
+    markFoldable(h);
     applyMaddConstraints(h);
+    insertMaddMorae(h);
+    bindTaBeforeAl(h);
+    insertTanwin(h);
     return h;
   }
 
@@ -918,14 +1092,45 @@ var Arud = (() => {
   function lettersFor(h, cand) {
     const out = [];
     h.phonemes.forEach((p, i) => {
-      var _a, _b;
+      var _a, _b, _c;
       const a = (_a = cand.assign[i]) != null ? _a : -1;
       if (!p.display && a === -1) return;
+      if (p.kind === "alif_madd" && a === -1 && p.display) {
+        let moraBit = null;
+        if (i + 1 < h.phonemes.length && h.phonemes[i + 1].hint === "madd_mora") {
+          moraBit = i + 1 < cand.assign.length ? (_b = cand.assign[i + 1]) != null ? _b : -1 : -1;
+        }
+        if (moraBit === 1) {
+          out.push({
+            char: p.char || "\u0627",
+            bit: 0,
+            skipped: false,
+            kind: p.kind,
+            wordI: p.wordI,
+            locked: true,
+            shadda: false
+          });
+        } else {
+          out.push({
+            char: p.char || "\u0627",
+            bit: null,
+            skipped: true,
+            kind: p.kind,
+            wordI: p.wordI,
+            locked: true,
+            shadda: false
+          });
+        }
+        return;
+      }
       if (!p.display && (a === 0 || a === 1)) return;
       let shadda = false;
       if (i > 0) {
         const prev = h.phonemes[i - 1];
-        const prevA = (_b = cand.assign[i - 1]) != null ? _b : -1;
+        const prevA = (_c = cand.assign[i - 1]) != null ? _c : -1;
+        if (!prev.display && (prev.hint === "user_shadda" || prev.hint === "shamsi_sukun") && prevA === 0 && a === 1) {
+          shadda = prev.hint === "user_shadda";
+        }
         if (prev.hint === "user_shadda" && prevA === 0) shadda = true;
       }
       out.push({
@@ -1005,6 +1210,26 @@ var Arud = (() => {
       }
     }
   }
+  function directedCandidates(h, meters, selectedId) {
+    const pool = selectedId && selectedId !== "auto" ? meters.filter((m) => m.id === selectedId) : meters;
+    const use = pool.length ? pool : meters;
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const meter of use) {
+      for (let ti = 0; ti < meter.templates.length; ti++) {
+        const tmpl = meter.templates[ti];
+        const feet = meter.templateFeet[ti];
+        if (meter.id === "mashub" && feet.some((f) => f.key === "muftacilun")) continue;
+        for (const c of generateTowards(h, tmpl)) {
+          if (seen.has(c.bits)) continue;
+          seen.add(c.bits);
+          out.push(c);
+        }
+      }
+    }
+    out.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
+    return out;
+  }
   function weighHemistich(text, meterId = "auto", locks) {
     var _a;
     const { meters } = loadCatalog();
@@ -1015,7 +1240,8 @@ var Arud = (() => {
     if (!h.phonemes.length || nDisp < 2) {
       return emptyResult(text, h.cleaned, meterId, mode, "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641");
     }
-    const cands = generate(h);
+    let cands = directedCandidates(h, meters, mode === "discover" ? null : meterId);
+    if (!cands.length) cands = generate(h);
     if (!cands.length) {
       const letters = h.phonemes.filter((p) => p.display).map((p) => ({
         char: p.char || "\xB7",
@@ -1182,7 +1408,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   }
 
   var EXAMPLES = [
-    { meter: "mashub", label: "المسحوب", sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "" },
+    { meter: "mashub", label: "المسحوب", sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "في مجلس ما فيه نفس ثقيلة" },
     { meter: "mashub", label: "المسحوب — عابرة سبيل", sadr: "العيد باكر أسعد الله ممساك", ajz: "والله مادري وين حدٍ جلسته" },
     { meter: "arda", label: "العرضة", sadr: "نحمد الله جت على ما تمنى", ajz: "من ولي العرش جزل الوهايب" },
     { meter: "hajini_tamm", label: "الهجيني التام", sadr: "غريب الدار ومناي التسلي", ajz: "أسلي خاطري عن حب خلي" },
@@ -1391,10 +1617,11 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     var hi = +btn.getAttribute("data-hi");
     var li = +btn.getAttribute("data-li");
     var sh = btn.getAttribute("data-sh") === "1";
-    var cur = btn.getAttribute("data-bit") === "1" ? 1 : 0;
+    var raw = btn.getAttribute("data-bit");
     var next;
-    if (sh) next = 0;
-    else if (cur === 1) next = 2;
+    if (sh) next = 1;
+    else if (raw === "1") next = 0;
+    else if (raw === "0") next = 2;
     else next = 1;
     while (locks.length <= hi) locks.push({});
     locks[hi][li] = next;

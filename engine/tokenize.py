@@ -433,12 +433,16 @@ def tokenize_hemistich(text: str) -> Hemistich:
         if last_disp is not None and last_disp.kind != "wasl":
             last_disp.fixed = 0
 
+    _mark_foldable(h)
     _apply_madd_constraints(h)
+    _insert_madd_morae(h)
+    _bind_ta_before_al(h)
+    _insert_tanwin(h)
     return h
 
 
 def _apply_madd_constraints(h: Hemistich) -> None:
-    """الألف بعد صامت = مد 0، والحرف قبل المد متحرك. المد+سكون يُطوي بتّاً واحداً."""
+    """الألف بعد صامت = مد 0، والحرف قبل المد متحرك. الطيّ داخل الكلمة فقط."""
     ph = h.phonemes
     for i, p in enumerate(ph):
         if p.kind == "alif_madd":
@@ -446,14 +450,115 @@ def _apply_madd_constraints(h: Hemistich) -> None:
             while j >= 0 and ph[j].kind in ("wasl", "collapsed"):
                 j -= 1
             if j >= 0 and ph[j].kind not in ("alif_madd",):
-                if ph[j].fixed is None:
+                if ph[j].hint == "foldable":
+                    pass
+                elif ph[j].fixed is None:
                     ph[j].fixed = 1
                 elif ph[j].fixed == 0 and ph[j].hint not in ("fn10", "qamari_lam", "allah_lam1"):
-                    # تعارض نادر: نترك البحث يفشل هذا الفرع
                     pass
-        # سكون بعد ألف مد (جال، لاه، تمنى) لا يضيف بتّاً — إلا هاء لفظ الجلالة المعروضة
         if i > 0 and ph[i - 1].kind == "alif_madd" and p.fixed == 0:
             if p.hint == "allah_ha":
                 continue
+            if ph[i - 1].word_i != p.word_i:
+                continue
             if p.kind in ("cons", "ta_marbuta", "collapsed"):
                 p.kind = "collapsed"
+
+
+def _insert_madd_morae(h: Hemistich) -> None:
+    """صامت+مد+صامت نفس الكلمة: بتّ خفي يكمّل وتد 110 والألف تُعرض ساكنة."""
+    out: list[Phoneme] = []
+    ph = h.phonemes
+    for i, p in enumerate(ph):
+        out.append(p)
+        if p.kind != "alif_madd" or i + 1 >= len(ph):
+            continue
+        nxt = ph[i + 1]
+        if nxt.word_i != p.word_i:
+            continue
+        if nxt.kind == "collapsed":
+            continue
+        if nxt.kind in ("cons", "ta_marbuta", "waw", "ya"):
+            out.append(
+                Phoneme(
+                    char="",
+                    kind="cons",
+                    fixed=None,
+                    display=False,
+                    word_i=p.word_i,
+                    src_index=p.src_index,
+                    hint="madd_mora",
+                )
+            )
+    h.phonemes = out
+
+
+def _mark_foldable(h: Hemistich) -> None:
+    """آخر كلمة بعد ال: الصامت قبل المد قابل للطي إن اكتمل القالب."""
+    ph = h.phonemes
+    if not ph:
+        return
+    last_w = ph[-1].word_i
+    has_al = any(
+        p.word_i == last_w and p.hint in ("qamari_lam", "shamsi_sukun", "al_wasl")
+        for p in ph
+    )
+    if not has_al:
+        return
+    for i, p in enumerate(ph):
+        if p.kind != "alif_madd" or p.word_i != last_w or i == 0:
+            continue
+        prev = ph[i - 1]
+        if prev.word_i != last_w:
+            continue
+        if prev.kind in ("cons", "waw", "ya") and prev.hint not in (
+            "qamari_lam",
+            "shamsi_sukun",
+            "fn10",
+        ):
+            prev.hint = "foldable"
+            prev.fixed = None
+
+
+def _bind_ta_before_al(h: Hemistich) -> None:
+    ph = h.phonemes
+    for i, p in enumerate(ph):
+        if p.kind != "ta_marbuta" or p.fixed is not None:
+            continue
+        if i + 1 < len(ph) and ph[i + 1].kind == "wasl" and ph[i + 1].hint == "al_wasl":
+            p.hint = "ta_wasl"
+
+
+def _insert_tanwin(h: Hemistich) -> None:
+    """تنوين اختياري بعد اسم نكرة يتيح بتّاً إضافياً (مجلسٍ، نفسٍ)."""
+    ph = h.phonemes
+    if not ph:
+        return
+    last_w = ph[-1].word_i
+    blocked = set()
+    for p in ph:
+        if p.hint in ("al_alif", "al_wasl", "qamari_lam", "shamsi_sukun", "fn10", "fn", "pron"):
+            blocked.add(p.word_i)
+        if p.hint.startswith("allah"):
+            blocked.add(p.word_i)
+    out: list[Phoneme] = []
+    n = len(ph)
+    for i, p in enumerate(ph):
+        out.append(p)
+        last_of_word = i == n - 1 or ph[i + 1].word_i != p.word_i
+        if not last_of_word or p.word_i == last_w or p.word_i in blocked:
+            continue
+        if p.kind in ("wasl", "collapsed") or not p.display:
+            continue
+        out.append(
+            Phoneme(
+                char="",
+                kind="cons",
+                fixed=None,
+                display=False,
+                word_i=p.word_i,
+                src_index=getattr(p, "src_index", 0),
+                hint="tanwin",
+            )
+        )
+    h.phonemes = out

@@ -15,6 +15,8 @@ from engine.tokenize import split_bayt, tokenize_hemistich
 
 
 MASHUB = "يا ما حلا بعد العشا شرب الفنجال"
+MASHUB_TRUE = "يا ما حلا الفنجال مع سيحة البال"
+MASHUB_AJZ = "في مجلس ما فيه نفس ثقيلة"
 ARDA = "نحمد الله جت على ما تمنى"
 HAJR = "من هجركم"
 AID = "العيد باكر أسعد الله ممساك"
@@ -53,10 +55,37 @@ class MashubTests(unittest.TestCase):
         r = weigh_hemistich("ما يستريح القلب لا صار مشغول", "mashub")
         self.assertGreaterEqual(r.score, 0.80, f"{r.score} {r.bits}")
 
+    def test_mashub_true_gold(self):
+        r = weigh_hemistich(MASHUB_TRUE, "mashub")
+        self.assertTrue(r.ok, r.message)
+        self.assertEqual(r.bits, "101011010101101011010", r.bits)
+        self.assertEqual(r.score, 1.0, f"{r.score} {r.bits} {[b.name for b in r.boxes]}")
+        names = [b.name for b in r.boxes]
+        self.assertEqual(names, ["مستفعلن", "مستفعلن", "فاعلاتن"], names)
+        self.assertFalse(any(b.broken for b in r.boxes), names)
+
+    def test_mashub_true_bayt(self):
+        out = weigh(MASHUB_TRUE + "\n" + MASHUB_AJZ, "mashub")
+        self.assertEqual(len(out["hemistichs"]), 2)
+        for h in out["hemistichs"]:
+            self.assertGreaterEqual(h["score"], 0.95, f"{h['text']} {h['score']} {h['bits']}")
+
+    def test_ma_function_10(self):
+        h = tokenize_hemistich("مع")
+        hints = [p.hint for p in h.phonemes]
+        self.assertTrue(any("fn10" in x for x in hints), hints)
+        bits = []
+        for p in h.phonemes:
+            if p.fixed in (0, 1) and p.kind != "collapsed":
+                bits.append(str(p.fixed))
+        self.assertTrue("".join(bits).startswith("10") or bits[:2] == ["1", "0"], bits)
+        r = weigh_hemistich("ما يستريح القلب لا صار مشغول", "mashub")
+        self.assertGreaterEqual(r.score, 0.80, f"{r.score} {r.bits}")
+
     def test_aid_bakir_mashub(self):
         r = weigh_hemistich(AID, "mashub")
         self.assertTrue(r.ok, r.message)
-        self.assertGreaterEqual(r.score, 0.90, f"{r.score} {r.bits} {r.la_naam}")
+        self.assertGreaterEqual(r.score, 0.99, f"{r.score} {r.bits} {r.la_naam}")
         names = [b.name for b in r.boxes]
         self.assertEqual(names[-1], "فاعلاتن", names)
         self.assertFalse(r.boxes[-1].broken)
@@ -69,7 +98,7 @@ class MashubTests(unittest.TestCase):
         self.assertEqual(auto.meter_id, "mashub")
         out = weigh(AID, "mashub")
         self.assertTrue(out["ok"])
-        self.assertGreaterEqual(out["hemistichs"][0]["score"], 0.90)
+        self.assertGreaterEqual(out["hemistichs"][0]["score"], 0.99)
 
 
 class ArdaTests(unittest.TestCase):
@@ -83,7 +112,7 @@ class ArdaTests(unittest.TestCase):
     def test_arda_selected(self):
         r = weigh_hemistich(ARDA, "arda")
         self.assertEqual(r.meter_id, "arda")
-        self.assertGreaterEqual(r.score, 0.80, f"{r.score} {r.bits}")
+        self.assertGreaterEqual(r.score, 0.95, f"{r.score} {r.bits}")
         ha = [L for L in r.letters if L.char == "ه"]
         self.assertTrue(ha)
         self.assertFalse(ha[0].skipped)

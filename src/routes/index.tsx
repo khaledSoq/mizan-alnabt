@@ -8,12 +8,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({ component: Home });
 
 const DEFAULT_SADR = "يا ما حلا الفنجال مع سيحة البال";
+const DEFAULT_AJZ = "في مجلس ما فيه نفس ثقيلة";
 
 const EXAMPLES: { label: string; sadr: string; ajz: string; meter: string }[] = [
   {
     label: "المسحوب",
     sadr: "يا ما حلا الفنجال مع سيحة البال",
-    ajz: "",
+    ajz: "في مجلس ما فيه نفس ثقيلة",
     meter: "mashub",
   },
   {
@@ -51,7 +52,7 @@ function joinBayt(sadr: string, ajz: string) {
 function Home() {
   const meters = useMemo(() => meterList(), []);
   const [sadr, setSadr] = useState(DEFAULT_SADR);
-  const [ajz, setAjz] = useState("");
+  const [ajz, setAjz] = useState(DEFAULT_AJZ);
   const [meterId, setMeterId] = useState("mashub");
   const [locks, setLocks] = useState<Array<Record<number, number>>>([]);
 

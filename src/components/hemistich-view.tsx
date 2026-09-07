@@ -97,7 +97,11 @@ export function HemistichView({ result, label, onFlip }: Props) {
                       key={`${wi}-${li}-${L.char}-${global}`}
                       letter={L}
                       onClick={() => {
-                        const next = L.shadda ? 0 : L.bit === 1 ? 2 : 1;
+                        let next: number;
+                        if (L.shadda) next = 1;
+                        else if (L.bit === 1) next = 0;
+                        else if (L.bit === 0) next = 2;
+                        else next = 1;
                         onFlip(global, next);
                       }}
                     />
