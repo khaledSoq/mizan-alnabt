@@ -35,6 +35,8 @@ textarea {
   padding:0.55rem 0.8rem; outline:none;
 }
 textarea:focus { border-color:var(--ring); }
+textarea::placeholder { color:var(--subtle); opacity:1; }
+textarea::-webkit-input-placeholder { color:var(--subtle); }
 .fields { display:flex; flex-direction:column; gap:0.65rem; }
 .meters { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.2rem 0 0.15rem; }
 .mchip {
@@ -124,11 +126,11 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
     <div class="fields">
       <div>
         <label for="sadr">الصدر</label>
-        <textarea id="sadr" rows="2" placeholder="الصدر، بلا حركات">يا ما حلا الفنجال مع سيحة البال</textarea>
+        <textarea id="sadr" rows="2" placeholder="يا ما حلا الفنجال مع سيحة البال"></textarea>
       </div>
       <div>
         <label for="ajz">العجز</label>
-        <textarea id="ajz" rows="2" placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده">في مجلس ما فيه نفس ثقيلة</textarea>
+        <textarea id="ajz" rows="2" placeholder="في مجلس ما فيه نفس ثقيلة"></textarea>
       </div>
     </div>
 
@@ -150,7 +152,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
       <button type="button" class="btn btn-go" id="go">زِن البيت</button>
       <button type="button" class="btn btn-reset" id="reset">صفّر القلب</button>
     </div>
-    <p class="hint" id="hint">يمسح تعديلك على الحروف. 1 متحرك · 0 ساكن · لا = 10 · نعم = 110.</p>
+    <p class="hint" id="hint">يمسح البيت ويعيد المثال الرمادي. اكتب فوقه مباشرة. 1 متحرك · 0 ساكن · لا = 10 · نعم = 110.</p>
   </section>
 
   <div id="boot" class="err" style="display:none"></div>
@@ -1407,12 +1409,26 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     return;
   }
 
+  var METER_EXAMPLES = {
+    mashub: { sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "في مجلس ما فيه نفس ثقيلة" },
+    arda: { sadr: "نحمد الله جت على ما تمنى", ajz: "من ولي العرش جزل الوهايب" },
+    hajini_tamm: { sadr: "غريب الدار ومناي التسلي", ajz: "أسلي خاطري عن حب خلي" },
+    hajini_qasir: { sadr: "إن كان هذا جزانا", ajz: "الله يجازي الحبيب" },
+    hilali: { sadr: "على ما يفوت القلب لا تشمت العدا", ajz: "ولا تشمت اللي ما درى بالذي جرى" },
+    sakhri: { sadr: "ثلاث سنين ودموعي حيارى", ajz: "متى يا ناس في خدي تبارا" },
+    hida: { sadr: "الزين بينة رسومه يا علي", ajz: "وان القمر غير النجوم اللي معه" },
+    madid: { sadr: "السلام ولا سهى القلب عن ذكر الاله", ajz: "ربنا اللي نزل اقرا وعلم بالقلم" }
+  };
   var EXAMPLES = [
-    { meter: "mashub", label: "المسحوب", sadr: "يا ما حلا الفنجال مع سيحة البال", ajz: "في مجلس ما فيه نفس ثقيلة" },
+    { meter: "mashub", label: "المسحوب", sadr: METER_EXAMPLES.mashub.sadr, ajz: METER_EXAMPLES.mashub.ajz },
     { meter: "mashub", label: "المسحوب — عابرة سبيل", sadr: "العيد باكر أسعد الله ممساك", ajz: "والله مادري وين حدٍ جلسته" },
-    { meter: "arda", label: "العرضة", sadr: "نحمد الله جت على ما تمنى", ajz: "من ولي العرش جزل الوهايب" },
-    { meter: "hajini_tamm", label: "الهجيني التام", sadr: "غريب الدار ومناي التسلي", ajz: "أسلي خاطري عن حب خلي" },
-    { meter: "hilali", label: "الهلالي", sadr: "على ما يفوت القلب لا تشمت العدا", ajz: "ولا تشمت اللي ما درى بالذي جرى" }
+    { meter: "arda", label: "العرضة", sadr: METER_EXAMPLES.arda.sadr, ajz: METER_EXAMPLES.arda.ajz },
+    { meter: "hajini_tamm", label: "الهجيني التام", sadr: METER_EXAMPLES.hajini_tamm.sadr, ajz: METER_EXAMPLES.hajini_tamm.ajz },
+    { meter: "hajini_qasir", label: "الهجيني القصير", sadr: METER_EXAMPLES.hajini_qasir.sadr, ajz: METER_EXAMPLES.hajini_qasir.ajz },
+    { meter: "hilali", label: "الهلالي", sadr: METER_EXAMPLES.hilali.sadr, ajz: METER_EXAMPLES.hilali.ajz },
+    { meter: "sakhri", label: "الصخري", sadr: METER_EXAMPLES.sakhri.sadr, ajz: METER_EXAMPLES.sakhri.ajz },
+    { meter: "hida", label: "الحداء", sadr: METER_EXAMPLES.hida.sadr, ajz: METER_EXAMPLES.hida.ajz },
+    { meter: "madid", label: "المديد", sadr: METER_EXAMPLES.madid.sadr, ajz: METER_EXAMPLES.madid.ajz }
   ];
   var LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
   var sadrEl = document.getElementById("sadr");
@@ -1423,7 +1439,28 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   var hintEl = document.getElementById("hint");
   var exEl = document.getElementById("ex");
   var meterId = "mashub";
+  var hintMeter = "mashub";
   var locks = [];
+
+  function applyPlaceholders(id) {
+    var ex = METER_EXAMPLES[id];
+    if (ex) {
+      sadrEl.placeholder = ex.sadr;
+      ajzEl.placeholder = ex.ajz;
+    } else {
+      sadrEl.placeholder = "الصدر، بلا حركات";
+      ajzEl.placeholder = "العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده";
+    }
+  }
+  function verseText() {
+    var s = (sadrEl.value || "").replace(/^\s+|\s+$/g, "");
+    var a = (ajzEl.value || "").replace(/^\s+|\s+$/g, "");
+    if (!s && !a) {
+      var ex = METER_EXAMPLES[hintMeter];
+      if (ex) return ex.sadr + "\n" + ex.ajz;
+    }
+    return sadrEl.value + "\n" + ajzEl.value;
+  }
 
   function setMeter(id) {
     meterId = id;
@@ -1434,12 +1471,27 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     }
   }
   setMeter("mashub");
+  applyPlaceholders("mashub");
 
   metersEl.onclick = function (ev) {
     var t = ev.target;
     while (t && t !== metersEl && !t.getAttribute("data-id")) t = t.parentNode;
     if (!t || t === metersEl) return;
-    setMeter(t.getAttribute("data-id"));
+    var id = t.getAttribute("data-id");
+    setMeter(id);
+    if (id !== "auto") {
+      hintMeter = id;
+      applyPlaceholders(id);
+      var ex = METER_EXAMPLES[id];
+      if (ex) {
+        sadrEl.value = ex.sadr;
+        ajzEl.value = ex.ajz;
+      } else {
+        sadrEl.value = "";
+        ajzEl.value = "";
+      }
+      locks = [];
+    }
     doWeigh();
   };
 
@@ -1457,6 +1509,8 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
         ajzEl.value = ex.ajz;
         locks = [];
         setMeter(ex.meter);
+        hintMeter = ex.meter;
+        applyPlaceholders(ex.meter);
         doWeigh();
       };
       exEl.appendChild(b);
@@ -1578,7 +1632,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   function doWeigh() {
     try {
       document.getElementById("boot").style.display = "none";
-      var result = ArudRef.weigh(sadrEl.value + "\n" + ajzEl.value, meterId, locks);
+      var result = ArudRef.weigh(verseText(), meterId, locks);
       hintEl.textContent = (result.mode === "discover"
         ? "اكتشاف تلقائي لأقرب بحر. "
         : "فحص البحر المختار. ") + "يمسح تعديلك على الحروف. اضغط الحرف: حركة ثم سكون ثم شدة.";
@@ -1636,6 +1690,8 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     }
   };
   document.getElementById("reset").onclick = function () {
+    sadrEl.value = "";
+    ajzEl.value = "";
     locks = [];
     doWeigh();
   };

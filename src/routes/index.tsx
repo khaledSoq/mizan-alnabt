@@ -7,40 +7,56 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: Home });
 
-const DEFAULT_SADR = "يا ما حلا الفنجال مع سيحة البال";
-const DEFAULT_AJZ = "في مجلس ما فيه نفس ثقيلة";
-
-const EXAMPLES: { label: string; sadr: string; ajz: string; meter: string }[] = [
-  {
-    label: "المسحوب",
+const METER_EXAMPLES: Record<string, { sadr: string; ajz: string }> = {
+  mashub: {
     sadr: "يا ما حلا الفنجال مع سيحة البال",
     ajz: "في مجلس ما فيه نفس ثقيلة",
-    meter: "mashub",
   },
+  arda: {
+    sadr: "نحمد الله جت على ما تمنى",
+    ajz: "من ولي العرش جزل الوهايب",
+  },
+  hajini_tamm: {
+    sadr: "غريب الدار ومناي التسلي",
+    ajz: "أسلي خاطري عن حب خلي",
+  },
+  hajini_qasir: {
+    sadr: "إن كان هذا جزانا",
+    ajz: "الله يجازي الحبيب",
+  },
+  hilali: {
+    sadr: "على ما يفوت القلب لا تشمت العدا",
+    ajz: "ولا تشمت اللي ما درى بالذي جرى",
+  },
+  sakhri: {
+    sadr: "ثلاث سنين ودموعي حيارى",
+    ajz: "متى يا ناس في خدي تبارا",
+  },
+  hida: {
+    sadr: "الزين بينة رسومه يا علي",
+    ajz: "وان القمر غير النجوم اللي معه",
+  },
+  madid: {
+    sadr: "السلام ولا سهى القلب عن ذكر الاله",
+    ajz: "ربنا اللي نزل اقرا وعلم بالقلم",
+  },
+};
+
+const EXAMPLES: { label: string; sadr: string; ajz: string; meter: string }[] = [
+  { label: "المسحوب", ...METER_EXAMPLES.mashub!, meter: "mashub" },
   {
     label: "المسحوب — عابرة سبيل",
     sadr: "العيد باكر أسعد الله ممساك",
     ajz: "والله مادري وين حدٍ جلسته",
     meter: "mashub",
   },
-  {
-    label: "العرضة",
-    sadr: "نحمد الله جت على ما تمنى",
-    ajz: "من ولي العرش جزل الوهايب",
-    meter: "arda",
-  },
-  {
-    label: "الهجيني التام",
-    sadr: "غريب الدار ومناي التسلي",
-    ajz: "أسلي خاطري عن حب خلي",
-    meter: "hajini_tamm",
-  },
-  {
-    label: "الهلالي",
-    sadr: "على ما يفوت القلب لا تشمت العدا",
-    ajz: "ولا تشمت اللي ما درى بالذي جرى",
-    meter: "hilali",
-  },
+  { label: "العرضة", ...METER_EXAMPLES.arda!, meter: "arda" },
+  { label: "الهجيني التام", ...METER_EXAMPLES.hajini_tamm!, meter: "hajini_tamm" },
+  { label: "الهجيني القصير", ...METER_EXAMPLES.hajini_qasir!, meter: "hajini_qasir" },
+  { label: "الهلالي", ...METER_EXAMPLES.hilali!, meter: "hilali" },
+  { label: "الصخري", ...METER_EXAMPLES.sakhri!, meter: "sakhri" },
+  { label: "الحداء", ...METER_EXAMPLES.hida!, meter: "hida" },
+  { label: "المديد", ...METER_EXAMPLES.madid!, meter: "madid" },
 ];
 
 const LABELS = ["الصدر", "العجز", "شطر ثالث", "شطر رابع"];
@@ -51,18 +67,43 @@ function joinBayt(sadr: string, ajz: string) {
 
 function Home() {
   const meters = useMemo(() => meterList(), []);
-  const [sadr, setSadr] = useState(DEFAULT_SADR);
-  const [ajz, setAjz] = useState(DEFAULT_AJZ);
+  const [sadr, setSadr] = useState("");
+  const [ajz, setAjz] = useState("");
   const [meterId, setMeterId] = useState("mashub");
+  const [hintMeter, setHintMeter] = useState("mashub");
   const [locks, setLocks] = useState<Array<Record<number, number>>>([]);
 
-  const verse = joinBayt(sadr, ajz);
+  const hint = METER_EXAMPLES[hintMeter] ?? METER_EXAMPLES.mashub!;
+  const bothEmpty = !sadr.trim() && !ajz.trim();
+  const verse = bothEmpty ? joinBayt(hint.sadr, hint.ajz) : joinBayt(sadr, ajz);
   const result: WeighResult = useMemo(() => weigh(verse, meterId, locks), [verse, meterId, locks]);
+
+  function selectMeter(id: string) {
+    setMeterId(id);
+    setLocks([]);
+    if (id === "auto") return;
+    setHintMeter(id);
+    const ex = METER_EXAMPLES[id];
+    if (ex) {
+      setSadr(ex.sadr);
+      setAjz(ex.ajz);
+    } else {
+      setSadr("");
+      setAjz("");
+    }
+  }
 
   function loadExample(ex: (typeof EXAMPLES)[number]) {
     setSadr(ex.sadr);
     setAjz(ex.ajz);
     setMeterId(ex.meter);
+    setHintMeter(ex.meter);
+    setLocks([]);
+  }
+
+  function resetAll() {
+    setSadr("");
+    setAjz("");
     setLocks([]);
   }
 
@@ -77,7 +118,7 @@ function Home() {
 
   function hemistichLabel(i: number) {
     if (result.hemistichs.length === 1) {
-      return sadr.trim() ? "الصدر" : "العجز";
+      return sadr.trim() || bothEmpty ? "الصدر" : "العجز";
     }
     return LABELS[i] ?? `شطر ${i + 1}`;
   }
@@ -132,7 +173,7 @@ function Home() {
                   setSadr(e.target.value);
                   setLocks([]);
                 }}
-                placeholder="الصدر، بلا حركات"
+                placeholder={hint.sadr}
                 className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -149,7 +190,7 @@ function Home() {
                   setAjz(e.target.value);
                   setLocks([]);
                 }}
-                placeholder="العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده"
+                placeholder={hint.ajz}
                 className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -162,7 +203,7 @@ function Home() {
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => setMeterId(m.id)}
+                  onClick={() => selectMeter(m.id)}
                   className={cn(
                     "rounded-full px-3 py-1.5 text-sm ring-1 transition-colors",
                     meterId === m.id
@@ -185,14 +226,14 @@ function Home() {
             </button>
             <button
               type="button"
-              onClick={() => setLocks([])}
+              onClick={resetAll}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-bg-elevated px-4 text-sm text-fg ring-1 ring-border"
             >
               <RotateCcw className="size-4" strokeWidth={1.75} />
               صفّر
             </button>
           </div>
-          <p className="mt-2 text-xs leading-5 text-subtle">يمسح تعديلك على الحروف</p>
+          <p className="mt-2 text-xs leading-5 text-subtle">يمسح البيت ويعيد المثال الرمادي. اكتب فوقه مباشرة.</p>
           <p className="mt-2 text-xs leading-5 text-subtle">
             الوضع {result.mode === "discover" ? "اكتشاف تلقائي لأقرب بحر" : "فحص البحر المختار"}.
             اضغط الحرف: حركة ثم سكون ثم شدة.
