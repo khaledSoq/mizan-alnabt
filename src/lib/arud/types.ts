@@ -94,6 +94,8 @@ export type HemistichResult = {
   brokenBox: number | null;
   alts: AltOut[];
   mode: "discover" | "check";
+  discoveredMeterId?: string;
+  discoveredMeterName?: string;
 };
 
 export type MeterListItem = {

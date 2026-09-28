@@ -107,7 +107,13 @@ textarea::-webkit-input-placeholder { color:var(--subtle); }
   display:block; font-family:var(--disp); font-size:1.05rem; line-height:1.75;
   color:var(--muted); white-space:normal; overflow:visible; word-break:break-word;
 }
-.warn { text-align:center; color:var(--muted); font-size:0.82rem; }
+.warn {
+  display:none; margin:0.85rem 0 0; background:#3a2420; color:var(--fg);
+  border:1px solid var(--brk); border-radius:0.85rem; padding:0.9rem 1rem;
+  text-align:right; font-size:0.92rem; line-height:1.8;
+}
+.warn b { display:block; font-family:var(--disp); font-size:1.2rem; margin:0 0 0.3rem; }
+.warn p { margin:0; }
 footer { margin-top:1.2rem; text-align:center; font-size:0.72rem; color:var(--subtle); line-height:1.7; }
 footer a { color:var(--muted); }
 noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color:#f3d0c8; border-radius:0.5rem; }
@@ -156,8 +162,8 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
   </section>
 
   <div id="boot" class="err" style="display:none"></div>
+  <div class="warn" id="same"></div>
   <section class="results" id="results"></section>
-  <p class="warn" id="same" style="display:none"></p>
 
   <section class="ex">
     <h2>أمثلة — اضغط للتجربة</h2>
@@ -1088,7 +1094,9 @@ var Arud = (() => {
       firstDiff: null,
       brokenBox: null,
       alts: [],
-      mode
+      mode,
+      discoveredMeterId: "",
+      discoveredMeterName: ""
     };
   }
   function lettersFor(h, cand) {
@@ -1233,7 +1241,7 @@ var Arud = (() => {
     return out;
   }
   function weighHemistich(text, meterId = "auto", locks) {
-    var _a;
+    var _a, _b;
     const { meters } = loadCatalog();
     const h = tokenizeHemistich(text);
     applyLocks(h, locks);
@@ -1277,20 +1285,26 @@ var Arud = (() => {
     const selected = mode === "discover" ? null : meterId;
     let bestHit = null;
     let bestCand = null;
+    let bestRaw = -1;
     const ranked = [];
     for (const c of cands.slice(0, 400)) {
       const hits = matchCandidate(c.bits, meters, selected);
       if (!hits.length) continue;
       const h0 = hits[0];
+      const raw = h0.score;
       h0.score = h0.score - 2e-3 * c.cost;
       ranked.push({ hit: h0, cand: c });
-      if (!bestHit || h0.score > bestHit.score + 1e-12) {
+      const pri = h0.meter.priority;
+      const bestPri = (_a = bestHit == null ? void 0 : bestHit.meter.priority) != null ? _a : 99;
+      if (!bestHit || raw > bestRaw + 1e-12) {
         bestHit = h0;
         bestCand = c;
-      } else if (bestHit && Math.abs(h0.score - bestHit.score) < 1e-9) {
-        if (c.cost < ((_a = bestCand == null ? void 0 : bestCand.cost) != null ? _a : 1e9)) {
+        bestRaw = raw;
+      } else if (bestHit && Math.abs(raw - bestRaw) < 1e-9) {
+        if (pri < bestPri || pri === bestPri && c.cost < ((_b = bestCand == null ? void 0 : bestCand.cost) != null ? _b : 1e9)) {
           bestHit = h0;
           bestCand = c;
+          bestRaw = raw;
         }
       }
     }
@@ -1336,7 +1350,9 @@ var Arud = (() => {
       firstDiff: bestHit.firstDiff,
       brokenBox: accepted ? null : brokenBox,
       alts,
-      mode
+      mode,
+      discoveredMeterId: "",
+      discoveredMeterName: ""
     };
   }
   function meterList() {
@@ -1367,11 +1383,20 @@ var Arud = (() => {
         selected: meterId
       };
     }
-    const hemistichs = parts.map((p, i) => weighHemistich(p, meterId, locks == null ? void 0 : locks[i]));
-    const names = hemistichs.filter((r) => r.ok && r.meterName).map((r) => r.meterName);
-    const same = new Set(names).size <= 1;
+    const hemistichs = parts.map((p, i) => {
+      const checked = weighHemistich(p, meterId, locks == null ? void 0 : locks[i]);
+      const disc = meterId === "" || meterId === "auto" ? checked : weighHemistich(p, "auto", locks == null ? void 0 : locks[i]);
+      if (disc.ok && disc.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && disc.meterId) {
+        checked.discoveredMeterId = disc.meterId;
+        checked.discoveredMeterName = disc.meterName;
+      }
+      return checked;
+    });
+    const mixed = hemistichs.length === 2 && hemistichs.every((h) => h.ok && h.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && !!h.discoveredMeterId) && hemistichs[0].discoveredMeterId !== hemistichs[1].discoveredMeterId;
+    const same = !mixed;
     let overall = hemistichs.length && hemistichs.every((r) => r.accepted) ? "\u0645\u0648\u0632\u0648\u0646" : "\u0631\u0627\u062C\u0639 \u0627\u0644\u0643\u0633\u0631";
-    if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641") {
+    if (mixed) overall = "\u0634\u0637\u0631\u0627\u0646 \u0639\u0644\u0649 \u0628\u062D\u0631\u064A\u0646 \u0645\u062E\u062A\u0644\u0641\u064A\u0646";
+    else if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641") {
       overall = "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641";
     }
     return {
@@ -1652,10 +1677,14 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
         resultsEl.innerHTML = html;
       }
       if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
+        var hs = result.hemistichs;
         sameEl.style.display = "block";
-        sameEl.textContent = "الشطران على بحرين مختلفين. ثبّت بحراً واحداً للقصيدة.";
+        sameEl.innerHTML = "<b>شطران على بحرين مختلفين</b><p>الصدر على بحر «" +
+          esc(hs[0].discoveredMeterName) + "» والعجز على بحر «" + esc(hs[1].discoveredMeterName) +
+          "». هذا مفيد للتعلم: كل شطر موزون وحده. لكن القصيدة ما تنكتب على بحرين. ثبّت بحراً واحداً للصدر والعجز وأعد الوزن.</p>";
       } else {
         sameEl.style.display = "none";
+        sameEl.innerHTML = "";
       }
     } catch (err) {
       fail("خطأ أثناء الوزن: " + (err && err.message ? err.message : err));

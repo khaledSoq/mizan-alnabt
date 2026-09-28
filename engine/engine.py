@@ -67,6 +67,8 @@ class HemistichResult:
     broken_box: Optional[int]
     alts: list[AltOut]
     mode: str
+    discovered_meter_id: str = ""
+    discovered_meter_name: str = ""
 
 
 def _letters_for(h: Hemistich, cand: Candidate) -> list[LetterOut]:
@@ -308,6 +310,7 @@ def weigh_hemistich(
 
     best_hit: Optional[MeterHit] = None
     best_cand: Optional[Candidate] = None
+    best_raw = -1.0
     # نقيّم كل مرشح. نكتفي بأول ~400 الأرخص لأن الترتيب بالكلفة العروضية
     pool = cands[:400]
     ranked: list[tuple[MeterHit, Candidate]] = []
@@ -318,14 +321,19 @@ def weigh_hemistich(
         # في الاكتشاف: أفضل بحر لهذا التقطيع
         # في الفحص: البحر المختار فقط (hits مفلترة)
         h0 = hits[0]
-        # كلفة التقطيع تُكسَر بها التعادلات لصالح النطق الأقرب
+        raw = h0.score
+        # كلفة التقطيع تُكسَر بها التعادلات داخل البحر نفسه
         h0.score = h0.score - 0.002 * c.cost
         ranked.append((h0, c))
-        if best_hit is None or h0.score > best_hit.score + 1e-12:
-            best_hit, best_cand = h0, c
-        elif best_hit and abs(h0.score - best_hit.score) < 1e-9:
-            if c.cost < (best_cand.cost if best_cand else 1e9):
-                best_hit, best_cand = h0, c
+        pri = h0.meter.priority
+        best_pri = best_hit.meter.priority if best_hit else 99
+        if best_hit is None or raw > best_raw + 1e-12:
+            best_hit, best_cand, best_raw = h0, c, raw
+        elif best_hit and abs(raw - best_raw) < 1e-9:
+            if pri < best_pri or (
+                pri == best_pri and c.cost < (best_cand.cost if best_cand else 1e9)
+            ):
+                best_hit, best_cand, best_raw = h0, c, raw
 
     if best_hit is None or best_cand is None:
         return HemistichResult(
@@ -417,12 +425,27 @@ def weigh_text(
         lk = None
         if locks and i < len(locks):
             lk = locks[i]
-        results.append(weigh_hemistich(p, meter_id, lk))
+        checked = weigh_hemistich(p, meter_id, lk)
+        disc = checked if meter_id in ("", "auto") else weigh_hemistich(p, "auto", lk)
+        if disc.ok and disc.message != "طول غير كاف" and disc.meter_id:
+            checked.discovered_meter_id = disc.meter_id
+            checked.discovered_meter_name = disc.meter_name
+        results.append(checked)
 
-    names = [r.meter_name for r in results if r.ok and r.meter_name]
-    same = len(set(names)) <= 1
+    def _comparable(r: HemistichResult) -> bool:
+        return bool(r.ok and r.message != "طول غير كاف" and r.discovered_meter_id)
+
+    mixed = (
+        len(results) == 2
+        and _comparable(results[0])
+        and _comparable(results[1])
+        and results[0].discovered_meter_id != results[1].discovered_meter_id
+    )
+    same = not mixed
     overall = "موزون" if all(r.accepted for r in results) and results else "راجع الكسر"
-    if any(not r.ok and r.message == "طول غير كاف" for r in results) and len(results) == 1:
+    if mixed:
+        overall = "شطران على بحرين مختلفين"
+    elif any(not r.ok and r.message == "طول غير كاف" for r in results) and len(results) == 1:
         overall = "طول غير كاف"
 
     return {
@@ -459,6 +482,8 @@ def _result_dict(r: HemistichResult) -> dict[str, Any]:
         "broken_box": r.broken_box,
         "alts": [asdict(x) for x in r.alts],
         "mode": r.mode,
+        "discovered_meter_id": r.discovered_meter_id,
+        "discovered_meter_name": r.discovered_meter_name,
     }
 
 

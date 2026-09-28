@@ -116,7 +116,13 @@ textarea::-webkit-input-placeholder { color:var(--subtle); }
   display:block; font-family:var(--disp); font-size:1.05rem; line-height:1.75;
   color:var(--muted); white-space:normal; overflow:visible; word-break:break-word;
 }
-.warn { text-align:center; color:var(--muted); font-size:0.82rem; }
+.warn {
+  display:none; margin:0.85rem 0 0; background:#3a2420; color:var(--fg);
+  border:1px solid var(--brk); border-radius:0.85rem; padding:0.9rem 1rem;
+  text-align:right; font-size:0.92rem; line-height:1.8;
+}
+.warn b { display:block; font-family:var(--disp); font-size:1.2rem; margin:0 0 0.3rem; }
+.warn p { margin:0; }
 footer { margin-top:1.2rem; text-align:center; font-size:0.72rem; color:var(--subtle); line-height:1.7; }
 footer a { color:var(--muted); }
 noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color:#f3d0c8; border-radius:0.5rem; }
@@ -165,8 +171,8 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
   </section>
 
   <div id="boot" class="err" style="display:none"></div>
+  <div class="warn" id="same"></div>
   <section class="results" id="results"></section>
-  <p class="warn" id="same" style="display:none"></p>
 
   <section class="ex">
     <h2>أمثلة — اضغط للتجربة</h2>
@@ -446,10 +452,14 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
         resultsEl.innerHTML = html;
       }
       if (result.hemistichs && result.hemistichs.length === 2 && result.sameMeter === false) {
+        var hs = result.hemistichs;
         sameEl.style.display = "block";
-        sameEl.textContent = "الشطران على بحرين مختلفين. ثبّت بحراً واحداً للقصيدة.";
+        sameEl.innerHTML = "<b>شطران على بحرين مختلفين</b><p>الصدر على بحر «" +
+          esc(hs[0].discoveredMeterName) + "» والعجز على بحر «" + esc(hs[1].discoveredMeterName) +
+          "». هذا مفيد للتعلم: كل شطر موزون وحده. لكن القصيدة ما تنكتب على بحرين. ثبّت بحراً واحداً للصدر والعجز وأعد الوزن.</p>";
       } else {
         sameEl.style.display = "none";
+        sameEl.innerHTML = "";
       }
     } catch (err) {
       fail("خطأ أثناء الوزن: " + (err && err.message ? err.message : err));

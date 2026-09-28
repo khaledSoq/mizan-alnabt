@@ -915,7 +915,9 @@ var Arud = (() => {
       firstDiff: null,
       brokenBox: null,
       alts: [],
-      mode
+      mode,
+      discoveredMeterId: "",
+      discoveredMeterName: ""
     };
   }
   function lettersFor(h, cand) {
@@ -1060,7 +1062,7 @@ var Arud = (() => {
     return out;
   }
   function weighHemistich(text, meterId = "auto", locks) {
-    var _a;
+    var _a, _b;
     const { meters } = loadCatalog();
     const h = tokenizeHemistich(text);
     applyLocks(h, locks);
@@ -1104,20 +1106,26 @@ var Arud = (() => {
     const selected = mode === "discover" ? null : meterId;
     let bestHit = null;
     let bestCand = null;
+    let bestRaw = -1;
     const ranked = [];
     for (const c of cands.slice(0, 400)) {
       const hits = matchCandidate(c.bits, meters, selected);
       if (!hits.length) continue;
       const h0 = hits[0];
+      const raw = h0.score;
       h0.score = h0.score - 2e-3 * c.cost;
       ranked.push({ hit: h0, cand: c });
-      if (!bestHit || h0.score > bestHit.score + 1e-12) {
+      const pri = h0.meter.priority;
+      const bestPri = (_a = bestHit == null ? void 0 : bestHit.meter.priority) != null ? _a : 99;
+      if (!bestHit || raw > bestRaw + 1e-12) {
         bestHit = h0;
         bestCand = c;
-      } else if (bestHit && Math.abs(h0.score - bestHit.score) < 1e-9) {
-        if (c.cost < ((_a = bestCand == null ? void 0 : bestCand.cost) != null ? _a : 1e9)) {
+        bestRaw = raw;
+      } else if (bestHit && Math.abs(raw - bestRaw) < 1e-9) {
+        if (pri < bestPri || pri === bestPri && c.cost < ((_b = bestCand == null ? void 0 : bestCand.cost) != null ? _b : 1e9)) {
           bestHit = h0;
           bestCand = c;
+          bestRaw = raw;
         }
       }
     }
@@ -1163,7 +1171,9 @@ var Arud = (() => {
       firstDiff: bestHit.firstDiff,
       brokenBox: accepted ? null : brokenBox,
       alts,
-      mode
+      mode,
+      discoveredMeterId: "",
+      discoveredMeterName: ""
     };
   }
   function meterList() {
@@ -1194,11 +1204,20 @@ var Arud = (() => {
         selected: meterId
       };
     }
-    const hemistichs = parts.map((p, i) => weighHemistich(p, meterId, locks == null ? void 0 : locks[i]));
-    const names = hemistichs.filter((r) => r.ok && r.meterName).map((r) => r.meterName);
-    const same = new Set(names).size <= 1;
+    const hemistichs = parts.map((p, i) => {
+      const checked = weighHemistich(p, meterId, locks == null ? void 0 : locks[i]);
+      const disc = meterId === "" || meterId === "auto" ? checked : weighHemistich(p, "auto", locks == null ? void 0 : locks[i]);
+      if (disc.ok && disc.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && disc.meterId) {
+        checked.discoveredMeterId = disc.meterId;
+        checked.discoveredMeterName = disc.meterName;
+      }
+      return checked;
+    });
+    const mixed = hemistichs.length === 2 && hemistichs.every((h) => h.ok && h.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && !!h.discoveredMeterId) && hemistichs[0].discoveredMeterId !== hemistichs[1].discoveredMeterId;
+    const same = !mixed;
     let overall = hemistichs.length && hemistichs.every((r) => r.accepted) ? "\u0645\u0648\u0632\u0648\u0646" : "\u0631\u0627\u062C\u0639 \u0627\u0644\u0643\u0633\u0631";
-    if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641") {
+    if (mixed) overall = "\u0634\u0637\u0631\u0627\u0646 \u0639\u0644\u0649 \u0628\u062D\u0631\u064A\u0646 \u0645\u062E\u062A\u0644\u0641\u064A\u0646";
+    else if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641") {
       overall = "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641";
     }
     return {

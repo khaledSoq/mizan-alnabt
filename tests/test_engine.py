@@ -157,6 +157,33 @@ class BaytTests(unittest.TestCase):
         self.assertTrue(out["hemistichs"][0]["text"])
         self.assertTrue(out["hemistichs"][1]["text"])
 
+    def test_mixed_meters_warn_even_when_selected(self):
+        sadr = "يا ما حلا الفنجال مع سيحة البال"
+        ajz = "نحمد الله جت على ما تمنى"
+        for meter in ("auto", "mashub"):
+            out = weigh(sadr + "\n" + ajz, meter)
+            self.assertFalse(out["same_meter"], meter)
+            self.assertEqual(out["message"], "شطران على بحرين مختلفين")
+            hs = out["hemistichs"]
+            self.assertEqual(hs[0]["discovered_meter_id"], "mashub")
+            self.assertEqual(hs[1]["discovered_meter_id"], "arda")
+            self.assertEqual(hs[0]["discovered_meter_name"], "المسحوب")
+            self.assertEqual(hs[1]["discovered_meter_name"], "العرضة")
+            if meter == "mashub":
+                self.assertEqual(hs[0]["meter_id"], "mashub")
+                self.assertEqual(hs[1]["meter_id"], "mashub")
+
+    def test_same_mashub_bayt_no_warn(self):
+        out = weigh("يا ما حلا الفنجال مع سيحة البال\nفي مجلس ما فيه نفس ثقيلة", "mashub")
+        self.assertTrue(out["same_meter"])
+        self.assertNotEqual(out["message"], "شطران على بحرين مختلفين")
+        self.assertEqual(out["message"], "موزون")
+
+    def test_short_second_hemistich_no_warn(self):
+        out = weigh("يا ما حلا الفنجال مع سيحة البال\nيا", "mashub")
+        self.assertTrue(out["same_meter"])
+        self.assertNotEqual(out["message"], "شطران على بحرين مختلفين")
+
 
 class EncodingTests(unittest.TestCase):
     def test_la_naam(self):

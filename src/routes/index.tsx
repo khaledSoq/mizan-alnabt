@@ -265,6 +265,16 @@ function Home() {
         </section>
 
         <section className="flex flex-col gap-4">
+          {result.hemistichs.length === 2 && result.sameMeter === false ? (
+            <div className="rounded-xl bg-break/15 px-5 py-4 ring-1 ring-break">
+              <p className="font-display text-lg font-bold text-fg">شطران على بحرين مختلفين</p>
+              <p className="mt-2 text-sm leading-7 text-fg">
+                الصدر على بحر «{result.hemistichs[0]?.discoveredMeterName}» والعجز على بحر «
+                {result.hemistichs[1]?.discoveredMeterName}». هذا مفيد للتعلم: كل شطر موزون وحده. لكن
+                القصيدة ما تنكتب على بحرين. ثبّت بحراً واحداً للصدر والعجز وأعد الوزن.
+              </p>
+            </div>
+          ) : null}
           {result.hemistichs.length === 0 ? (
             <div className="rounded-xl bg-surface px-5 py-8 text-center text-sm text-muted ring-1 ring-border">
               {result.message}
@@ -280,12 +290,6 @@ function Home() {
             ))
           )}
         </section>
-
-        {result.hemistichs.length === 2 && result.sameMeter === false ? (
-          <p className="text-center text-sm text-muted">
-            الشطران على بحرين مختلفين. راجع الوزن أو ثبّت بحراً واحداً للقصيدة.
-          </p>
-        ) : null}
 
         <footer className="pb-8 pt-2 text-center text-xs leading-6 text-subtle">
           القياس على النطق النجدي لا على الرسم. الله سببان لا وتد. ال الشمسية تُدغم.

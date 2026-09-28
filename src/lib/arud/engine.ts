@@ -44,6 +44,8 @@ function emptyResult(
     brokenBox: null,
     alts: [],
     mode,
+    discoveredMeterId: "",
+    discoveredMeterName: "",
   };
 }
 
@@ -244,20 +246,26 @@ export function weighHemistich(
   const selected = mode === "discover" ? null : meterId;
   let bestHit: MeterHit | null = null;
   let bestCand: Candidate | null = null;
+  let bestRaw = -1;
   const ranked: { hit: MeterHit; cand: Candidate }[] = [];
   for (const c of cands.slice(0, 400)) {
     const hits = matchCandidate(c.bits, meters, selected);
     if (!hits.length) continue;
     const h0 = hits[0]!;
+    const raw = h0.score;
     h0.score = h0.score - 0.002 * c.cost;
     ranked.push({ hit: h0, cand: c });
-    if (!bestHit || h0.score > bestHit.score + 1e-12) {
+    const pri = h0.meter.priority;
+    const bestPri = bestHit?.meter.priority ?? 99;
+    if (!bestHit || raw > bestRaw + 1e-12) {
       bestHit = h0;
       bestCand = c;
-    } else if (bestHit && Math.abs(h0.score - bestHit.score) < 1e-9) {
-      if (c.cost < (bestCand?.cost ?? 1e9)) {
+      bestRaw = raw;
+    } else if (bestHit && Math.abs(raw - bestRaw) < 1e-9) {
+      if (pri < bestPri || (pri === bestPri && c.cost < (bestCand?.cost ?? 1e9))) {
         bestHit = h0;
         bestCand = c;
+        bestRaw = raw;
       }
     }
   }
@@ -315,6 +323,8 @@ export function weighHemistich(
     brokenBox: accepted ? null : brokenBox,
     alts,
     mode,
+    discoveredMeterId: "",
+    discoveredMeterName: "",
   };
 }
 
@@ -350,11 +360,24 @@ export function weigh(
       selected: meterId,
     };
   }
-  const hemistichs = parts.map((p, i) => weighHemistich(p, meterId, locks?.[i]));
-  const names = hemistichs.filter((r) => r.ok && r.meterName).map((r) => r.meterName);
-  const same = new Set(names).size <= 1;
+  const hemistichs = parts.map((p, i) => {
+    const checked = weighHemistich(p, meterId, locks?.[i]);
+    const disc =
+      meterId === "" || meterId === "auto" ? checked : weighHemistich(p, "auto", locks?.[i]);
+    if (disc.ok && disc.message !== "طول غير كاف" && disc.meterId) {
+      checked.discoveredMeterId = disc.meterId;
+      checked.discoveredMeterName = disc.meterName;
+    }
+    return checked;
+  });
+  const mixed =
+    hemistichs.length === 2 &&
+    hemistichs.every((h) => h.ok && h.message !== "طول غير كاف" && !!h.discoveredMeterId) &&
+    hemistichs[0]!.discoveredMeterId !== hemistichs[1]!.discoveredMeterId;
+  const same = !mixed;
   let overall = hemistichs.length && hemistichs.every((r) => r.accepted) ? "موزون" : "راجع الكسر";
-  if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "طول غير كاف") {
+  if (mixed) overall = "شطران على بحرين مختلفين";
+  else if (hemistichs.length === 1 && hemistichs[0] && !hemistichs[0].ok && hemistichs[0].message === "طول غير كاف") {
     overall = "طول غير كاف";
   }
   return {
