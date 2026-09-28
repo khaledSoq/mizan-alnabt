@@ -187,6 +187,35 @@ function allahPhonemes(
   return out;
 }
 
+function functionSpecial(bare: string): "illi" | "ila" | null {
+  if (!bare) return null;
+  let key = "";
+  for (const ch of bare) {
+    key += "أإآٱ".includes(ch) ? "ا" : ch;
+  }
+  if (key === "الى") return "ila";
+  if (key === "الي" && "أإآٱ".includes(bare[0]!)) return "ila";
+  if (key === "اللي" || key === "الي") return "illi";
+  return null;
+}
+
+function illiPhonemes(bare: string, wordI: number, first: boolean): Phoneme[] {
+  const alif = "اأإآٱ".includes(bare[0] || "") ? bare[0]! : "ا";
+  const head = first
+    ? ph(alif, "cons", 1, true, wordI, "fn10")
+    : ph(alif, "wasl", null, true, wordI, "fn10");
+  return [head, ph("ل", "cons", 1, true, wordI, "fn10"), ph("ي", "cons", 0, true, wordI, "fn10")];
+}
+
+function ilaPhonemes(bare: string, wordI: number): Phoneme[] {
+  const alif = "اأإآٱ".includes(bare[0] || "") ? bare[0]! : "ا";
+  return [
+    ph(alif, "cons", 1, true, wordI, "fn10"),
+    ph("ل", "cons", 1, true, wordI, "fn10"),
+    ph("ى", "alif_madd", 0, true, wordI, "fn10"),
+  ];
+}
+
 function function10(word: string, wordI: number): Phoneme[] {
   let letters = iterBaseLetters(word).map((x) => x.ch);
   if (!letters.length) letters = [...stripHarakat(word)];
@@ -346,6 +375,15 @@ export function tokenizeHemistich(text: string): Hemistich {
     }
     if (FUNCTION_10.has(bare)) {
       h.phonemes.push(...function10(word, wi));
+      continue;
+    }
+    const special = functionSpecial(bare);
+    if (special === "illi") {
+      h.phonemes.push(...illiPhonemes(bare, wi, first));
+      continue;
+    }
+    if (special === "ila") {
+      h.phonemes.push(...ilaPhonemes(bare, wi));
       continue;
     }
     if (PRONOUNS.has(bare)) {

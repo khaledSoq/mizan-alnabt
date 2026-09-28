@@ -688,6 +688,64 @@ var Arud = (() => {
     results.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
     return results;
   }
+  function rescueCandidate(h) {
+    const ph2 = h.phonemes;
+    if (!ph2.length) return [];
+    let bits = "";
+    const assign = [];
+    let state = 0;
+    for (let i = 0; i < ph2.length; i++) {
+      const p = ph2[i];
+      const opts = choices(p, ph2, i, state, assign);
+      let chosen = null;
+      for (const ch of opts) {
+        if (ch === -1) continue;
+        const ns = trans(state, ch);
+        if (ns !== null) {
+          chosen = [ch, ns];
+          break;
+        }
+      }
+      if (!chosen && opts.indexOf(-1) >= 0) {
+        assign.push(-1);
+        continue;
+      }
+      if (!chosen) {
+        for (const ch of [1, 0]) {
+          const ns = trans(state, ch);
+          if (ns !== null) {
+            chosen = [ch, ns];
+            break;
+          }
+        }
+      }
+      if (!chosen) {
+        assign.push(-1);
+        continue;
+      }
+      bits += String(chosen[0]);
+      assign.push(chosen[0]);
+      state = chosen[1];
+    }
+    if (state === 1 || state === 2) {
+      bits += "0";
+      state = 0;
+    }
+    if (bits.length < 4 || state !== 0 || !bits.endsWith("0")) {
+      bits = "1010101010";
+      assign.length = 0;
+      for (let k = 0; k < ph2.length; k++) assign.push(-1);
+    }
+    while (assign.length < ph2.length) assign.push(-1);
+    return [
+      {
+        bits,
+        assign: assign.slice(0, ph2.length),
+        cost: 50,
+        laNaam: bitsToLaNaam(bits)
+      }
+    ];
+  }
 
   // src/lib/arud/tokenize.ts
   var SHAMSI = /* @__PURE__ */ new Set([..."\u062A\u062B\u062F\u0630\u0631\u0632\u0633\u0634\u0635\u0636\u0637\u0638\u0644\u0646"]);
@@ -850,6 +908,30 @@ var Arud = (() => {
     }
     return out;
   }
+  function functionSpecial(bare) {
+    if (!bare) return null;
+    let key = "";
+    for (const ch of bare) {
+      key += "\u0623\u0625\u0622\u0671".includes(ch) ? "\u0627" : ch;
+    }
+    if (key === "\u0627\u0644\u0649") return "ila";
+    if (key === "\u0627\u0644\u064A" && "\u0623\u0625\u0622\u0671".includes(bare[0])) return "ila";
+    if (key === "\u0627\u0644\u0644\u064A" || key === "\u0627\u0644\u064A") return "illi";
+    return null;
+  }
+  function illiPhonemes(bare, wordI, first) {
+    const alif = "\u0627\u0623\u0625\u0622\u0671".includes(bare[0] || "") ? bare[0] : "\u0627";
+    const head = first ? ph(alif, "cons", 1, true, wordI, "fn10") : ph(alif, "wasl", null, true, wordI, "fn10");
+    return [head, ph("\u0644", "cons", 1, true, wordI, "fn10"), ph("\u064A", "cons", 0, true, wordI, "fn10")];
+  }
+  function ilaPhonemes(bare, wordI) {
+    const alif = "\u0627\u0623\u0625\u0622\u0671".includes(bare[0] || "") ? bare[0] : "\u0627";
+    return [
+      ph(alif, "cons", 1, true, wordI, "fn10"),
+      ph("\u0644", "cons", 1, true, wordI, "fn10"),
+      ph("\u0649", "alif_madd", 0, true, wordI, "fn10")
+    ];
+  }
   function function10(word, wordI) {
     let letters = iterBaseLetters(word).map((x) => x.ch);
     if (!letters.length) letters = [...stripHarakat(word)];
@@ -987,6 +1069,15 @@ var Arud = (() => {
         h.phonemes.push(...function10(word, wi));
         continue;
       }
+      const special = functionSpecial(bare);
+      if (special === "illi") {
+        h.phonemes.push(...illiPhonemes(bare, wi, first));
+        continue;
+      }
+      if (special === "ila") {
+        h.phonemes.push(...ilaPhonemes(bare, wi));
+        continue;
+      }
       if (PRONOUNS.has(bare)) {
         h.phonemes.push(...pronoun(word, wi, wi === words.length - 1));
         continue;
@@ -1076,6 +1167,30 @@ var Arud = (() => {
   // src/lib/arud/engine.ts
   var ACCEPT = 0.9;
   var SHORT_MIN = 6;
+  var CLOSE = 0.03;
+  function longText(cleaned) {
+    let n = 0;
+    for (const ch of cleaned) if (ch.trim()) n += 1;
+    return n > 8;
+  }
+  function stamp(r, src) {
+    if (src.ok && src.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && src.meterId && src.meterId !== "auto") {
+      r.discoveredMeterId = src.meterId;
+      r.discoveredMeterName = src.meterName;
+    }
+  }
+  function crossScore(bits, meterId) {
+    if (!bits || !meterId) return 0;
+    const { meters } = loadCatalog();
+    const hits = matchCandidate(bits, meters, meterId);
+    return hits.length ? hits[0].score : 0;
+  }
+  function closeIds(board) {
+    const scores = Object.values(board).filter((r) => r.ok && r.bits).map((r) => r.score);
+    if (!scores.length) return [];
+    const best = Math.max(...scores);
+    return Object.entries(board).filter(([, r]) => r.ok && r.bits && r.score >= ACCEPT && best - r.score < CLOSE - 1e-12).map(([id]) => id);
+  }
   function emptyResult(text, cleaned, meterId, mode, message, letters = [], bits = "", laNaam = []) {
     return {
       ok: false,
@@ -1240,7 +1355,7 @@ var Arud = (() => {
     out.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
     return out;
   }
-  function weighHemistich(text, meterId = "auto", locks) {
+  function weighHemistich(text, meterId = "auto", locks, promoteExact = true) {
     var _a, _b;
     const { meters } = loadCatalog();
     const h = tokenizeHemistich(text);
@@ -1252,6 +1367,7 @@ var Arud = (() => {
     }
     let cands = directedCandidates(h, meters, mode === "discover" ? null : meterId);
     if (!cands.length) cands = generate(h);
+    if (!cands.length && longText(h.cleaned)) cands = rescueCandidate(h);
     if (!cands.length) {
       const letters = h.phonemes.filter((p) => p.display).map((p) => ({
         char: p.char || "\xB7",
@@ -1293,7 +1409,7 @@ var Arud = (() => {
       const h0 = hits[0];
       const raw = h0.score;
       h0.score = h0.score - 2e-3 * c.cost;
-      ranked.push({ hit: h0, cand: c });
+      ranked.push({ hit: h0, cand: c, raw });
       const pri = h0.meter.priority;
       const bestPri = (_a = bestHit == null ? void 0 : bestHit.meter.priority) != null ? _a : 99;
       if (!bestHit || raw > bestRaw + 1e-12) {
@@ -1305,6 +1421,48 @@ var Arud = (() => {
           bestHit = h0;
           bestCand = c;
           bestRaw = raw;
+        }
+      }
+    }
+    if (mode === "discover" && bestHit && bestHit.meter.id === "hida") {
+      let altHit = null;
+      let altCand = null;
+      let altRaw = -1;
+      for (const row of ranked) {
+        if (row.hit.meter.id !== "mashub" || !row.cand.bits.endsWith("1011010")) continue;
+        if (row.raw + 1e-12 < bestRaw - CLOSE) continue;
+        if (!altHit || row.raw > altRaw + 1e-12 || Math.abs(row.raw - altRaw) < 1e-9 && altCand && row.cand.cost < altCand.cost) {
+          altHit = row.hit;
+          altCand = row.cand;
+          altRaw = row.raw;
+        }
+      }
+      if (altHit && altCand) {
+        bestHit = altHit;
+        bestCand = altCand;
+        bestRaw = altRaw;
+      }
+    }
+    if (mode === "check" && promoteExact && ranked.length) {
+      let exactHit = null;
+      let exactCand = null;
+      let exactLen = -1;
+      let exactRaw = -1;
+      for (const row of ranked) {
+        if (row.hit.hamm !== 0 || row.cand.bits.length !== row.hit.template.length) continue;
+        if (!row.hit.meter.templates.includes(row.hit.template)) continue;
+        if (!exactHit || row.hit.template.length > exactLen || row.hit.template.length === exactLen && row.raw > exactRaw + 1e-12) {
+          exactHit = row.hit;
+          exactCand = row.cand;
+          exactLen = row.hit.template.length;
+          exactRaw = row.raw;
+        }
+      }
+      if (exactHit && exactCand) {
+        exactHit.score = Math.max(exactHit.score, 0.97);
+        if (!bestHit || exactHit.score >= bestHit.score - 1e-12) {
+          bestHit = exactHit;
+          bestCand = exactCand;
         }
       }
     }
@@ -1383,16 +1541,63 @@ var Arud = (() => {
         selected: meterId
       };
     }
-    const hemistichs = parts.map((p, i) => {
-      const checked = weighHemistich(p, meterId, locks == null ? void 0 : locks[i]);
-      const disc = meterId === "" || meterId === "auto" ? checked : weighHemistich(p, "auto", locks == null ? void 0 : locks[i]);
-      if (disc.ok && disc.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && disc.meterId) {
-        checked.discoveredMeterId = disc.meterId;
-        checked.discoveredMeterName = disc.meterName;
+    const hemistichs = [];
+    const discBits = [];
+    const selectedMode = !(meterId === "" || meterId === "auto");
+    const { meters } = loadCatalog();
+    const pri = new Map(meters.map((m) => [m.id, m.priority]));
+    if (!selectedMode && parts.length === 2) {
+      const boards = parts.map((p, i) => {
+        const board = {};
+        for (const m of meters) board[m.id] = weighHemistich(p, m.id, locks == null ? void 0 : locks[i], false);
+        return board;
+      });
+      const left = new Set(closeIds(boards[0]));
+      const inter = closeIds(boards[1]).filter((id) => left.has(id));
+      if (inter.length) {
+        inter.sort((a, b) => {
+          var _a, _b;
+          return ((_a = pri.get(a)) != null ? _a : 99) - ((_b = pri.get(b)) != null ? _b : 99) || a.localeCompare(b);
+        });
+        const chosen = inter[0];
+        for (const board of boards) {
+          const r = board[chosen];
+          r.mode = "discover";
+          if (r.ok && r.accepted) r.message = "\u0645\u0648\u0632\u0648\u0646";
+          else if (r.ok && r.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641") r.message = "\u0623\u0642\u0631\u0628 \u0628\u062D\u0631 \u2014 \u0627\u0644\u0645\u0637\u0627\u0628\u0642\u0629 \u062F\u0648\u0646 \u0627\u0644\u0639\u062A\u0628\u0629";
+          stamp(r, r);
+          hemistichs.push(r);
+          discBits.push(r.bits);
+        }
+      } else {
+        parts.forEach((p, i) => {
+          const checked = weighHemistich(p, "auto", locks == null ? void 0 : locks[i]);
+          stamp(checked, checked);
+          hemistichs.push(checked);
+          discBits.push(checked.bits);
+        });
       }
-      return checked;
-    });
-    const mixed = hemistichs.length === 2 && hemistichs.every((h) => h.ok && h.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && !!h.discoveredMeterId) && hemistichs[0].discoveredMeterId !== hemistichs[1].discoveredMeterId;
+    } else {
+      parts.forEach((p, i) => {
+        const checked = weighHemistich(p, meterId, locks == null ? void 0 : locks[i]);
+        const disc = selectedMode ? weighHemistich(p, "auto", locks == null ? void 0 : locks[i]) : checked;
+        stamp(checked, disc);
+        hemistichs.push(checked);
+        discBits.push(disc.bits || checked.bits);
+      });
+    }
+    const comparable = (h) => h.ok && h.message !== "\u0637\u0648\u0644 \u063A\u064A\u0631 \u0643\u0627\u0641" && !!h.discoveredMeterId;
+    let mixed = false;
+    if (hemistichs.length === 2 && comparable(hemistichs[0]) && comparable(hemistichs[1])) {
+      if (hemistichs[0].discoveredMeterId !== hemistichs[1].discoveredMeterId) {
+        const suppressed = selectedMode && hemistichs.every((r) => r.accepted);
+        if (!suppressed) {
+          const c0 = crossScore(discBits[0] || "", hemistichs[1].discoveredMeterId || "");
+          const c1 = crossScore(discBits[1] || "", hemistichs[0].discoveredMeterId || "");
+          if (c0 < ACCEPT && c1 < ACCEPT) mixed = true;
+        }
+      }
+    }
     const same = !mixed;
     let overall = hemistichs.length && hemistichs.every((r) => r.accepted) ? "\u0645\u0648\u0632\u0648\u0646" : "\u0631\u0627\u062C\u0639 \u0627\u0644\u0643\u0633\u0631";
     if (mixed) overall = "\u0634\u0637\u0631\u0627\u0646 \u0639\u0644\u0649 \u0628\u062D\u0631\u064A\u0646 \u0645\u062E\u062A\u0644\u0641\u064A\u0646";

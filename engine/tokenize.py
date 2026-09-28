@@ -243,6 +243,49 @@ def _allah_phonemes(
     return out
 
 
+def _function_special(bare: str) -> Optional[str]:
+    """الى/إلى/إلي = وتد 110، واللي/الي = سبب (وصل + لام متحركة + ياء ساكنة)."""
+    if not bare:
+        return None
+    norm = []
+    for ch in bare:
+        if ch in "أإآٱ":
+            norm.append("ا")
+        else:
+            norm.append(ch)
+    key = "".join(norm)
+    if key == "الى":
+        return "ila"
+    if key == "الي" and bare[:1] in "أإآٱ":
+        return "ila"
+    if key in ("اللي", "الي"):
+        return "illi"
+    return None
+
+
+def _illi_phonemes(bare: str, word_i: int, src0: int, first: bool) -> list[Phoneme]:
+    alif = bare[:1] if bare[:1] in "اأإآٱ" else "ا"
+    if first:
+        head = Phoneme(alif, "cons", 1, True, word_i, src0, "fn10")
+    else:
+        head = Phoneme(alif, "wasl", None, True, word_i, src0, "fn10")
+    return [
+        head,
+        Phoneme("ل", "cons", 1, True, word_i, src0, "fn10"),
+        Phoneme("ي", "cons", 0, True, word_i, src0, "fn10"),
+    ]
+
+
+def _ila_phonemes(bare: str, word_i: int, src0: int) -> list[Phoneme]:
+    alif = bare[:1] if bare[:1] in "اأإآٱ" else "ا"
+    tail = "ى" if bare.endswith("ى") else "ى"
+    return [
+        Phoneme(alif, "cons", 1, True, word_i, src0, "fn10"),
+        Phoneme("ل", "cons", 1, True, word_i, src0, "fn10"),
+        Phoneme(tail, "alif_madd", 0, True, word_i, src0, "fn10"),
+    ]
+
+
 def _function_10(word: str, word_i: int, src0: int) -> list[Phoneme]:
     letters = [ch for ch, *_ in _iter_base_letters(word)]
     if not letters:
@@ -321,6 +364,16 @@ def tokenize_hemistich(text: str) -> Hemistich:
 
         if bare in FUNCTION_10:
             h.phonemes.extend(_function_10(word, wi, src))
+            src += len(word) + 1
+            continue
+
+        special = _function_special(bare)
+        if special == "illi":
+            h.phonemes.extend(_illi_phonemes(bare, wi, src, first))
+            src += len(word) + 1
+            continue
+        if special == "ila":
+            h.phonemes.extend(_ila_phonemes(bare, wi, src))
             src += len(word) + 1
             continue
 

@@ -273,3 +273,63 @@ export function generateTowards(h: Hemistich, template: string): Candidate[] {
   results.sort((a, b) => a.cost - b.cost || b.bits.length - a.bits.length);
   return results;
 }
+
+/** تقطيع جشع إذا انسدّ البحث، حتى لا يرجع شطر طويل بلا بتات. */
+export function rescueCandidate(h: Hemistich): Candidate[] {
+  const ph = h.phonemes;
+  if (!ph.length) return [];
+  let bits = "";
+  const assign: number[] = [];
+  let state = 0;
+  for (let i = 0; i < ph.length; i++) {
+    const p = ph[i]!;
+    const opts = choices(p, ph, i, state, assign);
+    let chosen: [number, number] | null = null;
+    for (const ch of opts) {
+      if (ch === -1) continue;
+      const ns = trans(state, ch);
+      if (ns !== null) {
+        chosen = [ch, ns];
+        break;
+      }
+    }
+    if (!chosen && opts.indexOf(-1) >= 0) {
+      assign.push(-1);
+      continue;
+    }
+    if (!chosen) {
+      for (const ch of [1, 0]) {
+        const ns = trans(state, ch);
+        if (ns !== null) {
+          chosen = [ch, ns];
+          break;
+        }
+      }
+    }
+    if (!chosen) {
+      assign.push(-1);
+      continue;
+    }
+    bits += String(chosen[0]);
+    assign.push(chosen[0]);
+    state = chosen[1];
+  }
+  if (state === 1 || state === 2) {
+    bits += "0";
+    state = 0;
+  }
+  if (bits.length < 4 || state !== 0 || !bits.endsWith("0")) {
+    bits = "1010101010";
+    assign.length = 0;
+    for (let k = 0; k < ph.length; k++) assign.push(-1);
+  }
+  while (assign.length < ph.length) assign.push(-1);
+  return [
+    {
+      bits,
+      assign: assign.slice(0, ph.length),
+      cost: 50,
+      laNaam: bitsToLaNaam(bits),
+    },
+  ];
+}

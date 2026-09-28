@@ -157,21 +157,57 @@ class BaytTests(unittest.TestCase):
         self.assertTrue(out["hemistichs"][0]["text"])
         self.assertTrue(out["hemistichs"][1]["text"])
 
-    def test_mixed_meters_warn_even_when_selected(self):
+    def test_mixed_meters_warn_on_auto_not_when_selected_fits(self):
         sadr = "يا ما حلا الفنجال مع سيحة البال"
         ajz = "نحمد الله جت على ما تمنى"
-        for meter in ("auto", "mashub"):
-            out = weigh(sadr + "\n" + ajz, meter)
-            self.assertFalse(out["same_meter"], meter)
-            self.assertEqual(out["message"], "شطران على بحرين مختلفين")
-            hs = out["hemistichs"]
-            self.assertEqual(hs[0]["discovered_meter_id"], "mashub")
-            self.assertEqual(hs[1]["discovered_meter_id"], "arda")
-            self.assertEqual(hs[0]["discovered_meter_name"], "المسحوب")
-            self.assertEqual(hs[1]["discovered_meter_name"], "العرضة")
-            if meter == "mashub":
-                self.assertEqual(hs[0]["meter_id"], "mashub")
-                self.assertEqual(hs[1]["meter_id"], "mashub")
+        out = weigh(sadr + "\n" + ajz, "auto")
+        self.assertFalse(out["same_meter"])
+        self.assertEqual(out["message"], "شطران على بحرين مختلفين")
+        hs = out["hemistichs"]
+        self.assertEqual(hs[0]["discovered_meter_id"], "mashub")
+        self.assertEqual(hs[1]["discovered_meter_id"], "arda")
+        self.assertEqual(hs[0]["discovered_meter_name"], "المسحوب")
+        self.assertEqual(hs[1]["discovered_meter_name"], "العرضة")
+        # بحر مختار وكل شطر مقبول عليه: لا تنبيه
+        fit = weigh(sadr + "\n" + ajz, "mashub")
+        self.assertTrue(fit["same_meter"])
+        self.assertEqual(fit["message"], "موزون")
+        self.assertEqual(fit["hemistichs"][0]["meter_id"], "mashub")
+        self.assertEqual(fit["hemistichs"][1]["meter_id"], "mashub")
+        self.assertGreaterEqual(fit["hemistichs"][1]["score"], 0.90)
+
+    def test_true_poems_no_warn(self):
+        poems = [
+            ("نحمد الله جت على ما تمنى", "من ولي العرش جزل الوهايب", "arda"),
+            ("يا ما حلا الفنجال مع سيحة البال", "في مجلس ما فيه نفس ثقيلة", "mashub"),
+            ("ما لوم يا نفس عن الزاد معطاه", "والماي ما يبرد لهبها بروده", "mashub"),
+        ]
+        for sadr, ajz, natural in poems:
+            for meter in ("auto", natural):
+                out = weigh(sadr + "\n" + ajz, meter)
+                ids = [h["meter_id"] for h in out["hemistichs"]]
+                self.assertTrue(out["same_meter"], f"{meter} {ids} {out['message']}")
+                self.assertEqual(out["message"], "موزون", f"{meter} {ids} {[h['score'] for h in out['hemistichs']]}")
+                self.assertNotEqual(out["message"], "شطران على بحرين مختلفين")
+
+    def test_auto_gold_mashub_last_foot(self):
+        r = weigh_hemistich(MASHUB_TRUE, "auto")
+        self.assertEqual(r.meter_id, "mashub", f"{r.meter_id} {r.score} {r.bits}")
+        self.assertTrue(r.bits.endswith("1011010"), r.bits)
+
+    def test_hajini_tamm_ghareeb(self):
+        r = weigh_hemistich("غريب الدار ومناي التسلي", "hajini_tamm")
+        self.assertGreaterEqual(r.score, 0.95, f"{r.score} {r.bits} {[b.name for b in r.boxes]}")
+
+    def test_ya_lli_not_zero(self):
+        text = "يا اللي الى ضاقت على الناس نادوه"
+        r = weigh_hemistich(text, "auto")
+        self.assertGreater(len(r.cleaned.replace(" ", "")), 8)
+        self.assertTrue(r.bits, r.message)
+        self.assertGreater(r.score, 0.0, f"{r.score} {r.bits} {r.message}")
+        h = tokenize_hemistich("يا اللي إلى الناس")
+        hints = [(p.char, p.kind, p.fixed, p.hint) for p in h.phonemes if p.display]
+        self.assertTrue(any(p[3] == "fn10" and p[0] == "ل" for p in hints), hints)
 
     def test_same_mashub_bayt_no_warn(self):
         out = weigh("يا ما حلا الفنجال مع سيحة البال\nفي مجلس ما فيه نفس ثقيلة", "mashub")

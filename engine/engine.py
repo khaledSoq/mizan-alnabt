@@ -11,11 +11,49 @@ from .match import (
     load_catalog,
     match_candidate,
 )
-from .search import Candidate, generate, generate_towards
+from .search import Candidate, generate, generate_towards, rescue_candidate
 from .tokenize import Hemistich, Phoneme, split_bayt, tokenize_hemistich
 
 ACCEPT = 0.90
 SHORT_MIN = 6
+CLOSE = 0.03
+
+
+def _long_text(cleaned: str) -> bool:
+    n = 0
+    for ch in cleaned:
+        if not ch.isspace():
+            n += 1
+    return n > 8
+
+
+def _stamp(r: HemistichResult, src: HemistichResult) -> None:
+    if src.ok and src.message != "طول غير كاف" and src.meter_id and src.meter_id != "auto":
+        r.discovered_meter_id = src.meter_id
+        r.discovered_meter_name = src.meter_name
+
+
+def _cross_score(bits: str, meter_id: str) -> float:
+    """درجة تقطيع الشطر نفسه على بحر الشطر الآخر، لا إعادة بحث."""
+    if not bits or not meter_id:
+        return 0.0
+    _, meters = load_catalog()
+    hits = match_candidate(bits, meters, meter_id)
+    if not hits:
+        return 0.0
+    return hits[0].score
+
+
+def _close_ids(board: dict[str, HemistichResult]) -> set[str]:
+    scores = [r.score for r in board.values() if r.ok and r.bits]
+    if not scores:
+        return set()
+    best = max(scores)
+    return {
+        mid
+        for mid, r in board.items()
+        if r.ok and r.bits and r.score >= ACCEPT and best - r.score < CLOSE - 1e-12
+    }
 
 
 @dataclass
@@ -216,6 +254,7 @@ def weigh_hemistich(
     text: str,
     meter_id: str = "auto",
     locks: Optional[dict[int, int]] = None,
+    promote_exact: bool = True,
 ) -> HemistichResult:
     _, meters = load_catalog()
     h = tokenize_hemistich(text)
@@ -246,6 +285,8 @@ def weigh_hemistich(
     cands = _directed_candidates(h, meters, None if meter_id in ("", "auto") else meter_id)
     if not cands:
         cands = generate(h)
+    if not cands and _long_text(h.cleaned):
+        cands = rescue_candidate(h)
     mode = "discover" if meter_id in ("", "auto") else "check"
     n_disp = len([p for p in h.phonemes if p.display])
 
@@ -313,7 +354,7 @@ def weigh_hemistich(
     best_raw = -1.0
     # نقيّم كل مرشح. نكتفي بأول ~400 الأرخص لأن الترتيب بالكلفة العروضية
     pool = cands[:400]
-    ranked: list[tuple[MeterHit, Candidate]] = []
+    ranked: list[tuple[MeterHit, Candidate, float]] = []
     for c in pool:
         hits = match_candidate(c.bits, meters, selected)
         if not hits:
@@ -324,7 +365,7 @@ def weigh_hemistich(
         raw = h0.score
         # كلفة التقطيع تُكسَر بها التعادلات داخل البحر نفسه
         h0.score = h0.score - 0.002 * c.cost
-        ranked.append((h0, c))
+        ranked.append((h0, c, raw))
         pri = h0.meter.priority
         best_pri = best_hit.meter.priority if best_hit else 99
         if best_hit is None or raw > best_raw + 1e-12:
@@ -334,6 +375,45 @@ def weigh_hemistich(
                 pri == best_pri and c.cost < (best_cand.cost if best_cand else 1e9)
             ):
                 best_hit, best_cand, best_raw = h0, c, raw
+
+    # شطر واحد: آخر تفعيلة 1011010 مسحوب لا حداء إن كان الفرق دون 0.03
+    if mode == "discover" and best_hit is not None and best_hit.meter.id == "hida":
+        alt_hit = None
+        alt_cand = None
+        alt_raw = -1.0
+        for hit, c, raw in ranked:
+            if hit.meter.id != "mashub" or not c.bits.endswith("1011010"):
+                continue
+            if raw + 1e-12 < best_raw - CLOSE:
+                continue
+            if alt_hit is None or raw > alt_raw + 1e-12 or (
+                abs(raw - alt_raw) < 1e-9 and alt_cand is not None and c.cost < alt_cand.cost
+            ):
+                alt_hit, alt_cand, alt_raw = hit, c, raw
+        if alt_hit is not None and alt_cand is not None:
+            best_hit, best_cand, best_raw = alt_hit, alt_cand, alt_raw
+
+    # بحر مختار: تطابق قالب كامل (خبن الهجيني وغيره) لا يُسقَط تحت القبول.
+    if mode == "check" and promote_exact and ranked:
+        exact_hit = None
+        exact_cand = None
+        exact_len = -1
+        exact_raw = -1.0
+        for hit, c, raw in ranked:
+            if hit.hamm != 0 or len(c.bits) != len(hit.template):
+                continue
+            if hit.template not in hit.meter.templates:
+                continue
+            if (
+                exact_hit is None
+                or len(hit.template) > exact_len
+                or (len(hit.template) == exact_len and raw > exact_raw + 1e-12)
+            ):
+                exact_hit, exact_cand, exact_len, exact_raw = hit, c, len(hit.template), raw
+        if exact_hit is not None and exact_cand is not None:
+            exact_hit.score = max(exact_hit.score, 0.97)
+            if best_hit is None or exact_hit.score >= best_hit.score - 1e-12:
+                best_hit, best_cand = exact_hit, exact_cand
 
     if best_hit is None or best_cand is None:
         return HemistichResult(
@@ -359,7 +439,7 @@ def weigh_hemistich(
     # وجهان قريبان (مثل من هجركم)
     alts: list[AltOut] = []
     seen_bits = {best_cand.bits}
-    for hit, c in sorted(ranked, key=lambda x: -x[0].score):
+    for hit, c, _raw in sorted(ranked, key=lambda x: -x[0].score):
         if c.bits in seen_bits:
             continue
         if hit.score >= best_hit.score - 0.08 and len(alts) < 3:
@@ -421,26 +501,57 @@ def weigh_text(
             "meters": _meter_list(),
         }
     results: list[HemistichResult] = []
-    for i, p in enumerate(parts):
-        lk = None
-        if locks and i < len(locks):
-            lk = locks[i]
-        checked = weigh_hemistich(p, meter_id, lk)
-        disc = checked if meter_id in ("", "auto") else weigh_hemistich(p, "auto", lk)
-        if disc.ok and disc.message != "طول غير كاف" and disc.meter_id:
-            checked.discovered_meter_id = disc.meter_id
-            checked.discovered_meter_name = disc.meter_name
-        results.append(checked)
+    disc_bits: list[str] = []
+    selected_mode = meter_id not in ("", "auto")
+    _, meters = load_catalog()
+    pri = {m.id: m.priority for m in meters}
+
+    if not selected_mode and len(parts) == 2:
+        boards: list[dict[str, HemistichResult]] = []
+        for i, p in enumerate(parts):
+            lk = locks[i] if locks and i < len(locks) else None
+            boards.append({m.id: weigh_hemistich(p, m.id, lk, promote_exact=False) for m in meters})
+        inter = _close_ids(boards[0]) & _close_ids(boards[1])
+        if inter:
+            chosen = min(inter, key=lambda mid: (pri.get(mid, 99), mid))
+            for board in boards:
+                r = board[chosen]
+                r.mode = "discover"
+                if r.ok and r.accepted:
+                    r.message = "موزون"
+                elif r.ok and r.message != "طول غير كاف":
+                    r.message = "أقرب بحر — المطابقة دون العتبة"
+                _stamp(r, r)
+                results.append(r)
+                disc_bits.append(r.bits)
+        else:
+            for i, p in enumerate(parts):
+                lk = locks[i] if locks and i < len(locks) else None
+                checked = weigh_hemistich(p, "auto", lk)
+                _stamp(checked, checked)
+                results.append(checked)
+                disc_bits.append(checked.bits)
+    else:
+        for i, p in enumerate(parts):
+            lk = locks[i] if locks and i < len(locks) else None
+            checked = weigh_hemistich(p, meter_id, lk)
+            disc = checked if not selected_mode else weigh_hemistich(p, "auto", lk)
+            _stamp(checked, disc)
+            results.append(checked)
+            disc_bits.append(disc.bits or checked.bits)
 
     def _comparable(r: HemistichResult) -> bool:
         return bool(r.ok and r.message != "طول غير كاف" and r.discovered_meter_id)
 
-    mixed = (
-        len(results) == 2
-        and _comparable(results[0])
-        and _comparable(results[1])
-        and results[0].discovered_meter_id != results[1].discovered_meter_id
-    )
+    mixed = False
+    if len(results) == 2 and _comparable(results[0]) and _comparable(results[1]):
+        if results[0].discovered_meter_id != results[1].discovered_meter_id:
+            suppressed = selected_mode and all(r.accepted for r in results)
+            if not suppressed:
+                c0 = _cross_score(disc_bits[0], results[1].discovered_meter_id)
+                c1 = _cross_score(disc_bits[1], results[0].discovered_meter_id)
+                if c0 < ACCEPT and c1 < ACCEPT:
+                    mixed = True
     same = not mixed
     overall = "موزون" if all(r.accepted for r in results) and results else "راجع الكسر"
     if mixed:

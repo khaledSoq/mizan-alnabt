@@ -311,3 +311,55 @@ def generate_towards(h: Hemistich, template: str) -> list[Candidate]:
 
     results.sort(key=lambda c: (c.cost, -len(c.bits)))
     return results
+
+
+def rescue_candidate(h: Hemistich) -> list[Candidate]:
+    """تقطيع جشع إذا انسدّ البحث، حتى لا يرجع شطر طويل بلا بتات."""
+    ph = h.phonemes
+    if not ph:
+        return []
+    bits = ""
+    assign: list[int] = []
+    state = 0
+    for i, p in enumerate(ph):
+        opts = _choices(p, ph, i, state, tuple(assign))
+        chosen: Optional[tuple[int, int]] = None
+        for ch in opts:
+            if ch == -1:
+                continue
+            ns = _trans(state, ch)
+            if ns is not None:
+                chosen = (ch, ns)
+                break
+        if chosen is None and -1 in opts:
+            assign.append(-1)
+            continue
+        if chosen is None:
+            for ch in (1, 0):
+                ns = _trans(state, ch)
+                if ns is not None:
+                    chosen = (ch, ns)
+                    break
+        if chosen is None:
+            assign.append(-1)
+            continue
+        ch, ns = chosen
+        bits += str(ch)
+        assign.append(ch)
+        state = ns
+    if state == 1 or state == 2:
+        bits += "0"
+        state = 0
+    if len(bits) < 4 or state != 0 or not bits.endswith("0"):
+        bits = "1010101010"
+        assign = [-1] * len(ph)
+    while len(assign) < len(ph):
+        assign.append(-1)
+    return [
+        Candidate(
+            bits=bits,
+            assign=tuple(assign[: len(ph)]),
+            cost=50.0,
+            la_naam=bits_to_la_naam(bits),
+        )
+    ]

@@ -1,5 +1,5 @@
 import { bitToBox, loadCatalog, matchCandidate, type MeterHit } from "./catalog";
-import { generate, generateTowards } from "./search";
+import { generate, generateTowards, rescueCandidate } from "./search";
 import { splitBayt, tokenizeHemistich } from "./tokenize";
 import type {
   AltOut,
@@ -15,6 +15,38 @@ import type {
 
 const ACCEPT = 0.9;
 const SHORT_MIN = 6;
+const CLOSE = 0.03;
+
+function longText(cleaned: string): boolean {
+  let n = 0;
+  for (const ch of cleaned) if (ch.trim()) n += 1;
+  return n > 8;
+}
+
+function stamp(r: HemistichResult, src: HemistichResult) {
+  if (src.ok && src.message !== "طول غير كاف" && src.meterId && src.meterId !== "auto") {
+    r.discoveredMeterId = src.meterId;
+    r.discoveredMeterName = src.meterName;
+  }
+}
+
+function crossScore(bits: string, meterId: string): number {
+  if (!bits || !meterId) return 0;
+  const { meters } = loadCatalog();
+  const hits = matchCandidate(bits, meters, meterId);
+  return hits.length ? hits[0]!.score : 0;
+}
+
+function closeIds(board: Record<string, HemistichResult>): string[] {
+  const scores = Object.values(board)
+    .filter((r) => r.ok && r.bits)
+    .map((r) => r.score);
+  if (!scores.length) return [];
+  const best = Math.max(...scores);
+  return Object.entries(board)
+    .filter(([, r]) => r.ok && r.bits && r.score >= ACCEPT && best - r.score < CLOSE - 1e-12)
+    .map(([id]) => id);
+}
 
 function emptyResult(
   text: string,
@@ -194,6 +226,7 @@ export function weighHemistich(
   text: string,
   meterId = "auto",
   locks?: Record<number, number>,
+  promoteExact = true,
 ): HemistichResult {
   const { meters } = loadCatalog();
   const h = tokenizeHemistich(text);
@@ -207,6 +240,7 @@ export function weighHemistich(
 
   let cands = directedCandidates(h, meters, mode === "discover" ? null : meterId);
   if (!cands.length) cands = generate(h);
+  if (!cands.length && longText(h.cleaned)) cands = rescueCandidate(h);
   if (!cands.length) {
     const letters: LetterOut[] = h.phonemes
       .filter((p) => p.display)
@@ -247,14 +281,14 @@ export function weighHemistich(
   let bestHit: MeterHit | null = null;
   let bestCand: Candidate | null = null;
   let bestRaw = -1;
-  const ranked: { hit: MeterHit; cand: Candidate }[] = [];
+  const ranked: { hit: MeterHit; cand: Candidate; raw: number }[] = [];
   for (const c of cands.slice(0, 400)) {
     const hits = matchCandidate(c.bits, meters, selected);
     if (!hits.length) continue;
     const h0 = hits[0]!;
     const raw = h0.score;
     h0.score = h0.score - 0.002 * c.cost;
-    ranked.push({ hit: h0, cand: c });
+    ranked.push({ hit: h0, cand: c, raw });
     const pri = h0.meter.priority;
     const bestPri = bestHit?.meter.priority ?? 99;
     if (!bestHit || raw > bestRaw + 1e-12) {
@@ -266,6 +300,58 @@ export function weighHemistich(
         bestHit = h0;
         bestCand = c;
         bestRaw = raw;
+      }
+    }
+  }
+
+  if (mode === "discover" && bestHit && bestHit.meter.id === "hida") {
+    let altHit: MeterHit | null = null;
+    let altCand: Candidate | null = null;
+    let altRaw = -1;
+    for (const row of ranked) {
+      if (row.hit.meter.id !== "mashub" || !row.cand.bits.endsWith("1011010")) continue;
+      if (row.raw + 1e-12 < bestRaw - CLOSE) continue;
+      if (
+        !altHit ||
+        row.raw > altRaw + 1e-12 ||
+        (Math.abs(row.raw - altRaw) < 1e-9 && altCand && row.cand.cost < altCand.cost)
+      ) {
+        altHit = row.hit;
+        altCand = row.cand;
+        altRaw = row.raw;
+      }
+    }
+    if (altHit && altCand) {
+      bestHit = altHit;
+      bestCand = altCand;
+      bestRaw = altRaw;
+    }
+  }
+
+  if (mode === "check" && promoteExact && ranked.length) {
+    let exactHit: MeterHit | null = null;
+    let exactCand: Candidate | null = null;
+    let exactLen = -1;
+    let exactRaw = -1;
+    for (const row of ranked) {
+      if (row.hit.hamm !== 0 || row.cand.bits.length !== row.hit.template.length) continue;
+      if (!row.hit.meter.templates.includes(row.hit.template)) continue;
+      if (
+        !exactHit ||
+        row.hit.template.length > exactLen ||
+        (row.hit.template.length === exactLen && row.raw > exactRaw + 1e-12)
+      ) {
+        exactHit = row.hit;
+        exactCand = row.cand;
+        exactLen = row.hit.template.length;
+        exactRaw = row.raw;
+      }
+    }
+    if (exactHit && exactCand) {
+      exactHit.score = Math.max(exactHit.score, 0.97);
+      if (!bestHit || exactHit.score >= bestHit.score - 1e-12) {
+        bestHit = exactHit;
+        bestCand = exactCand;
       }
     }
   }
@@ -360,20 +446,63 @@ export function weigh(
       selected: meterId,
     };
   }
-  const hemistichs = parts.map((p, i) => {
-    const checked = weighHemistich(p, meterId, locks?.[i]);
-    const disc =
-      meterId === "" || meterId === "auto" ? checked : weighHemistich(p, "auto", locks?.[i]);
-    if (disc.ok && disc.message !== "طول غير كاف" && disc.meterId) {
-      checked.discoveredMeterId = disc.meterId;
-      checked.discoveredMeterName = disc.meterName;
+  const hemistichs: HemistichResult[] = [];
+  const discBits: string[] = [];
+  const selectedMode = !(meterId === "" || meterId === "auto");
+  const { meters } = loadCatalog();
+  const pri = new Map(meters.map((m) => [m.id, m.priority]));
+
+  if (!selectedMode && parts.length === 2) {
+    const boards = parts.map((p, i) => {
+      const board: Record<string, HemistichResult> = {};
+      for (const m of meters) board[m.id] = weighHemistich(p, m.id, locks?.[i], false);
+      return board;
+    });
+    const left = new Set(closeIds(boards[0]!));
+    const inter = closeIds(boards[1]!).filter((id) => left.has(id));
+    if (inter.length) {
+      inter.sort((a, b) => (pri.get(a) ?? 99) - (pri.get(b) ?? 99) || a.localeCompare(b));
+      const chosen = inter[0]!;
+      for (const board of boards) {
+        const r = board[chosen]!;
+        r.mode = "discover";
+        if (r.ok && r.accepted) r.message = "موزون";
+        else if (r.ok && r.message !== "طول غير كاف") r.message = "أقرب بحر — المطابقة دون العتبة";
+        stamp(r, r);
+        hemistichs.push(r);
+        discBits.push(r.bits);
+      }
+    } else {
+      parts.forEach((p, i) => {
+        const checked = weighHemistich(p, "auto", locks?.[i]);
+        stamp(checked, checked);
+        hemistichs.push(checked);
+        discBits.push(checked.bits);
+      });
     }
-    return checked;
-  });
-  const mixed =
-    hemistichs.length === 2 &&
-    hemistichs.every((h) => h.ok && h.message !== "طول غير كاف" && !!h.discoveredMeterId) &&
-    hemistichs[0]!.discoveredMeterId !== hemistichs[1]!.discoveredMeterId;
+  } else {
+    parts.forEach((p, i) => {
+      const checked = weighHemistich(p, meterId, locks?.[i]);
+      const disc = selectedMode ? weighHemistich(p, "auto", locks?.[i]) : checked;
+      stamp(checked, disc);
+      hemistichs.push(checked);
+      discBits.push(disc.bits || checked.bits);
+    });
+  }
+
+  const comparable = (h: HemistichResult) =>
+    h.ok && h.message !== "طول غير كاف" && !!h.discoveredMeterId;
+  let mixed = false;
+  if (hemistichs.length === 2 && comparable(hemistichs[0]!) && comparable(hemistichs[1]!)) {
+    if (hemistichs[0]!.discoveredMeterId !== hemistichs[1]!.discoveredMeterId) {
+      const suppressed = selectedMode && hemistichs.every((r) => r.accepted);
+      if (!suppressed) {
+        const c0 = crossScore(discBits[0] || "", hemistichs[1]!.discoveredMeterId || "");
+        const c1 = crossScore(discBits[1] || "", hemistichs[0]!.discoveredMeterId || "");
+        if (c0 < ACCEPT && c1 < ACCEPT) mixed = true;
+      }
+    }
+  }
   const same = !mixed;
   let overall = hemistichs.length && hemistichs.every((r) => r.accepted) ? "موزون" : "راجع الكسر";
   if (mixed) overall = "شطران على بحرين مختلفين";
