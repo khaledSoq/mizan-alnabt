@@ -1669,14 +1669,13 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   var hintEl = document.getElementById("hint");
   var exEl = document.getElementById("ex");
   var meterId = "mashub";
-  var hintMeter = "mashub";
+  var hint = METER_EXAMPLES.mashub;
   var locks = [];
 
-  function applyPlaceholders(id) {
-    var ex = METER_EXAMPLES[id];
-    if (ex) {
+  function applyPlaceholders(ex) {
+    if (ex && ex.sadr) {
       sadrEl.placeholder = ex.sadr;
-      ajzEl.placeholder = ex.ajz;
+      ajzEl.placeholder = ex.ajz || "";
     } else {
       sadrEl.placeholder = "الصدر، بلا حركات";
       ajzEl.placeholder = "العجز، بلا حركات — اتركه فارغاً لوزن الصدر وحده";
@@ -1685,10 +1684,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
   function verseText() {
     var s = (sadrEl.value || "").replace(/^\s+|\s+$/g, "");
     var a = (ajzEl.value || "").replace(/^\s+|\s+$/g, "");
-    if (!s && !a) {
-      var ex = METER_EXAMPLES[hintMeter];
-      if (ex) return ex.sadr + "\n" + ex.ajz;
-    }
+    if (!s && !a && hint && hint.sadr) return hint.sadr + "\n" + (hint.ajz || "");
     return sadrEl.value + "\n" + ajzEl.value;
   }
 
@@ -1701,7 +1697,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     }
   }
   setMeter("mashub");
-  applyPlaceholders("mashub");
+  applyPlaceholders(hint);
 
   metersEl.onclick = function (ev) {
     var t = ev.target;
@@ -1710,16 +1706,10 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     var id = t.getAttribute("data-id");
     setMeter(id);
     if (id !== "auto") {
-      hintMeter = id;
-      applyPlaceholders(id);
-      var ex = METER_EXAMPLES[id];
-      if (ex) {
-        sadrEl.value = ex.sadr;
-        ajzEl.value = ex.ajz;
-      } else {
-        sadrEl.value = "";
-        ajzEl.value = "";
-      }
+      hint = METER_EXAMPLES[id] || null;
+      applyPlaceholders(hint);
+      sadrEl.value = "";
+      ajzEl.value = "";
       locks = [];
     }
     doWeigh();
@@ -1735,12 +1725,12 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
       if (ex.ajz) html += "<span class='ajz'>" + esc(ex.ajz) + "</span>";
       b.innerHTML = html;
       b.onclick = function () {
-        sadrEl.value = ex.sadr;
-        ajzEl.value = ex.ajz;
+        sadrEl.value = "";
+        ajzEl.value = "";
         locks = [];
         setMeter(ex.meter);
-        hintMeter = ex.meter;
-        applyPlaceholders(ex.meter);
+        hint = { sadr: ex.sadr, ajz: ex.ajz || "" };
+        applyPlaceholders(hint);
         doWeigh();
       };
       exEl.appendChild(b);

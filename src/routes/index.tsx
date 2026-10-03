@@ -70,34 +70,28 @@ function Home() {
   const [sadr, setSadr] = useState("");
   const [ajz, setAjz] = useState("");
   const [meterId, setMeterId] = useState("mashub");
-  const [hintMeter, setHintMeter] = useState("mashub");
+  const [hint, setHint] = useState(METER_EXAMPLES.mashub!);
   const [locks, setLocks] = useState<Array<Record<number, number>>>([]);
 
-  const hint = METER_EXAMPLES[hintMeter] ?? METER_EXAMPLES.mashub!;
   const bothEmpty = !sadr.trim() && !ajz.trim();
-  const verse = bothEmpty ? joinBayt(hint.sadr, hint.ajz) : joinBayt(sadr, ajz);
+  const verse =
+    bothEmpty && hint.sadr ? joinBayt(hint.sadr, hint.ajz) : joinBayt(sadr, ajz);
   const result: WeighResult = useMemo(() => weigh(verse, meterId, locks), [verse, meterId, locks]);
 
   function selectMeter(id: string) {
     setMeterId(id);
     setLocks([]);
     if (id === "auto") return;
-    setHintMeter(id);
-    const ex = METER_EXAMPLES[id];
-    if (ex) {
-      setSadr(ex.sadr);
-      setAjz(ex.ajz);
-    } else {
-      setSadr("");
-      setAjz("");
-    }
+    setHint(METER_EXAMPLES[id] ?? { sadr: "", ajz: "" });
+    setSadr("");
+    setAjz("");
   }
 
   function loadExample(ex: (typeof EXAMPLES)[number]) {
-    setSadr(ex.sadr);
-    setAjz(ex.ajz);
+    setHint({ sadr: ex.sadr, ajz: ex.ajz });
+    setSadr("");
+    setAjz("");
     setMeterId(ex.meter);
-    setHintMeter(ex.meter);
     setLocks([]);
   }
 
@@ -173,7 +167,7 @@ function Home() {
                   setSadr(e.target.value);
                   setLocks([]);
                 }}
-                placeholder={hint.sadr}
+                placeholder={hint.sadr || "الصدر، بلا حركات"}
                 className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -190,7 +184,7 @@ function Home() {
                   setAjz(e.target.value);
                   setLocks([]);
                 }}
-                placeholder={hint.ajz}
+                placeholder={hint.ajz || "العجز، بلا حركات"}
                 className="w-full resize-y rounded-md bg-bg-elevated px-4 py-3 font-display text-xl leading-loose text-fg outline-none ring-1 ring-border placeholder:text-subtle focus:ring-2 focus:ring-ring"
               />
             </div>
