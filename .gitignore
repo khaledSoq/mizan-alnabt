@@ -12,3 +12,8 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# بيانات القوافي تُبنى في GitHub Actions عند النشر، لا تُرفع للمستودع
+docs/qawafi/data/
+tools/qawafi/out/
+tools/qawafi/data/
