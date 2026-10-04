@@ -48,6 +48,9 @@ def scan(word, tokenize, generate, prefix="يا", n_alts=3):
 
 
 DIAC_MARKS = re.compile(r"[\u064B-\u0652]")
+# الأصوات المركبة في النجدي تُنطق مدا: "لَيْه" و"عَيْن" تُقرآن لِيه وعِين، فسكون الواو/الياء
+# بعد فتحة في التشكيل الفصيح لا يُعتدّ به حكما بين القراءتين.
+DIPHTHONG = re.compile(r"(\u064E[\u0648\u064A])\u0652")
 
 
 def scan_variants(forms, tokenize, generate):
@@ -72,7 +75,7 @@ def scan_variants(forms, tokenize, generate):
         # نفس الحروف تمامًا (الهمزة منها): "واحكُمِ" فعل أمر لا "وأحكم"
         if not DIAC_MARKS.search(f) or DIAC.sub("", f) != DIAC.sub("", forms[0]):
             continue
-        b, a = scan(f, tokenize, generate)
+        b, a = scan(DIPHTHONG.sub(r"\1", f), tokenize, generate)
         if b in options and not a:
             votes.setdefault(b, f)
     if len(votes) == 1:

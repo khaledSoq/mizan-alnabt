@@ -40,8 +40,16 @@ jobs:
           pip install pyarrow
           python build_qawafi.py --download --data /tmp/ashaar --out /tmp/qout
           python wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv
-          python test_wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv --min 40
+          python test_wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv --min 44
           python make_web.py --rhymes /tmp/qout/rhymes.csv --verses /tmp/qout/verses.jsonl.gz --out ../../docs/qawafi/data
+
+      # محرك الموقع يُبنى من TypeScript بنفس إعداد الحزمة السابقة (طابقها حرفًا حرفًا قبل إصلاح الواو والياء)
+      - name: build engine bundle
+        run: npx --yes esbuild@0.28.2 src/lib/arud/index.ts --bundle --format=iife --global-name=Arud --target=es2019 --outfile=docs/engine.js --log-level=warning
+
+      # حارس التطابق: محرك بايثون (الأرشيف) ومحرك الموقع. الأربعة المسموحة تعادلات قديمة معروفة
+      - name: engine parity
+        run: python3 tools/parity/parity.py --max-diffs 4
 
       # الصفحة الرئيسية تُولَّد من مولّدها حتى يبقى المولّد هو المرجع
       - name: build static index
