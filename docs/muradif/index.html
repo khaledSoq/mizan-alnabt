@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>المرادفات · ميزان النبط</title>
+<meta name="description" content="مرادفات الكلمة بصيغها الواردة في الشعر، مصفاة بالتفعيلة"/>
+<meta name="theme-color" content="#12100e"/>
+<meta name="color-scheme" content="dark"/>
+<meta name="referrer" content="no-referrer"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23f3ead8'/><text x='32' y='44' text-anchor='middle' font-size='36' fill='%231c1612'>ر</text></svg>"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap"/>
+<style>
+:root {
+  --bg:#12100e; --elev:#1a1714; --surf:#211d18; --paper:#f3ead8; --edge:#e4d7c0;
+  --ink:#1c1612; --soft:#3a322b; --fg:#f4efe6; --muted:#9a9186; --subtle:#6e675f;
+  --one:#3f5c4a; --zero:#7a4a42; --bd:#3a342d; --ring:#8a9a7b;
+  --sans:"Noto Naskh Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --disp:"Amiri","Traditional Arabic","Noto Naskh Arabic",serif;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+[hidden] { display:none !important; }
+html, body { margin:0; min-height:100%; background:var(--bg); color:var(--fg); }
+body { font-family:var(--sans); padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+button, input { font-family:inherit; }
+button { cursor:pointer; }
+.wrap { max-width:44rem; margin:0 auto; padding:0.85rem 0.85rem 3rem; }
+.top { display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; }
+.navs { display:flex; gap:0.35rem; flex-wrap:wrap; justify-content:flex-end; }
+.kicker { margin:0; font-size:0.72rem; color:var(--muted); }
+h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:1.25; }
+.navbtn { border:1px solid var(--bd); background:var(--elev); color:var(--fg); text-decoration:none;
+  border-radius:999px; padding:0.4rem 0.8rem; font-size:0.8rem; white-space:nowrap; }
+.lede { margin:0.35rem 0 0.8rem; font-size:0.82rem; line-height:1.7; color:var(--muted); }
+.panel { background:var(--surf); border:1px solid var(--bd); border-radius:0.85rem; padding:0.85rem; margin-bottom:0.8rem; }
+.step { font-size:0.78rem; color:var(--muted); font-weight:700; margin:0 0 0.45rem; }
+.qrow { display:flex; gap:0.4rem; }
+#q { flex:1; min-width:0; border:1px solid var(--bd); border-radius:0.55rem; background:var(--elev); color:var(--fg);
+  font-family:var(--disp); font-size:1.5rem; padding:0.35rem 0.8rem; outline:none; text-align:center; }
+#q:focus { border-color:var(--ring); }
+.go { border:0; border-radius:0.55rem; background:var(--paper); color:var(--ink); font-weight:800; padding:0 1rem; font-size:1rem; }
+.senses { display:flex; flex-direction:column; gap:0.4rem; }
+.sense { text-align:right; border:1px solid var(--bd); background:var(--elev); color:var(--fg); border-radius:0.6rem; padding:0.55rem 0.7rem; }
+.sense.on { background:var(--paper); color:var(--ink); border-color:var(--paper); }
+.sense .d { font-size:0.9rem; line-height:1.7; }
+.sense .s { font-family:var(--disp); font-size:1rem; color:var(--muted); margin-top:0.15rem; }
+.sense.on .s { color:var(--soft); }
+.tafs { display:grid; grid-template-columns:repeat(auto-fill, minmax(6.4rem, 1fr)); gap:0.35rem; }
+.taf { border:1px solid var(--bd); background:var(--elev); color:var(--fg); border-radius:0.6rem; padding:0.4rem 0.3rem; text-align:center; }
+.taf.on { background:var(--paper); color:var(--ink); border-color:var(--paper); }
+.taf b { display:block; font-family:var(--disp); font-size:1.15rem; }
+.taf small { display:block; font-size:0.68rem; color:var(--muted); }
+.taf.on small { color:var(--soft); }
+.taf code { display:block; font-size:0.68rem; letter-spacing:0.1em; direction:ltr; color:var(--subtle); }
+.status { text-align:center; color:var(--muted); font-size:0.85rem; margin:0.6rem 0; line-height:1.7; }
+.res { display:flex; flex-direction:column; gap:0.6rem; }
+.syn { background:var(--paper); color:var(--ink); border-radius:0.8rem; padding:0.65rem 0.8rem; }
+.syn h3 { margin:0 0 0.35rem; font-family:var(--disp); font-size:1.4rem; }
+.forms { display:flex; flex-wrap:wrap; gap:0.35rem; }
+.form { border:1px solid var(--one); background:#e9f0e4; color:var(--ink); border-radius:999px; padding:0.15rem 0.7rem;
+  font-family:var(--disp); font-size:1.1rem; text-decoration:none; }
+.form small { font-family:var(--sans); font-size:0.66rem; color:var(--soft); margin-right:0.3rem; }
+.form.sw { border-color:#b9a37f; background:#f6eedd; }
+.tag { font-family:var(--sans); font-size:0.62rem; background:var(--edge); border-radius:999px; padding:0 0.4rem; margin-right:0.25rem; color:var(--soft); }
+.more { border:0; background:none; color:var(--one); text-decoration:underline; font-size:0.8rem; }
+.rej { background:var(--surf); border:1px solid var(--bd); border-radius:0.7rem; padding:0.55rem 0.75rem; font-size:0.85rem; color:var(--muted); line-height:1.8; }
+.rej b { color:var(--fg); }
+.note { font-size:0.72rem; color:var(--subtle); line-height:1.7; text-align:center; margin-top:1.2rem; }
+</style>
+</head>
+<body>
+<noscript>فعّل جافاسكربت حتى تشتغل الصفحة.</noscript>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <p class="kicker">من سوار والشعر · لا صيغة مولّدة</p>
+      <h1>المرادفات</h1>
+    </div>
+    <div class="navs"><a class="navbtn" href="../">ميزان النبط</a><a class="navbtn" href="../qawafi/">القوافي</a></div>
+  </div>
+  <p class="lede">اكتب الكلمة، واختر المعنى الذي تقصده، ثم التفعيلة. تظهر المرادفات بصيغها التي وردت في الشعر أو في تصريف سوار، وتطابق التفعيلة.</p>
+
+  <div class="panel">
+    <p class="step">١. الكلمة</p>
+    <div class="qrow">
+      <input id="q" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="كريم" inputmode="text"/>
+      <button class="go" id="go">ابحث</button>
+    </div>
+  </div>
+
+  <div class="panel" id="sensePanel" hidden>
+    <p class="step">٢. المعنى المقصود</p>
+    <div class="senses" id="senses"></div>
+  </div>
+
+  <div class="panel" id="tafPanel" hidden>
+    <p class="step">٣. التفعيلة</p>
+    <div class="tafs" id="tafs"></div>
+  </div>
+
+  <div class="status" id="status"></div>
+  <div class="res" id="res"></div>
+
+  <p class="note">المرادفات والمعاني من منصة سوار، مجمع الملك سلمان العالمي للغة العربية. الصيغ مما ورد في الأشعار (مع عدد الورود) أو من تصريف سوار للأفعال، وتشكيل أصلها من سوار. الوزن بمحرك ميزان النبط على النطق النجدي.</p>
+</div>
+
+<script src="../engine.js"></script>
+<script>
+"use strict";
+const PROXY = "https://qawafi-siwar.k-alsoqair.workers.dev";
+const TAFS = [
+  { b: "", n: "الكل" },
+  { b: "1010110", n: "مستفعلن", ln: "لا لا نعم" },
+  { b: "10110", n: "فاعلن", ln: "لا نعم" },
+  { b: "1011010", n: "فاعلاتن", ln: "لا نعم لا" },
+  { b: "11010", n: "فعولن", ln: "نعم لا" },
+  { b: "1101010", n: "مفاعيلن", ln: "نعم لا لا" },
+  { b: "1010", n: "فعلن", ln: "لا لا" },
+];
+// أسماء التفاعيل لعرض "الكل" (نفس جدول صفحة القوافي)
+const TAFNAME = { "1010110": "مستفعلن", "1011010": "فاعلاتن", "1101010": "مفاعيلن", "1110110": "متفاعلن", "1101110": "مفاعلتن",
+  "110110": "مفاعلن", "101010": "مفعولن", "111010": "فعلاتن", "10110": "فاعلن", "11010": "فعولن", "1110": "فعلن", "1010": "فعْلن", "110": "فعَلْ", "10": "فعْ" };
+const PREFIXES = ["وبال", "وال", "فال", "بال", "كال", "ولل", "لل", "ال", "وب", "ول", "فل", "فب", "و", "ف", "ب", "ل", "ك", ""];
+const SUFFIXES = ["هما", "كما", "هم", "هن", "كم", "كن", "ها", "نا", "ني", "ات", "ون", "ين", "ان", "ه", "ي", "ك", ""];
+const DIAC = /[\u0610-\u061A\u064B-\u065F\u0670\u0640]/g;
+const UNI = { "أ":"ا", "إ":"ا", "آ":"ا", "ٱ":"ا", "ى":"ي", "ة":"ه" };
+const norm = s => (s || "").replace(DIAC, "").replace(/[^\u0621-\u064A]/g, "").replace(/[أإآٱىة]/g, c => UNI[c]);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const ar = n => Number(n).toLocaleString("ar-EG");
+const $ = id => document.getElementById(id);
+const A = window.Arud && window.Arud.wordWazn ? window.Arud : null;
+const state = { word: "", senses: [], sense: -1, taf: "1010110", built: null };
+
+// ---------- فهرس الأشعار (نفس دالة build_vocab.py) ----------
+function fnv1a(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+const buckets = new Map();
+function vocab(stem) {
+  const b = fnv1a(stem) % 256;
+  if (!buckets.has(b)) buckets.set(b, fetch(`../qawafi/data/v/${b}.json`).then(r => r.ok ? r.json() : {}).catch(() => ({})));
+  return buckets.get(b).then(d => d[stem] || []);
+}
+
+// ---------- الوزن ----------
+// الأصل يشكّل بتشكيل سوار. قبل اللاحقة تُحذف حركة الإعراب وتبقى الشدة (سخيّها)،
+// وفي آخر الكلمة تُحذف الشدة أيضًا لأن الوقف يسقطها (سخي)
+const core = lemma => lemma.replace(/[\u064B-\u0650\u0652]+$/, "");
+const pausal = lemma => lemma.replace(/[\u064B-\u0652]+$/, "").replace(/[\u064B-\u0652]+$/, "");
+function weigh(w) {
+  if (!A) return [];
+  // القراءة الأرجح وحدها: المتعادلات هنا من غموض اللاحقة غير المشكولة، فتُدخل الصيغة في تفعيلتين
+  try { const r = A.wordWazn(w); return r.bits ? [r.bits] : []; } catch (e) { return []; }
+}
+// صيغة من الشعر: تُستبدل الحروف التي تطابق الأصل بالأصل المشكول، وتبقى السوابق واللواحق كما كُتبت
+function vocalize(form, stem, lemma) {
+  const k = norm(form);
+  for (const p of PREFIXES) {
+    if (!k.startsWith(p) || !k.startsWith(stem, p.length)) continue;
+    const s = k.slice(p.length + stem.length);
+    if (!SUFFIXES.includes(s)) continue;
+    return form.slice(0, p.length) + (s ? core(lemma) : pausal(lemma)) + form.slice(p.length + stem.length);
+  }
+  return null;
+}
+function cleanForm(v) {
+  return (v || "").split("/").map(x => x.trim()).filter(x => /^[\u0621-\u064A][\u0621-\u0652\u0670]*$/.test(x));
+}
+
+// ---------- الخطوة ١: الكلمة ومعانيها ----------
+async function lookupWord() {
+  const w = norm($("q").value);
+  if (w.length < 2) return;
+  state.word = w; state.sense = -1; state.built = null;
+  $("res").innerHTML = ""; $("tafPanel").hidden = true; $("sensePanel").hidden = true;
+  $("status").textContent = "جارٍ البحث في سوار…";
+  let j;
+  try {
+    const r = await fetch(`${PROXY}/lookup?w=${encodeURIComponent(w)}`);
+    j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || r.status);
+  } catch (e) { $("status").textContent = "تعذّر الاتصال بسوار الآن."; return; }
+  // كل معنى بمرادفاته وحده، والمكرر يُحذف (معجم الرياض يعيد بعض المعاني)
+  const seen = new Set(), senses = [];
+  for (const g of j.groups || []) {
+    if (!g.self) continue;
+    for (const e of g.entries) for (const s of e.senses || []) {
+      const syn = [];
+      for (const r of s.rel || []) if (/رادف/.test(r[0]) && r[1] && !syn.includes(r[1])) syn.push(r[1]);
+      if (!syn.length) continue;
+      const key = norm(s.d) + "|" + syn.map(norm).join(",");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      senses.push({ lemma: e.lemma, d: s.d, syn });
+    }
+  }
+  state.senses = senses;
+  if (!senses.length) { $("status").textContent = j.stop ? "كلمة وظيفية، لا مرادفات لها." : "لا مرادفات لهذه الكلمة في سوار."; return; }
+  $("status").textContent = senses.length === 1 ? "" : `للكلمة ${ar(senses.length)} معانٍ لها مرادفات. اختر ما تقصده.`;
+  $("senses").innerHTML = senses.map((s, i) => `<button class="sense" data-i="${i}"><div class="d"><b>${esc(s.lemma)}</b>: ${esc(s.d)}</div><div class="s">${s.syn.map(esc).join("، ")}</div></button>`).join("");
+  $("sensePanel").hidden = false;
+  if (senses.length === 1) pickSense(0);
+}
+
+// ---------- الخطوة ٢: المعنى، فتُجمع صيغ كل مرادف ----------
+async function pickSense(i) {
+  state.sense = i;
+  document.querySelectorAll(".sense").forEach(b => b.classList.toggle("on", +b.dataset.i === i));
+  $("tafPanel").hidden = false;
+  $("status").textContent = "جارٍ جمع الصيغ…";
+  const sense = state.senses[i], me = state.built = { sense: i, syns: null };
+  const syns = await Promise.all(sense.syn.map(async lemma => {
+    const stem = norm(lemma), out = [], have = new Set();
+    const add = (vocalized, shown, n, src) => {
+      const k = norm(shown) + "|" + src;
+      if (have.has(k)) return;
+      have.add(k);
+      out.push({ shown, n, src, bits: weigh(vocalized) });
+    };
+    add(lemma, lemma, 0, "سوار");
+    if (!/\s/.test(lemma) && stem.length >= 3) {
+      for (const [form, n] of await vocab(stem)) {
+        const v = vocalize(form, stem, lemma);
+        if (v) add(v, form, n, "شعر");
+      }
+    }
+    // الأفعال: سوار يعيد تصريفها مشكولًا (الفعل الماضي في سوار ينتهي بفتحة)
+    if (/\u064e$/.test(lemma) && !/\s/.test(lemma)) {
+      try {
+        const r = await fetch(`${PROXY}/forms?l=${encodeURIComponent(lemma)}`);
+        const fj = await r.json();
+        for (const v of fj.forms || []) for (const f of cleanForm(v)) add(f, f, 0, "تصريف");
+      } catch (e) {}
+    }
+    return { lemma, forms: out };
+  }));
+  if (state.built !== me) return;
+  me.syns = syns;
+  render();
+}
+
+// ---------- الخطوة ٣: التفعيلة ----------
+function matches(bits, taf) {
+  for (const b of bits) {
+    if (b === taf) return "";
+    if (b === "0" + taf) return "ساكن قبلها";
+  }
+  return null;
+}
+function formChip(f, note) {
+  const n = f.src === "شعر" ? `<small>${ar(f.n)}</small>` : `<span class="tag">${esc(f.src)}</span>`;
+  const t = note ? `<span class="tag">${esc(note)}</span>` : "";
+  const href = f.src === "شعر" ? `../qawafi/?q=${encodeURIComponent(norm(f.shown))}` : null;
+  return href ? `<a class="form" href="${href}">${esc(f.shown)}${n}${t}</a>` : `<span class="form sw">${esc(f.shown)}${n}${t}</span>`;
+}
+function render() {
+  const b = state.built;
+  if (!b || !b.syns) return;
+  const taf = state.taf, ok = [], rejected = [];
+  for (const s of b.syns) {
+    const hits = [];
+    for (const f of s.forms) {
+      if (!taf) { const name = f.bits.map(x => TAFNAME[x] || TAFNAME[x.replace(/^0+/, "")]).find(Boolean); if (name) hits.push([f, name]); continue; }
+      const m = matches(f.bits, taf);
+      if (m !== null) hits.push([f, m]);
+    }
+    hits.sort((x, y) => (y[0].n - x[0].n) || (x[0].src === "سوار" ? -1 : 1));
+    if (hits.length) ok.push({ s, hits }); else rejected.push(s.lemma);
+  }
+  const tname = (TAFS.find(t => t.b === taf) || {}).n;
+  $("status").textContent = ok.length ? `${ar(ok.length)} من ${ar(b.syns.length)} مرادفات لها صيغة ${taf ? "تركب على " + tname : "موزونة"}.` : "";
+  $("res").innerHTML = ok.map(({ s, hits }) => {
+    const first = hits.slice(0, 14), rest = hits.slice(14);
+    return `<div class="syn"><h3>${esc(s.lemma)}</h3><div class="forms">${first.map(h => formChip(...h)).join("")}` +
+      (rest.length ? `<span class="hid" hidden>${rest.map(h => formChip(...h)).join("")}</span><button class="more">+${ar(rest.length)}</button>` : "") + `</div></div>`;
+  }).join("") + (rejected.length ? `<div class="rej"><b>${taf ? "لا تركب على " + esc(tname) : "بلا وزن معروف"}:</b> ${rejected.map(esc).join("، ")}</div>` : "");
+}
+
+// ---------- الأحداث ----------
+$("tafs").innerHTML = TAFS.map(t => `<button class="taf${t.b === state.taf ? " on" : ""}" data-b="${t.b}"><b>${t.n}</b>${t.ln ? `<small>${t.ln}</small><code>${t.b}</code>` : "<small>كل الصيغ</small>"}</button>`).join("");
+$("tafs").addEventListener("click", e => {
+  const b = e.target.closest("[data-b]"); if (!b) return;
+  state.taf = b.dataset.b;
+  document.querySelectorAll(".taf").forEach(x => x.classList.toggle("on", x === b));
+  render();
+});
+$("senses").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) pickSense(+b.dataset.i); });
+$("res").addEventListener("click", e => {
+  const m = e.target.closest(".more"); if (!m) return;
+  m.previousElementSibling.hidden = false; m.remove();
+});
+$("go").addEventListener("click", lookupWord);
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") lookupWord(); });
+const q0 = new URLSearchParams(location.search).get("w");
+if (q0) { $("q").value = q0; lookupWord(); }
+if (!A) $("status").textContent = "تعذّر تحميل المحرك، فلن تُوزن الصيغ.";
+</script>
+</body>
+</html>
