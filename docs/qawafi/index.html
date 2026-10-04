@@ -91,6 +91,12 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
 .rel .plain { color:var(--soft); }
 .pick { border:1px solid var(--one); background:none; color:var(--one); border-radius:999px; font-size:0.75rem; padding:0.15rem 0.6rem; margin-top:0.3rem; }
 .card a { color:var(--one); }
+.syns { display:flex; flex-wrap:wrap; gap:0.35rem; margin:0.3rem 0 0.5rem; }
+.syn { border:1px solid var(--one); background:#e9f0e4; color:var(--one); border-radius:999px; padding:0.15rem 0.7rem;
+  font-family:var(--disp); font-size:1.05rem; }
+.syn.off { border-color:#cdbd9f; background:transparent; color:var(--soft); }
+.syn small { font-family:var(--sans); font-size:0.65rem; margin-right:0.3rem; }
+.synh { font-size:0.78rem; font-weight:700; color:var(--soft); margin-top:0.3rem; }
 .zchip { display:flex; align-items:center; justify-content:center; gap:0.4rem; flex-wrap:wrap; margin:0.8rem 0 0;
   background:var(--surf); border:1px solid var(--ring); border-radius:0.7rem; padding:0.45rem 0.7rem; font-size:0.85rem; }
 .zchip .taf { font-size:1.05rem; }
@@ -307,13 +313,28 @@ function dedupe(entries) {
     if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
+// طلب واحد لكل كلمة يخدم المعنى والمرادفات معًا
+const lookCache = new Map();
+function lookupWord(q) {
+  if (!lookCache.has(q)) {
+    lookCache.set(q, fetch(PROXY + encodeURIComponent(q)).then(async r => {
+      const j = await r.json();
+      if (!r.ok || j.error) throw new Error(j.error || r.status);
+      return j;
+    }).catch(e => { lookCache.delete(q); throw e; }));
+  }
+  return lookCache.get(q);
+}
+let IDX = null;
+function idxOf(w) {
+  if (!IDX) { IDX = new Map(); W.forEach((x, i) => IDX.set(x, i)); }
+  return IDX.has(w) ? IDX.get(w) : -1;
+}
+
 async function meaningHtml(word, query) {
   let j;
-  try {
-    const r = await fetch(PROXY + encodeURIComponent(query));
-    j = await r.json();
-    if (!r.ok || j.error) throw new Error(j.error || r.status);
-  } catch (e) { return `<p class="note">تعذّر جلب المعنى الآن.</p>`; }
+  try { j = await lookupWord(query); }
+  catch (e) { return `<p class="note">تعذّر جلب المعنى الآن.</p>`; }
   if (j.stop) return `<p class="note">كلمة وظيفية، لا معنى معجمي يفيد هنا.</p>`;
   if (!j.groups.length) return `<p class="note">لم يجد سوار هذه الكلمة في المعاجم العامة.</p>`;
   const choice = getChoice(word);
@@ -332,6 +353,69 @@ async function meaningHtml(word, query) {
   return chosenHtml + `<p class="note">${chosenHtml ? "خيارات أخرى:" : "اختر المعنى الذي تقصده:"}</p>` + groups + via;
 }
 
+// ---------- المرادفات: من المعنى المختار، وما على نفس القافية أولًا ----------
+const waznSet = i => new Set([Z[i], ...(ZA[i] ? ZA[i].split("|") : []), ...(ZC[i] ? ZC[i].split("|").map(x => x.split(":")[1]) : [])].filter(Boolean));
+function rhymeSuffix(i) {
+  const q = norm($("q").value);
+  return state.mode === "end" && q && W[i].endsWith(q) ? q : W[i].slice(-2);
+}
+function synChip(s) {
+  const tag = s.wz ? "<small>نفس الوزن</small>" : "";
+  return s.ix >= 0 ? `<button class="syn" data-go="${esc(s.key)}">${esc(s.raw)}${tag}</button>`
+    : `<span class="syn off" title="ليست في الأرشيف">${esc(s.raw)}${tag}</span>`;
+}
+// المحرك يحمّل عند أول بطاقة فقط: وزن المرادف يحسب من صيغته المشكولة في سوار (جذّاب = 1010)،
+// لأن وزن الأرشيف من رسم بلا تشكيل لا يرى الشدة (جذاب = 110)
+let enginePromise = null;
+function loadEngine() {
+  if (!enginePromise) enginePromise = new Promise(res => {
+    if (window.Arud && window.Arud.wordWazn) return res(window.Arud);
+    const sc = document.createElement("script");
+    sc.src = "../engine.js";
+    sc.onload = () => res(window.Arud && window.Arud.wordWazn ? window.Arud : null);
+    sc.onerror = () => res(null);
+    document.head.appendChild(sc);
+  });
+  return enginePromise;
+}
+function synWazn(A, raw, ix) {
+  const out = new Set();
+  if (A) {
+    for (const f of [raw, raw.replace(/\u0651(?=[\u064B-\u0650\u0652]*$)/, "")]) {
+      try { const r = A.wordWazn(f); if (r.bits) { out.add(r.bits); r.alts.forEach(x => out.add(x)); break; } } catch (e) {}
+    }
+  }
+  if (!out.size && ix >= 0) waznSet(ix).forEach(x => out.add(x));
+  return out;
+}
+async function synonymsHtml(word, query, i) {
+  let j;
+  const A = await loadEngine();
+  try { j = await lookupWord(query); }
+  catch (e) { return `<p class="note">تعذّر جلب المرادفات الآن.</p>`; }
+  if (j.stop || !j.groups.length) return `<p class="note">لا مرادفات لهذه الكلمة في سوار.</p>`;
+  const choice = getChoice(word);
+  const ents = [];
+  for (const g of j.groups) for (const e of g.entries) if (choice ? e.id === choice : g.self) ents.push(e);
+  const suf = rhymeSuffix(i), mine = waznSet(i), seen = new Set([W[i]]), syns = [];
+  for (const e of ents) for (const s of e.senses || []) for (const r of s.rel || []) {
+    if (!/رادف/.test(r[0])) continue;
+    const raw = (r[1] || "").trim(), key = norm(raw);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const multi = /\s/.test(noDiac(raw));
+    const ix = multi ? -1 : idxOf(key);
+    syns.push({ raw, key, ix, rhyme: !multi && key.endsWith(suf), wz: !multi && [...synWazn(A, raw, ix)].some(z => mine.has(z)) });
+  }
+  const scope = choice ? "مرادفات المعنى الذي اخترته." : "مرادفات كل المعاني، واختيارك للمعنى في الأسفل يصفّيها.";
+  if (!syns.length) return `<p class="note">${choice ? "لا مرادف في سوار لهذا المعنى." : "لا مرادفات لهذه الكلمة في سوار."}</p>`;
+  const rank = (a, b) => (b.wz - a.wz) || ((b.ix >= 0) - (a.ix >= 0));
+  const same = syns.filter(s => s.rhyme).sort(rank), other = syns.filter(s => !s.rhyme).sort(rank);
+  return `<p class="note">${scope}</p>` +
+    (same.length ? `<div class="synh">على نفس القافية «${esc(suf)}»</div><div class="syns">${same.map(synChip).join("")}</div>` : "") +
+    (other.length ? `<div class="synh">${same.length ? "مرادفات أخرى" : `لا مرادف ينتهي بـ«${esc(suf)}»، وهذه مرادفاتها`}</div><div class="syns">${other.map(synChip).join("")}</div>` : "");
+}
+
 // ---------- البطاقة ----------
 let cardWord = null;
 async function openCard(g) {
@@ -342,6 +426,7 @@ async function openCard(g) {
     <div class="sub">وردت ${ar(g.members.reduce((s, m) => s + N[m], 0))} مرة عند نحو ${ar(g.members.reduce((s, m) => s + P[m], 0))} شاعرًا${(() => { const nb = g.members.reduce((s, m) => s + NB[m], 0); return nb ? `، منها ${ar(nb)} في النبطي` : ""; })()}</div>${members}
     <div class="sec"><h3>الوزن</h3>${waznHtml(i)}</div>
     <div class="sec"><h3>الشاهد</h3><div id="wit" class="note">…</div></div>
+    <div class="sec"><h3>مرادفات</h3><div id="syn" class="note">…</div></div>
     <div class="sec"><h3>المعنى</h3><div id="mean" class="note">جارٍ البحث في سوار…</div></div>`;
   $("sheet").classList.add("on");
   if (!history.state || !history.state.card) history.pushState({ card: true }, "");
@@ -349,10 +434,11 @@ async function openCard(g) {
   const me = cardWord;
   witnessesHtml(i).then(h => { if (cardWord === me) $("wit").innerHTML = h; });
   meaningHtml(word, me.query).then(h => { if (cardWord === me) $("mean").innerHTML = h; });
+  synonymsHtml(word, me.query, i).then(h => { if (cardWord === me) $("syn").innerHTML = h; });
 }
 function closeCard() { $("sheet").classList.remove("on"); cardWord = null; }
 function openWord(w) {
-  const i = W.indexOf(w);
+  const i = idxOf(w);
   if (i >= 0) openCard({ key: w, n: N[i], rep: i, members: [i] });
 }
 
@@ -399,6 +485,7 @@ $("sheet").addEventListener("click", e => {
     setChoice(me.word, getChoice(me.word) === id ? null : id);
     $("mean").innerHTML = "…";
     meaningHtml(me.word, me.query).then(h => { if (cardWord === me) $("mean").innerHTML = h; });
+    synonymsHtml(me.word, me.query, me.g.rep).then(h => { if (cardWord === me) $("syn").innerHTML = h; });
     return;
   }
   const go = e.target.closest("[data-go]");
