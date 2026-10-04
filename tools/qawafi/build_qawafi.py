@@ -3,6 +3,7 @@
 
 المخرجات في مجلد out/:
   rhymes.csv        قافية مطبّعة لكل سطر، مع التكرار حسب الموضع والنوع وعدد الشعراء وأمثلة
+                    (النوع: فصيح، نبطي لشعراء nabati_poets.json، عامي لغيرهم، غير مصنف)
                     (قوافي العجز كلها، وقوافي الصدر حين تتسق صدور القصيدة على حرف واحد)
   verses.jsonl.gz   كل بيت حامل لقافية، مع الشاعر والعصر والبحر والروابط
   stats.json        إحصاءات البناء للتحقق
@@ -48,6 +49,13 @@ def clean_meter(m):
 KIND = {"فصيح": "فصيح", "فصحى": "فصيح", "عامي": "عامي", "شعبي": "عامي"}
 
 
+def load_nabati() -> set:
+    """شعراء النبط المعتمدون (nabati_poets.json): عاميّهم يصير "نبطي"، وعامي غيرهم يبقى مستبعدًا."""
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "nabati_poets.json"), encoding="utf-8") as fh:
+        d = json.load(fh)
+    return {n.strip() for names in d["country"].values() for n in names} | {n.strip() for n in d["dialect_only"]}
+
+
 ITLAQ = "اويه"  # حروف قد تأتي بعد الروي (إطلاق، وصل، واو جماعة وألفها)
 
 
@@ -69,7 +77,7 @@ SADR_SHARE = 0.8     # نسبة الصدور التي يجب أن تتفق عل�
 
 
 # رموز قصيرة لعمود sample_ids: النوع ثم الموضع ثم رقم البيت، مثل fj123 = فصيح، عجز، بيت 123
-CODE = {"فصيح": "f", "عامي": "a", "غير_مصنف": "u", "عجز": "j", "صدر": "s"}
+CODE = {"فصيح": "f", "عامي": "a", "نبطي": "n", "غير_مصنف": "u", "عجز": "j", "صدر": "s"}
 
 
 def add_word(words, w, kind, pos, pid, raw, vid):
@@ -116,6 +124,7 @@ def build(data_dir: str, out_dir: str) -> None:
     extra_urls = collections.defaultdict(list)  # روابط إضافية للأبيات المكررة
     words = {}                                  # القافية المطبّعة -> بيانات التجميع
     poet_ids = {}
+    nabati = load_nabati()
 
     tmp_path = os.path.join(out_dir, "verses.tmp.gz")
     with gzip.open(tmp_path, "wt", encoding="utf-8") as tmp:
@@ -155,6 +164,8 @@ def build(data_dir: str, out_dir: str) -> None:
 
                     kind = KIND.get((p["poem language type"] or "").strip(), "غير_مصنف")
                     poet = (p["poet name"] or "").strip()
+                    if kind == "عامي" and poet in nabati:
+                        kind = "نبطي"
                     pid = poet_ids.setdefault(poet, len(poet_ids))
                     url = p["poem url"] or ""
 
@@ -207,13 +218,13 @@ def build(data_dir: str, out_dir: str) -> None:
     with open(os.path.join(out_dir, "rhymes.csv"), "w", encoding="utf-8-sig", newline="") as fh:
         wr = csv.writer(fh)
         wr.writerow(["rhyme_norm", "length", "total", "ajz", "sadr", "fasih", "ammi",
-                     "unclassified", "n_poets", "top_forms", "sample_ids", "breakdown"])
+                     "unclassified", "nabati", "n_poets", "top_forms", "sample_ids", "breakdown"])
         for w, d in sorted(words.items(), key=lambda kv: -sum(kv[1]["cnt"].values())):
             c = d["cnt"]
             by = lambda i, v: sum(n for key, n in c.items() if key[i] == v)
             keys = sorted(c)
             wr.writerow([w, len(w), sum(c.values()), by(1, "عجز"), by(1, "صدر"),
-                         by(0, "فصيح"), by(0, "عامي"), by(0, "غير_مصنف"),
+                         by(0, "فصيح"), by(0, "عامي"), by(0, "غير_مصنف"), by(0, "نبطي"),
                          len(set().union(*d["poets"].values())),
                          "|".join(f for f, _ in d["forms"].most_common(3)),
                          "|".join(x for k in keys for x in d["samples"][k]),

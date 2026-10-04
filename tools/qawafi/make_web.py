@@ -5,14 +5,15 @@
 المخرجات في docs/qawafi/data/:
   rhymes.tsv       كل القوافي في ملف واحد (للبحث في الأرشيف كله داخل المتصفح)
                    الأعمدة: القافية، الصيغة (فارغة إن طابقت)، العدد، الشعراء، الوزن،
-                   البدائل، المشروط، أرقام الشواهد مفصولة بفاصلة
+                   البدائل، المشروط، أرقام الشواهد مفصولة بفاصلة، عدد الورود في النبطي
   w/<n>.json       الشواهد في ٢٥٦ دلوًا حسب رقم البيت (رقم % 256)، تُجلب عند فتح البطاقة
   meta.json        تاريخ البناء والأعداد
 
 قرارات خالد المطبّقة هنا:
-  - العامي مستبعد حتى يُجمع النبطي الحقيقي (أعداده تُطرح، وما كان عاميًا فقط يُحذف).
+  - النبطي (شعراء nabati_poets.json) داخل، والعامي من غيرهم مستبعد (أعداده تُطرح، وما كان عاميًا فقط يُحذف).
   - الصدر والعجز معاملة واحدة.
-  - الشاهد القديم يُنشر كاملًا، والحديث ومجهول العصر رابط المصدر فقط.
+  - الشاهد القديم يُنشر كاملًا، والحديث ومجهول العصر رابط المصدر فقط (والنبطي كله حديث).
+  - إن وردت القافية في النبطي فأحد الشاهدين نبطي.
 """
 import argparse, collections, csv, datetime, gzip, json, os
 
@@ -20,7 +21,7 @@ BUCKETS = 256
 
 EXCLUDED_KIND = "عامي"
 MODERN = {None, "", "العصر الحديث"}
-CODE_KIND = {"f": "فصيح", "a": "عامي", "u": "غير_مصنف"}
+CODE_KIND = {"f": "فصيح", "a": "عامي", "n": "نبطي", "u": "غير_مصنف"}
 
 
 def main():
@@ -36,11 +37,13 @@ def main():
     with open(a.rhymes, encoding="utf-8-sig") as fh:
         for r in csv.DictReader(fh):
             st["input"] += 1
-            n = poets = 0
+            n = poets = nb = 0
             for part in r["breakdown"].split("|"):
                 kd, ps, c, pt = part.split(":")
                 if kd != EXCLUDED_KIND:
                     n += int(c); poets += int(pt)
+                if kd == "نبطي":
+                    nb += int(c)
             if not n:
                 st["dropped_ammi_only"] += 1
                 continue
@@ -54,7 +57,7 @@ def main():
                 need[i] = None
             form = (r["top_forms"].split("|")[0] or w).replace("\u0640", "")
             rows.append([w, "" if form == w else form, n, poets, r.get("wazn", ""),
-                         r.get("wazn_alts", ""), r.get("wazn_cond", ""), ids])
+                         r.get("wazn_alts", ""), r.get("wazn_cond", ""), ids, nb])
 
     rows.sort(key=lambda x: -x[2])
     with gzip.open(a.verses, "rt", encoding="utf-8") as fh:
@@ -68,13 +71,18 @@ def main():
         cands = [i for i in cands if need.get(i)]
         cands.sort(key=lambda i: need[i].get("era") in MODERN)  # القديم أولًا
         chosen = cands[: a.witnesses]
+        nab = [i for i in cands if need[i].get("kind") == "نبطي"]
+        if nab and not any(i in nab for i in chosen):
+            chosen = chosen[: a.witnesses - 1] + nab[:1]
+            st["witness_nabati_swapped_in"] += 1
         r[7] = ",".join(map(str, chosen))
         for vid in chosen:
             v = need[vid]
             classical = v.get("era") not in MODERN
             st["witness_classical" if classical else "witness_link_only"] += 1
             shards[vid % BUCKETS][vid] = [v["sadr"] if classical else "", v["ajz"] if classical else "",
-                                          v.get("poet") or "", v.get("era") or "", (v.get("urls") or [""])[0]]
+                                          v.get("poet") or "", v.get("era") or "", (v.get("urls") or [""])[0],
+                                          "n" if v.get("kind") == "نبطي" else ""]
 
     sizes = {}
     def dump(path, obj):
@@ -89,6 +97,7 @@ def main():
     sizes["rhymes.tsv"] = len(tsv)
     for b, d in shards.items():
         dump(os.path.join(a.out, "w", f"{b}.json"), d)
+    st["rhymes_with_nabati"] = sum(1 for r in rows if r[8])
     meta = {"built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"), "rhymes": len(rows),
             "buckets": BUCKETS, "stats": dict(st)}
     dump(os.path.join(a.out, "meta.json"), meta)

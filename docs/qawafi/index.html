@@ -123,6 +123,7 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
     </div>
     <div class="hint" id="advhint" hidden>* أي عدد من الحروف، ؟ حرف واحد. مثال: ؟ا؟ين يعطي ياسين ودارين.</div>
     <div class="opts">
+      <label>النوع <select id="kind"><option value="">الكل</option><option value="f">فصيح</option><option value="n">نبطي</option></select></label>
       <label><input type="checkbox" id="noal"/> ادمج "ال"</label>
       <label>عدد الحروف <select id="len"><option value="">أي</option></select></label>
       <label>تكرار ≥ <select id="min"><option selected>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>50</option></select></label>
@@ -136,7 +137,7 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
   <div id="grid" class="grid"></div>
   <button id="more" class="chip more" hidden>المزيد</button>
 
-  <p class="foot">القوافي مستخرجة من مجموعة أشعار (Ashaar) للشعر العربي الفصيح. الوزن بمحرك ميزان النبط، تقريبي حين تُوزن الكلمة وحدها.<br/>المعاني من منصة سوار، مجمع الملك سلمان العالمي للغة العربية.</p>
+  <p class="foot">القوافي مستخرجة من مجموعة أشعار (Ashaar): الفصيح كله، والنبطي لشعراء السعودية والخليج المعاصرين فيها. الوزن بمحرك ميزان النبط، تقريبي حين تُوزن الكلمة وحدها.<br/>المعاني من منصة سوار، مجمع الملك سلمان العالمي للغة العربية.</p>
 </div>
 
 <div class="sheet" id="sheet"><div class="card" id="card"></div></div>
@@ -161,7 +162,7 @@ const ar = n => Number(n).toLocaleString("ar-EG");
 const stripAl = w => (w.startsWith("ال") && w.length >= 5) ? w.slice(2) : w;
 
 // ---------- البيانات ----------
-let W = [], F = [], N, P, Z = [], ZA = [], ZC = [], IDS = [], WSET = new Set();
+let W = [], F = [], N, P, NB, Z = [], ZA = [], ZC = [], IDS = [], WSET = new Set();
 const state = { mode: "end", shown: PAGE, results: [], z: "", zw: "" };
 const $ = id => document.getElementById(id);
 
@@ -170,11 +171,11 @@ async function load() {
   if (!r.ok) throw new Error("rhymes " + r.status);
   const text = await r.text();
   const lines = text.split("\n");
-  N = new Int32Array(lines.length); P = new Int32Array(lines.length);
+  N = new Int32Array(lines.length); P = new Int32Array(lines.length); NB = new Int32Array(lines.length);
   for (let i = 0; i < lines.length; i++) {
     const c = lines[i].split("\t");
     W[i] = c[0]; F[i] = c[1] || c[0]; N[i] = +c[2]; P[i] = +c[3];
-    Z[i] = c[4]; ZA[i] = c[5]; ZC[i] = c[6]; IDS[i] = c[7];
+    Z[i] = c[4]; ZA[i] = c[5]; ZC[i] = c[6]; IDS[i] = c[7]; NB[i] = +c[8] || 0;
   }
   W.forEach(w => WSET.add(w));
   const counts = {};
@@ -202,17 +203,21 @@ function search() {
   $("letters").hidden = !!m;
   if (!m) { $("grid").innerHTML = ""; $("more").hidden = true;
     $("status").innerHTML = `عدد القوافي: <b>${ar(W.length)}</b>`; return; }
-  const min = +$("min").value, len = +$("len").value || 0, merge = $("noal").checked;
+  const min = +$("min").value, len = +$("len").value || 0, merge = $("noal").checked, kind = $("kind").value;
+  // العدد بحسب النوع المختار: الكل، أو الفصيح وحده (الكل ناقص النبطي)، أو النبطي وحده
+  const cnt = i => kind === "n" ? NB[i] : kind === "f" ? N[i] - NB[i] : N[i];
   const out = new Map();
   const z = state.z;
   for (let i = 0; i < W.length; i++) {
     if (!m(W[i])) continue;
     // "بنفس الوزن": الوزن الأرجح أو أحد المتعادلات أو قراءة مشروطة، لأن التعادل يُكسر بترتيب قد يختلف بين المحركين
     if (z && Z[i] !== z && !(ZA[i] && ZA[i].split("|").includes(z)) && !(ZC[i] && ZC[i].split("|").some(x => x.split(":")[1] === z))) continue;
+    const c = cnt(i);
+    if (!c) continue;
     const key = merge ? stripAl(W[i]) : W[i];
     const g = out.get(key);
-    if (g) { g.n += N[i]; g.members.push(i); if (N[i] > N[g.rep]) g.rep = i; }
-    else out.set(key, { key, n: N[i], rep: i, members: [i] });
+    if (g) { g.n += c; g.members.push(i); if (c > cnt(g.rep)) g.rep = i; }
+    else out.set(key, { key, n: c, rep: i, members: [i] });
   }
   let res = [...out.values()].filter(g => g.n >= min && (!len || g.key.length === len));
   if ($("sort").value === "a") res.sort((a, b) => a.key.localeCompare(b.key, "ar"));
@@ -268,9 +273,9 @@ async function witnessesHtml(i) {
   if (!ids.length) return `<p class="note">لا شاهد.</p>`;
   const rows = await Promise.all(ids.map(async id => (await bucket(id % 256))[id]));
   const clean = t => esc((t || "").replace(/\u0640/g, "").replace(/\s+/g, " "));
-  return rows.filter(Boolean).map(([s, a, poet, era, url]) => s || a
+  return rows.filter(Boolean).map(([s, a, poet, era, url, kd]) => s || a
     ? `<div class="verse">${clean(s)} <span class="p">***</span> ${clean(a)}<div class="p">${esc(poet)}${era ? " · " + esc(era) : ""} · <a href="${esc(url)}" target="_blank" rel="noopener">المصدر</a></div></div>`
-    : `<div class="verse"><div class="p">${era ? "شاهد من " + esc(era) : "شاهد غير محدد العصر"} للشاعر ${esc(poet)}: <a href="${esc(url)}" target="_blank" rel="noopener">اقرأه في مصدره</a></div></div>`).join("");
+    : `<div class="verse"><div class="p">${kd === "n" ? "شاهد نبطي" : era ? "شاهد من " + esc(era) : "شاهد غير محدد العصر"} للشاعر ${esc(poet)}: <a href="${esc(url)}" target="_blank" rel="noopener">اقرأه في مصدره</a></div></div>`).join("");
 }
 
 // ---------- المعنى من سوار ----------
@@ -334,7 +339,7 @@ async function openCard(g) {
   cardWord = { g, word, query: noDiac(F[i]) };
   const members = g.members.length > 1 ? `<div class="sub">تجمع: ${g.members.map(m => esc(F[m])).join("، ")}</div>` : "";
   $("card").innerHTML = `<button class="close" id="x">✕</button><h2>${esc(F[i])}</h2>
-    <div class="sub">وردت ${ar(g.n)} مرة عند نحو ${ar(g.members.reduce((s, m) => s + P[m], 0))} شاعرًا</div>${members}
+    <div class="sub">وردت ${ar(g.members.reduce((s, m) => s + N[m], 0))} مرة عند نحو ${ar(g.members.reduce((s, m) => s + P[m], 0))} شاعرًا${(() => { const nb = g.members.reduce((s, m) => s + NB[m], 0); return nb ? `، منها ${ar(nb)} في النبطي` : ""; })()}</div>${members}
     <div class="sec"><h3>الوزن</h3>${waznHtml(i)}</div>
     <div class="sec"><h3>الشاهد</h3><div id="wit" class="note">…</div></div>
     <div class="sec"><h3>المعنى</h3><div id="mean" class="note">جارٍ البحث في سوار…</div></div>`;
@@ -362,7 +367,7 @@ function renderZ() {
 // ---------- الأحداث ----------
 let timer;
 $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, 140); });
-["noal", "len", "min", "sort"].forEach(id => $(id).addEventListener("change", search));
+["kind", "noal", "len", "min", "sort"].forEach(id => $(id).addEventListener("change", search));
 $("modes").addEventListener("click", e => {
   const b = e.target.closest("[data-m]"); if (!b) return;
   state.mode = b.dataset.m;
