@@ -42,6 +42,7 @@ jobs:
           python wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv
           python test_wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv --min 44
           python make_web.py --rhymes /tmp/qout/rhymes.csv --verses /tmp/qout/verses.jsonl.gz --out ../../docs/qawafi/data
+          python build_vocab.py --verses /tmp/qout/verses.jsonl.gz --out ../../docs/qawafi/data
 
       # محرك الموقع يُبنى من TypeScript بنفس إعداد الحزمة السابقة (طابقها حرفًا حرفًا قبل إصلاح الواو والياء)
       - name: build engine bundle
