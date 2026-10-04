@@ -59,6 +59,10 @@ def _choices(
                 return [-1]
             return [0]
         return [0]
+    if p.hint == "fn_wy":
+        # الروي بعد واو/ياء: مدّ (0) قبله فلا يُعدّ، وصامت (1) قبله فيُعدّ ساكنًا
+        prev_a = assign[-1] if assign else 1
+        return [-1] if prev_a == 0 else [0]
     if p.hint == "tanwin":
         return [-1, 0, 1]
     if p.hint == "foldable":
@@ -72,7 +76,7 @@ def _choices(
 
 def _extra(p: Phoneme, ch: int, ph: list[Phoneme], i: int, assign: tuple) -> float:
     extra = 0.0
-    if p.kind == "cons" and p.fixed is None and ch == 0 and p.hint not in ("madd_mora", "foldable"):
+    if p.kind == "cons" and p.fixed is None and ch == 0 and p.hint not in ("madd_mora", "foldable", "fn_wy"):
         extra += 1.0
     if p.kind in ("waw", "ya") and p.fixed is None and ch == 1:
         between = i > 0 and i + 1 < len(ph) and ph[i - 1].kind == "cons" and ph[i + 1].kind in (
