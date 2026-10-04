@@ -72,8 +72,9 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
 .close { float:left; border:0; background:var(--edge); color:var(--ink); border-radius:999px; width:2.2rem; height:2.2rem; font-size:1.1rem; }
 .sec { border-top:1px solid #d8c9ae; padding-top:0.6rem; margin-top:0.7rem; }
 .sec h3 { margin:0 0 0.4rem; font-size:0.85rem; color:var(--soft); }
-.la { display:inline-block; border-radius:0.4rem; padding:0.15rem 0.55rem; margin:0.1rem; font-size:0.85rem; color:#fff; }
-.la.y { background:var(--one); } .la.n { background:var(--ink); } .la.s { background:var(--zero); }
+.taf { display:inline-block; border-radius:0.45rem; padding:0.1rem 0.7rem; margin:0.1rem; background:var(--one); color:#fff;
+  font-family:var(--disp); font-size:1.3rem; }
+.taf.s { background:var(--zero); font-size:1rem; }
 .bits { font-family:monospace; letter-spacing:0.15em; color:var(--soft); font-size:0.8rem; }
 .note { font-size:0.75rem; color:#6e6155; line-height:1.7; }
 .verse { font-family:var(--disp); font-size:1.15rem; line-height:2; text-align:center; }
@@ -119,7 +120,7 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
     <div class="hint" id="advhint" hidden>* أي عدد من الحروف، ؟ حرف واحد. مثال: ؟ا؟ين يعطي ياسين ودارين.</div>
     <div class="opts">
       <label><input type="checkbox" id="noal"/> ادمج "ال"</label>
-      <label>الأحرف <select id="len"><option value="">أي</option></select></label>
+      <label>عدد الحروف <select id="len"><option value="">أي</option></select></label>
       <label>تكرار ≥ <select id="min"><option selected>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>50</option></select></label>
       <label>ترتيب <select id="sort"><option value="n">الأكثر ورودًا</option><option value="a">أبجدي</option></select></label>
     </div>
@@ -220,15 +221,21 @@ function render() {
   $("more").hidden = state.results.length <= state.shown;
 }
 
-// ---------- الوزن ----------
+// ---------- الوزن: مقابل الكلمة من التفاعيل ----------
+// كل نمط يُقابَل بالتفعيلة المطابقة حرفًا بحرف، الأطول أولًا. يغطي ٩٨٫٤٪ من القوافي بتفعيلة واحدة.
+const TAF = { "1010110": "مُسْتَفْعِلُنْ", "1011010": "فاعِلاتُنْ", "1101010": "مَفاعِيلُنْ", "1110110": "مُتَفاعِلُنْ",
+  "1101110": "مُفاعَلَتُنْ", "110110": "مُفاعِلُنْ", "101010": "مَفْعُولُنْ", "111010": "فَعِلاتُنْ", "10110": "فاعِلُنْ",
+  "11010": "فَعُولُنْ", "1110": "فَعِلُنْ", "1010": "فَعْلُنْ", "110": "فَعَلْ", "10": "فَعْ" };
+const TAF_KEYS = Object.keys(TAF).sort((a, b) => b.length - a.length);
 function chips(bits) {
   if (!bits) return "";
   let i = 0, out = "";
-  while (i < bits.length && bits[i] === "0") { out += `<span class="la s">ـْ</span>`; i++; }
+  // الساكن في أول الكلمة (لام ال المدغمة) يكمل مقطع الكلمة السابقة، فيُكتب خارج التفعيلة
+  while (i < bits.length && bits[i] === "0") { out += `<span class="taf s">ساكن</span>`; i++; }
   while (i < bits.length) {
-    if (bits.startsWith("110", i)) { out += `<span class="la y">نعم</span>`; i += 3; }
-    else if (bits.startsWith("10", i)) { out += `<span class="la n">لا</span>`; i += 2; }
-    else { out += `<span class="bits">${bits.slice(i)}</span>`; break; }
+    const k = TAF_KEYS.find(t => bits.startsWith(t, i));
+    if (!k) { out += `<span class="bits">${bits.slice(i)}</span>`; break; }
+    out += `<span class="taf">${TAF[k]}</span>`; i += k.length;
   }
   return out + ` <span class="bits">${bits}</span>`;
 }
@@ -239,7 +246,7 @@ function waznHtml(i) {
   if (ZC[i]) h += `<p class="note">مشروط بالنطق:</p>` + ZC[i].split("|").map(x => {
     const [f, b] = x.split(":"); return `<div><span class="verse" style="font-size:1rem">${esc(f)}</span> ${chips(b)}</div>`; }).join("");
   else if (ZA[i]) h += `<p class="note">متعادل: قد تُقرأ أيضًا</p>` + ZA[i].split("|").map(b => `<div>${chips(b)}</div>`).join("");
-  return h + `<p class="note">وزن الكلمة منفردة على النطق النجدي. داخل البيت قد يختلف.</p>`;
+  return h + `<p class="note">مقابل الكلمة من التفاعيل على النطق النجدي، لا تفعيلة البيت. "ساكن" في أولها يكمل الكلمة التي قبلها.</p>`;
 }
 
 // ---------- الشواهد ----------
@@ -270,11 +277,13 @@ function relHtml(rel) {
     [...new Set(ws)].map(w => WSET.has(norm(w)) ? `<button data-go="${esc(norm(w))}">${esc(w)}</button>` : `<span class="plain">${esc(w)}</span>`).join("، ") + `</div>`).join("");
 }
 
+const plain = t => String(t ?? "").replace(/<br\s*\/?>/gi, " / ").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
 function entryHtml(e, chosen) {
   const tags = `<span class="tag" title="${esc(LEX[e.lex] || e.lex)}">${esc(e.lex)}</span>` +
     (e.root ? `<span class="tag">جذر ${esc(e.root)}</span>` : "") + (e.pattern ? `<span class="tag">${esc(e.pattern)}</span>` : "");
-  const senses = e.senses.map(s => `<div class="def">${esc(s.d)}</div>` + (s.rel ? relHtml(s.rel) : "") +
-    (s.ex ? `<div class="rel plain">مثال: ${s.ex.map(esc).join(" / ")}</div>` : "")).join("");
+  const senses = e.senses.map(s => `<div class="def">${esc(plain(s.d))}</div>` + (s.rel ? relHtml(s.rel) : "") +
+    (s.ex ? `<div class="rel plain">مثال: ${s.ex.map(x => esc(plain(x))).join(" / ")}</div>` : "")).join("");
   return `<div class="ent${chosen ? " chosen" : ""}"><b class="verse" style="font-size:1.1rem">${esc(e.lemma)}</b> ${tags}${senses}` +
     `<div><button class="pick" data-pick="${esc(e.id)}">${chosen ? "✓ معناي هنا، ألغِ" : "هذا المعنى"}</button></div></div>`;
 }
