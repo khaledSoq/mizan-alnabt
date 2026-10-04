@@ -105,7 +105,8 @@ textarea::-webkit-input-placeholder { color:var(--subtle); }
 .alts { padding:0.65rem 0.9rem; border-top:1px solid var(--edge); font-size:0.82rem; }
 .alts b { display:block; font-size:0.72rem; color:var(--soft); margin-bottom:0.3rem; }
 .fasih { margin:0; padding:0.45rem 0.9rem; border-top:1px solid var(--edge); font-size:0.72rem; color:var(--subtle); }
-.qbtn { display:block; margin:0; padding:0.6rem 0.9rem; border-top:1px solid var(--edge); color:var(--one); font-weight:700; text-decoration:none; font-size:0.9rem; }
+.qbtn { display:inline-block; margin:0.6rem 0.9rem 0; padding:0.4rem 0.95rem; border:1px solid var(--one); border-radius:999px;
+  background:#e9f0e4; color:var(--one); font-weight:700; text-decoration:none; font-size:0.88rem; }
 .ex { margin-top:1rem; }
 .ex h2 { margin:0 0 0.45rem; font-size:0.8rem; color:var(--muted); font-weight:700; }
 .exrow { display:flex; flex-direction:column; gap:0.45rem; }
@@ -434,8 +435,8 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     var fasih = (h.fasih && h.ok) ? "<p class='fasih'>مقابله في الفصيح: " + esc(h.fasih) + "</p>" : "";
     return "<article class='paper'><header class='phd'><div><span class='lbl'>" + esc(label) +
       "</span> " + (h.meterName ? "<span class='mname'>" + esc(h.meterName) + "</span>" : "") +
-      "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" +
-      "<div class='letters'>" + tiles + recited + la + bits + "</div>" + boxes + alts + fasih + rhymeLink(h) + "</article>";
+      "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" + rhymeLink(h) +
+      "<div class='letters'>" + tiles + recited + la + bits + "</div>" + boxes + alts + fasih + "</article>";
   }
 
   function doWeigh() {
