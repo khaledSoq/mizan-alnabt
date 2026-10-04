@@ -59,7 +59,7 @@ const PRONOUNS = new Set(["هو", "هي", "هم", "هن", "هما"]);
 const ALLAH_FORMS = new Set([
   "الله",
   "اللّه",
-  "اللَّه",
+  "\u0627\u0644\u0644\u064e\u0651\u0647",
   "اللّٰه",
   "لله",
   "والله",
@@ -275,6 +275,33 @@ function applyMaddConstraints(h: Hemistich) {
   }
 }
 
+// الروي بعد واو أو ياء: إن قُرئتا مدّا لا يُعدّ الروي (كالألف: طال = لا، سبوق = نعم)،
+// وإن قُرئتا صامتتين عُدّ ساكنًا (غَيْر). القرار في البحث بحسب قراءة الواو أو الياء.
+// التاء المربوطة مستثناة: الياء قبلها صامتة في الغالب (تحيّة، حكاية).
+function markFinalAfterWy(h: Hemistich) {
+  const phs = h.phonemes;
+  for (let i = phs.length - 1; i >= 0; i--) {
+    const p = phs[i]!;
+    if (!p.display && p.kind === "collapsed") continue;
+    if (
+      p.fixed === 0 &&
+      p.kind === "cons" &&
+      i >= 2 &&
+      (phs[i - 1]!.kind === "waw" || phs[i - 1]!.kind === "ya") &&
+      phs[i - 1]!.fixed === null &&
+      phs[i - 1]!.wordI === p.wordI &&
+      phs[i - 2]!.wordI === p.wordI &&
+      (phs[i - 2]!.kind === "cons" ||
+        // واو أو ياء في أول الكلمة صامتة دائمًا: وين، يوم
+        ((phs[i - 2]!.kind === "waw" || phs[i - 2]!.kind === "ya") && (i < 3 || phs[i - 3]!.wordI !== p.wordI)))
+    ) {
+      p.fixed = null;
+      p.hint = "fn_wy";
+    }
+    return;
+  }
+}
+
 function markFoldable(h: Hemistich) {
   const phs = h.phonemes;
   if (!phs.length) return;
@@ -473,6 +500,7 @@ export function tokenizeHemistich(text: string): Hemistich {
   }
   markFoldable(h);
   applyMaddConstraints(h);
+  markFinalAfterWy(h);
   insertMaddMorae(h);
   bindTaBeforeAl(h);
   insertTanwin(h);

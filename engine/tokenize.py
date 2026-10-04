@@ -488,6 +488,7 @@ def tokenize_hemistich(text: str) -> Hemistich:
 
     _mark_foldable(h)
     _apply_madd_constraints(h)
+    _mark_final_after_wy(h)
     _insert_madd_morae(h)
     _bind_ta_before_al(h)
     _insert_tanwin(h)
@@ -516,6 +517,34 @@ def _apply_madd_constraints(h: Hemistich) -> None:
                 continue
             if p.kind in ("cons", "ta_marbuta", "collapsed"):
                 p.kind = "collapsed"
+
+
+def _mark_final_after_wy(h: Hemistich) -> None:
+    """الروي بعد واو أو ياء: إن قُرئتا مدًّا لا يُعدّ الروي (كالألف: طال = لا، سبوق = نعم)،
+    وإن قُرئتا صامتتين عُدّ ساكنًا (غَيْر). القرار في البحث بحسب قراءة الواو أو الياء.
+    التاء المربوطة مستثناة: الياء قبلها صامتة في الغالب (تحيّة، حكاية)."""
+    ph = h.phonemes
+    for i in range(len(ph) - 1, -1, -1):
+        p = ph[i]
+        if not p.display and p.kind == "collapsed":
+            continue
+        if (
+            p.fixed == 0
+            and p.kind == "cons"
+            and i >= 2
+            and ph[i - 1].kind in ("waw", "ya")
+            and ph[i - 1].fixed is None
+            and ph[i - 1].word_i == p.word_i
+            and ph[i - 2].word_i == p.word_i
+            and (
+                ph[i - 2].kind == "cons"
+                # واو أو ياء في أول الكلمة صامتة دائمًا: وين، يوم
+                or (ph[i - 2].kind in ("waw", "ya") and (i < 3 or ph[i - 3].word_i != p.word_i))
+            )
+        ):
+            p.fixed = None
+            p.hint = "fn_wy"
+        return
 
 
 def _insert_madd_morae(h: Hemistich) -> None:

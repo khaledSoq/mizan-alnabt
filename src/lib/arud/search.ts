@@ -38,6 +38,11 @@ function choices(p: Phoneme, ph: Phoneme[], i: number, state: number, assign: nu
     }
     return [0];
   }
+  if (p.hint === "fn_wy") {
+    // الروي بعد واو/ياء: مدّ (0) قبله فلا يُعدّ، وصامت (1) قبله فيُعدّ ساكنًا
+    const prevA = assign.length ? assign[assign.length - 1]! : 1;
+    return prevA === 0 ? [-1] : [0];
+  }
   if (p.hint === "tanwin") return [-1, 0, 1];
   if (p.hint === "foldable") return [1, -1];
   if (p.fixed !== null) return [p.fixed];
@@ -47,7 +52,7 @@ function choices(p: Phoneme, ph: Phoneme[], i: number, state: number, assign: nu
 
 function extra(p: Phoneme, ch: number, ph: Phoneme[], i: number, assign: number[]): number {
   let e = 0;
-  if (p.kind === "cons" && p.fixed === null && ch === 0 && p.hint !== "madd_mora" && p.hint !== "foldable") {
+  if (p.kind === "cons" && p.fixed === null && ch === 0 && p.hint !== "madd_mora" && p.hint !== "foldable" && p.hint !== "fn_wy") {
     e += 1;
   }
   if ((p.kind === "waw" || p.kind === "ya") && p.fixed === null && ch === 1) {

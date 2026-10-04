@@ -105,6 +105,7 @@ textarea::-webkit-input-placeholder { color:var(--subtle); }
 .alts { padding:0.65rem 0.9rem; border-top:1px solid var(--edge); font-size:0.82rem; }
 .alts b { display:block; font-size:0.72rem; color:var(--soft); margin-bottom:0.3rem; }
 .fasih { margin:0; padding:0.45rem 0.9rem; border-top:1px solid var(--edge); font-size:0.72rem; color:var(--subtle); }
+.qbtn { display:block; margin:0; padding:0.6rem 0.9rem; border-top:1px solid var(--edge); color:var(--one); font-weight:700; text-decoration:none; font-size:0.9rem; }
 .ex { margin-top:1rem; }
 .ex h2 { margin:0 0 0.45rem; font-size:0.8rem; color:var(--muted); font-weight:700; }
 .exrow { display:flex; flex-direction:column; gap:0.45rem; }
@@ -350,6 +351,21 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     return n + li;
   }
 
+  // زر القوافي: آخر حرفين من آخر كلمة، ووزنها منفردة بتعريف الأرشيف نفسه (Arud.wordWazn)
+  function rhymeLink(h) {
+    if (!h.letters || !h.letters.length) return "";
+    var words = groupLetters(h.letters);
+    var last = words[words.length - 1], w = "";
+    for (var i = 0; i < last.length; i++) w += last[i].char || "";
+    if (!w) return "";
+    var bare = w.replace(/[\u064B-\u0652\u0640]/g, "").replace(/[\u0623\u0625\u0622\u0671]/g, "\u0627")
+      .replace(/\u0649/g, "\u064A").replace(/\u0629/g, "\u0647");
+    var z = "";
+    try { if (ArudRef.wordWazn) z = ArudRef.wordWazn(w).bits || ""; } catch (e) { z = ""; }
+    var href = "qawafi/?q=" + encodeURIComponent(bare.slice(-2)) + "&w=" + encodeURIComponent(w) + (z ? "&z=" + z : "");
+    return "<a class='qbtn' href='" + href + "'>قوافي على «" + esc(w) + "» ←</a>";
+  }
+
   function hemistichHTML(h, label, hi) {
     var words = groupLetters(h.letters || []);
     var pillCls = !h.ok ? "dim" : h.accepted ? "ok" : "bad";
@@ -419,7 +435,7 @@ if (typeof window !== "undefined") { window.Arud = Arud; window.mizanReady = tru
     return "<article class='paper'><header class='phd'><div><span class='lbl'>" + esc(label) +
       "</span> " + (h.meterName ? "<span class='mname'>" + esc(h.meterName) + "</span>" : "") +
       "</div><span class='pill " + pillCls + "'>" + esc(h.message) + score + "</span></header>" +
-      "<div class='letters'>" + tiles + recited + la + bits + "</div>" + boxes + alts + fasih + "</article>";
+      "<div class='letters'>" + tiles + recited + la + bits + "</div>" + boxes + alts + fasih + rhymeLink(h) + "</article>";
   }
 
   function doWeigh() {

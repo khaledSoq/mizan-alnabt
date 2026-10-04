@@ -12,4 +12,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: unit tests
-        run: python -m unittest tests/test_engine.py -v
+        run: python -m unittest discover -s tests -v
