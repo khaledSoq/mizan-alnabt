@@ -10,7 +10,7 @@
 //   /lookup?w=كلمة  المجموعات المقطّرة والمرتبة
 //   /health         فحص الإعداد
 
-const VERSION = "v1"; // غيّره عند تعديل منطق التقطير ليُتجاهل المحفوظ القديم
+const VERSION = "v2"; // غيّره عند تعديل منطق التقطير ليُتجاهل المحفوظ القديم
 const SIWAR = "https://siwar.ksaa.gov.sa/api/v1/external/public/search";
 
 // المعاجم العامة الخمسة. ترتيب العرض داخل المجموعة: المعاصر القصير أولًا، والمحيط آخرًا
@@ -70,8 +70,11 @@ function distill(data, selfSet) {
     const senses = [];
     for (const s of e.senses || []) {
       const d = (s.definition || "").trim();
-      const rel = (s.relations || []).filter((r) => r.type)
-        .map((r) => [r.type, r.related || r.entryLemmaOfRelated]).slice(0, LIMITS.rel);
+      // العلاقة: [النوع، الكلمة المرتبطة، تعريفها]. entryLemmaOfRelated هو الكلمة نفسها،
+      // و related تعريف معناها (في v1 كان يُعرض التعريف مكان الكلمة)
+      const rel = (s.relations || []).filter((r) => r.type && (r.entryLemmaOfRelated || r.related))
+        .map((r) => [r.type, (r.entryLemmaOfRelated || r.related || "").trim(),
+          r.entryLemmaOfRelated && r.related ? r.related.trim() : ""]).slice(0, LIMITS.rel);
       const ex = (s.examples || []).map((x) => x.word).filter(Boolean).slice(0, LIMITS.ex);
       if (!d && !rel.length && !ex.length) continue;
       const sense = { d: d.length > LIMITS.def ? d.slice(0, LIMITS.def) + "…" : d };
@@ -206,6 +209,6 @@ document.getElementById("f").onsubmit=async ev=>{ev.preventDefault();
  if(j.error)return;
  r.innerHTML=j.groups.map((g,i)=>'<details'+(i===0?" open":"")+'><summary class="'+(g.self?"self":"")+'">'+esc(g.bare)+(g.self?" ✓":"")+'</summary>'+
   g.entries.map(e=>'<div class="e"><b>'+esc(e.lemma)+'</b> <span class="tag">'+esc(e.lex)+'</span>'+(e.root?'<span class="tag">جذر '+esc(e.root)+'</span>':'')+(e.pattern?'<span class="tag">'+esc(e.pattern)+'</span>':'')+
-  e.senses.map(s=>'<div class="d">'+esc(s.d)+'</div>'+(s.rel?'<div class="rel">'+s.rel.map(x=>esc(x[0])+": "+esc(x[1])).join(" · ")+'</div>':'')+(s.ex?'<div class="rel">مثال: '+s.ex.map(esc).join(" / ")+'</div>':'')).join("")+'</div>').join("")+'</details>').join("");
+  e.senses.map(s=>'<div class="d">'+esc(s.d)+'</div>'+(s.rel?'<div class="rel">'+s.rel.map(x=>esc(x[0])+": "+esc(x[1])+(x[2]?" ("+esc(x[2])+")":"")).join(" · ")+'</div>':'')+(s.ex?'<div class="rel">مثال: '+s.ex.map(esc).join(" / ")+'</div>':'')).join("")+'</div>').join("")+'</details>').join("");
 };
 </script></body></html>`;
