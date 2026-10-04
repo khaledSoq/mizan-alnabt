@@ -91,6 +91,10 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
 .rel .plain { color:var(--soft); }
 .pick { border:1px solid var(--one); background:none; color:var(--one); border-radius:999px; font-size:0.75rem; padding:0.15rem 0.6rem; margin-top:0.3rem; }
 .card a { color:var(--one); }
+.zchip { display:flex; align-items:center; justify-content:center; gap:0.4rem; flex-wrap:wrap; margin:0.8rem 0 0;
+  background:var(--surf); border:1px solid var(--ring); border-radius:0.7rem; padding:0.45rem 0.7rem; font-size:0.85rem; }
+.zchip .taf { font-size:1.05rem; }
+.zchip button { border:0; background:var(--elev); color:var(--fg); border-radius:999px; width:1.9rem; height:1.9rem; }
 .foot { font-size:0.7rem; color:var(--subtle); text-align:center; margin-top:1.4rem; line-height:1.8; }
 </style>
 </head>
@@ -126,6 +130,7 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
     </div>
   </div>
 
+  <div class="zchip" id="zchip" hidden></div>
   <div class="status" id="status">جارٍ تحميل الأرشيف…</div>
   <div id="letters" class="letters"></div>
   <div id="grid" class="grid"></div>
@@ -157,7 +162,7 @@ const stripAl = w => (w.startsWith("ال") && w.length >= 5) ? w.slice(2) : w;
 
 // ---------- البيانات ----------
 let W = [], F = [], N, P, Z = [], ZA = [], ZC = [], IDS = [], WSET = new Set();
-const state = { mode: "end", shown: PAGE, results: [] };
+const state = { mode: "end", shown: PAGE, results: [], z: "", zw: "" };
 const $ = id => document.getElementById(id);
 
 async function load() {
@@ -199,8 +204,11 @@ function search() {
     $("status").innerHTML = `عدد القوافي: <b>${ar(W.length)}</b>`; return; }
   const min = +$("min").value, len = +$("len").value || 0, merge = $("noal").checked;
   const out = new Map();
+  const z = state.z;
   for (let i = 0; i < W.length; i++) {
     if (!m(W[i])) continue;
+    // "بنفس الوزن": الوزن الأرجح أو أحد المتعادلات أو قراءة مشروطة، لأن التعادل يُكسر بترتيب قد يختلف بين المحركين
+    if (z && Z[i] !== z && !(ZA[i] && ZA[i].split("|").includes(z)) && !(ZC[i] && ZC[i].split("|").some(x => x.split(":")[1] === z))) continue;
     const key = merge ? stripAl(W[i]) : W[i];
     const g = out.get(key);
     if (g) { g.n += N[i]; g.members.push(i); if (N[i] > N[g.rep]) g.rep = i; }
@@ -343,6 +351,14 @@ function openWord(w) {
   if (i >= 0) openCard({ key: w, n: N[i], rep: i, members: [i] });
 }
 
+// ---------- "بنفس الوزن" القادم من الميزان ----------
+function renderZ() {
+  const el = $("zchip");
+  if (!state.z) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  el.innerHTML = `<span>بنفس وزن «${esc(state.zw)}»:</span> ${chips(state.z).replace(/<span class="bits">[^<]*<\/span>/, "")}<button id="zx" title="ألغِ">✕</button>`;
+}
+
 // ---------- الأحداث ----------
 let timer;
 $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, 140); });
@@ -369,6 +385,7 @@ $("grid").addEventListener("click", e => {
   const c = e.target.closest(".cell"); if (c) openCard(state.results[+c.dataset.k]);
 });
 $("more").addEventListener("click", () => { state.shown += PAGE; render(); });
+$("zchip").addEventListener("click", e => { if (e.target.id === "zx") { state.z = ""; state.zw = ""; renderZ(); search(); } });
 $("sheet").addEventListener("click", e => {
   if (e.target.id === "sheet" || e.target.id === "x") { history.state && history.state.card ? history.back() : closeCard(); return; }
   const pk = e.target.closest("[data-pick]");
@@ -385,8 +402,11 @@ $("sheet").addEventListener("click", e => {
 window.addEventListener("popstate", () => { if ($("sheet").classList.contains("on")) closeCard(); });
 
 load().then(() => {
-  const q0 = new URLSearchParams(location.search).get("q");
+  const sp = new URLSearchParams(location.search);
+  const q0 = sp.get("q"), z0 = sp.get("z");
   if (q0) $("q").value = q0;
+  if (z0 && /^[01]{2,32}$/.test(z0)) { state.z = z0; state.zw = sp.get("w") || ""; }
+  renderZ();
   search();
 }).catch(err => { $("status").textContent = "تعذّر تحميل الأرشيف: " + err.message; });
 </script>
