@@ -1,0 +1,39 @@
+# أرشيف القوافي
+
+صفحة القوافي في `docs/qawafi/` تقرأ بياناتها من `docs/qawafi/data/`، وهذه البيانات **لا تُرفع للمستودع**: تُبنى في GitHub Actions عند النشر (`.github/workflows/pages.yml`) وتُحفظ في الذاكرة المؤقتة، ولا يُعاد بناؤها إلا إذا تغيّر كود هذا المجلد أو المحرك.
+
+## خط البناء
+
+| الخطوة | الملف | المدة التقريبية |
+|---|---|---|
+| تنزيل Ashaar واستخراج القوافي | `build_qawafi.py --download` | ٩ دقائق |
+| عمود الوزن بمحرك الميزان | `wazn.py --mizan ../..` | دقيقة |
+| حارس الجودة: مراجعة الخمسين | `test_wazn.py --min 40` | ثوانٍ |
+| بيانات الصفحة | `make_web.py` | دقيقة |
+
+`test_wazn.py` يقيس الوزن على مراجعة خالد اليدوية (`wazn_gold_50.json`)، ويُفشل النشر إن نزلت النتيجة عن الحد. ارفع الحد كلما تحسّن المحرك.
+
+## التشغيل محليًا
+
+```bash
+cd tools/qawafi
+pip install pyarrow
+python build_qawafi.py --download --data data --out out
+python wazn.py --mizan ../.. --rhymes out/rhymes.csv
+python test_wazn.py --mizan ../.. --rhymes out/rhymes.csv
+python make_web.py --rhymes out/rhymes.csv --verses out/verses.jsonl.gz --out ../../docs/qawafi/data
+python qafia.py "ين" --rhymes out/rhymes.csv --verses out/verses.jsonl.gz --show 1
+```
+
+## قرارات مطبّقة في البيانات
+
+- العامي مستبعد حتى يُجمع النبطي الحقيقي (أغلب العامي في Ashaar مصري).
+- الصدر والعجز معاملة واحدة.
+- الشاهد القديم يُنشر نصه، والحديث وغير محدد العصر رابط المصدر فقط.
+- التشكيل في المدونة فصيح والميزان نجدي، فالتشكيل يحسم التعادل فقط ولا ينقض قراءة المحرك.
+
+## المعاني
+
+تأتي من سوار عبر الوسيط `worker/siwar-proxy.js` (Cloudflare Worker). المفتاح سرّ في إعدادات Cloudflare، ولا يوجد في هذا المستودع.
+
+المصادر: مجموعة أشعار (Ashaar) للبحث والتطوير، ومنصة سوار من مجمع الملك سلمان العالمي للغة العربية.

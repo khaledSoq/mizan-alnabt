@@ -18,6 +18,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # بيانات القوافي: تُبنى هنا ولا تُرفع للمستودع. تُحفظ في الذاكرة المؤقتة
+      # وتُعاد فقط إذا تغيّر كود القوافي أو المحرك (لأن عمود الوزن يعتمد عليه).
+      - name: restore qawafi data
+        id: qcache
+        uses: actions/cache@v4
+        with:
+          path: docs/qawafi/data
+          key: qawafi-data-${{ hashFiles('tools/qawafi/**', 'engine/**', 'data/meters.json') }}
+
+      - uses: actions/setup-python@v5
+        if: steps.qcache.outputs.cache-hit != 'true'
+        with:
+          python-version: "3.12"
+
+      - name: build qawafi data
+        if: steps.qcache.outputs.cache-hit != 'true'
+        working-directory: tools/qawafi
+        run: |
+          pip install pyarrow
+          python build_qawafi.py --download --data /tmp/ashaar --out /tmp/qout
+          python wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv
+          python test_wazn.py --mizan ../.. --rhymes /tmp/qout/rhymes.csv --min 40
+          python make_web.py --rhymes /tmp/qout/rhymes.csv --verses /tmp/qout/verses.jsonl.gz --out ../../docs/qawafi/data
+
+      # الصفحة الرئيسية تُولَّد من مولّدها حتى يبقى المولّد هو المرجع
+      - name: build static index
+        run: python3 scripts/build-static.py
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true

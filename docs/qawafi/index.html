@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>القوافي · ميزان النبط</title>
+<meta name="description" content="أرشيف قوافي الشعر العربي مع الوزن والشواهد والمعاني"/>
+<meta name="theme-color" content="#12100e"/>
+<meta name="color-scheme" content="dark"/>
+<meta name="referrer" content="no-referrer"/>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23f3ead8'/><text x='32' y='44' text-anchor='middle' font-size='36' fill='%231c1612'>ق</text></svg>"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap"/>
+<style>
+:root {
+  --bg:#12100e; --elev:#1a1714; --surf:#211d18; --paper:#f3ead8; --edge:#e4d7c0;
+  --ink:#1c1612; --soft:#3a322b; --fg:#f4efe6; --muted:#9a9186; --subtle:#6e675f;
+  --ok:#6b7f63; --okfg:#ecf3e8; --one:#3f5c4a; --zero:#7a4a42; --bd:#3a342d; --ring:#8a9a7b;
+  --sans:"Noto Naskh Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --disp:"Amiri","Traditional Arabic","Noto Naskh Arabic",serif;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+[hidden] { display:none !important; }
+html, body { margin:0; min-height:100%; background:var(--bg); color:var(--fg); }
+body { font-family:var(--sans); padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+button, select, input { font-family:inherit; }
+button { cursor:pointer; }
+a { color:var(--edge); }
+.wrap { max-width:44rem; margin:0 auto; padding:0.85rem 0.85rem 3rem; }
+.top { display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; }
+.kicker { margin:0; font-size:0.72rem; color:var(--muted); }
+h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:1.25; }
+.navbtn { flex:none; border:1px solid var(--bd); background:var(--elev); color:var(--fg); text-decoration:none;
+  border-radius:999px; padding:0.45rem 0.85rem; font-size:0.85rem; }
+.lede { margin:0.35rem 0 0.8rem; font-size:0.82rem; line-height:1.7; color:var(--muted); }
+.panel { background:var(--surf); border:1px solid var(--bd); border-radius:0.85rem; padding:0.85rem; }
+.modes { display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.6rem; }
+.chip { border:1px solid var(--bd); background:var(--elev); color:var(--fg); border-radius:999px;
+  padding:0.4rem 0.8rem; font-size:0.82rem; min-height:2.3rem; }
+.chip.on { background:var(--paper); color:var(--ink); border-color:var(--paper); font-weight:700; }
+.qrow { display:flex; gap:0.4rem; }
+#q { flex:1; min-width:0; border:1px solid var(--bd); border-radius:0.55rem; background:var(--elev); color:var(--fg);
+  font-family:var(--disp); font-size:1.5rem; padding:0.35rem 0.8rem; outline:none; text-align:center; }
+#q:focus { border-color:var(--ring); }
+.wild { display:none; gap:0.35rem; }
+.wild.on { display:flex; }
+.wild button { width:2.6rem; border:1px solid var(--bd); background:var(--elev); color:var(--fg); border-radius:0.55rem; font-size:1.2rem; }
+.opts { display:flex; flex-wrap:wrap; gap:0.5rem 0.9rem; margin-top:0.7rem; font-size:0.8rem; color:var(--muted); align-items:center; }
+.opts label { display:flex; gap:0.35rem; align-items:center; }
+.opts select { background:var(--elev); color:var(--fg); border:1px solid var(--bd); border-radius:0.4rem; padding:0.2rem 0.3rem; }
+.hint { font-size:0.75rem; color:var(--subtle); margin-top:0.5rem; line-height:1.6; }
+.status { text-align:center; color:var(--muted); font-size:0.9rem; margin:0.9rem 0 0.6rem; }
+.status b { color:var(--fg); }
+.grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:0.4rem; }
+.cell { background:var(--paper); color:var(--ink); border:0; border-radius:0.6rem; padding:0.5rem 0.25rem 0.4rem;
+  text-align:center; min-height:3.6rem; }
+.cell .w { font-family:var(--disp); font-size:1.25rem; line-height:1.35; word-break:break-word; }
+.cell .n { font-size:0.7rem; color:var(--soft); }
+.more { display:block; margin:0.8rem auto; }
+.letters { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:0.35rem; }
+.letters button { background:var(--surf); color:var(--fg); border:1px solid var(--bd); border-radius:0.55rem; padding:0.35rem 0; }
+.letters .l { font-family:var(--disp); font-size:1.35rem; display:block; }
+.letters .c { font-size:0.68rem; color:var(--muted); }
+/* البطاقة */
+.sheet { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none; align-items:flex-end; justify-content:center; z-index:10; }
+.sheet.on { display:flex; }
+.card { background:var(--paper); color:var(--ink); width:100%; max-width:44rem; max-height:88vh; overflow-y:auto;
+  border-radius:1rem 1rem 0 0; padding:1rem 1rem calc(1.2rem + env(safe-area-inset-bottom)); }
+.card h2 { margin:0; font-family:var(--disp); font-size:2rem; }
+.card .sub { color:var(--soft); font-size:0.82rem; margin:0.2rem 0 0.6rem; }
+.close { float:left; border:0; background:var(--edge); color:var(--ink); border-radius:999px; width:2.2rem; height:2.2rem; font-size:1.1rem; }
+.sec { border-top:1px solid #d8c9ae; padding-top:0.6rem; margin-top:0.7rem; }
+.sec h3 { margin:0 0 0.4rem; font-size:0.85rem; color:var(--soft); }
+.la { display:inline-block; border-radius:0.4rem; padding:0.15rem 0.55rem; margin:0.1rem; font-size:0.85rem; color:#fff; }
+.la.y { background:var(--one); } .la.n { background:var(--ink); } .la.s { background:var(--zero); }
+.bits { font-family:monospace; letter-spacing:0.15em; color:var(--soft); font-size:0.8rem; }
+.note { font-size:0.75rem; color:#6e6155; line-height:1.7; }
+.verse { font-family:var(--disp); font-size:1.15rem; line-height:2; text-align:center; }
+.verse .p { color:var(--soft); font-size:0.78rem; font-family:var(--sans); }
+.grp { border:1px solid #d8c9ae; border-radius:0.6rem; padding:0.5rem 0.6rem; margin:0.4rem 0; }
+.grp > .gh { font-family:var(--disp); font-size:1.2rem; font-weight:700; }
+.ent { border-top:1px dashed #cdbd9f; padding:0.45rem 0; }
+.ent:first-of-type { border-top:0; }
+.ent.chosen { background:#e9f0e4; border-radius:0.5rem; padding:0.45rem; }
+.tag { display:inline-block; font-size:0.7rem; background:var(--edge); border-radius:999px; padding:0.05rem 0.5rem; margin:0 0.2rem; color:var(--soft); }
+.def { line-height:1.85; font-size:0.95rem; }
+.rel { font-size:0.82rem; margin-top:0.2rem; }
+.rel button { border:0; background:none; color:var(--one); text-decoration:underline; padding:0 0.15rem; font:inherit; }
+.rel .plain { color:var(--soft); }
+.pick { border:1px solid var(--one); background:none; color:var(--one); border-radius:999px; font-size:0.75rem; padding:0.15rem 0.6rem; margin-top:0.3rem; }
+.card a { color:var(--one); }
+.foot { font-size:0.7rem; color:var(--subtle); text-align:center; margin-top:1.4rem; line-height:1.8; }
+</style>
+</head>
+<body>
+<noscript>فعّل جافاسكربت حتى تشتغل القوافي.</noscript>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <p class="kicker">أرشيف القوافي · من الشعر العربي</p>
+      <h1>القوافي</h1>
+    </div>
+    <a class="navbtn" href="../">← ميزان النبط</a>
+  </div>
+  <p class="lede">اكتب آخر حروف القافية. اضغط الكلمة لترى وزنها وشاهدها ومعناها.</p>
+
+  <div class="panel">
+    <div class="modes" id="modes">
+      <button class="chip on" data-m="end">تنتهي بـ</button>
+      <button class="chip" data-m="start">تبدأ بـ</button>
+      <button class="chip" data-m="has">تتضمن</button>
+      <button class="chip" data-m="adv">متقدم</button>
+    </div>
+    <div class="qrow">
+      <input id="q" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="ين" inputmode="text"/>
+      <div class="wild" id="wild"><button data-ins="*">*</button><button data-ins="?">؟</button></div>
+    </div>
+    <div class="hint" id="advhint" hidden>* أي عدد من الحروف، ؟ حرف واحد. مثال: ؟ا؟ين يعطي ياسين ودارين.</div>
+    <div class="opts">
+      <label><input type="checkbox" id="noal"/> ادمج "ال"</label>
+      <label>الأحرف <select id="len"><option value="">أي</option></select></label>
+      <label>تكرار ≥ <select id="min"><option selected>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>50</option></select></label>
+      <label>ترتيب <select id="sort"><option value="n">الأكثر ورودًا</option><option value="a">أبجدي</option></select></label>
+    </div>
+  </div>
+
+  <div class="status" id="status">جارٍ تحميل الأرشيف…</div>
+  <div id="letters" class="letters"></div>
+  <div id="grid" class="grid"></div>
+  <button id="more" class="chip more" hidden>المزيد</button>
+
+  <p class="foot">القوافي مستخرجة من مجموعة أشعار (Ashaar) للشعر العربي الفصيح. الوزن بمحرك ميزان النبط، تقريبي حين تُوزن الكلمة وحدها.<br/>المعاني من منصة سوار، مجمع الملك سلمان العالمي للغة العربية.</p>
+</div>
+
+<div class="sheet" id="sheet"><div class="card" id="card"></div></div>
+
+<script>
+"use strict";
+const PROXY = "https://qawafi-siwar.k-alsoqair.workers.dev/lookup?w=";
+const PAGE = 210;
+const LEX = { "رياض": "معجم الرياض للغة العربية المعاصرة", "محيط": "القاموس المحيط",
+  "طلاب١": "المعجم العربي للطلاب (الابتدائية الأولى)", "طلاب٢": "المعجم العربي للطلاب (الابتدائية العليا)",
+  "طلاب٣": "المعجم العربي للطلاب (المتوسطة والثانوية)" };
+const LETTERS = "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" ");
+
+// ---------- التطبيع: مطابق لـ build_qawafi.py ----------
+const DIAC = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g;
+const UNI = { "أ":"ا", "إ":"ا", "آ":"ا", "ٱ":"ا", "ى":"ي", "ة":"ه" };
+const norm = (s, keepWild) => (s || "").replace(DIAC, "").replace(/[؟]/g, "?")
+  .replace(keepWild ? /[^\u0621-\u064A*?]/g : /[^\u0621-\u064A]/g, "").replace(/[أإآٱىة]/g, c => UNI[c]);
+const noDiac = s => (s || "").replace(DIAC, "");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+const ar = n => Number(n).toLocaleString("ar-EG");
+const stripAl = w => (w.startsWith("ال") && w.length >= 5) ? w.slice(2) : w;
+
+// ---------- البيانات ----------
+let W = [], F = [], N, P, Z = [], ZA = [], ZC = [], IDS = [], WSET = new Set();
+const state = { mode: "end", shown: PAGE, results: [] };
+const $ = id => document.getElementById(id);
+
+async function load() {
+  const r = await fetch("data/rhymes.tsv");
+  if (!r.ok) throw new Error("rhymes " + r.status);
+  const text = await r.text();
+  const lines = text.split("\n");
+  N = new Int32Array(lines.length); P = new Int32Array(lines.length);
+  for (let i = 0; i < lines.length; i++) {
+    const c = lines[i].split("\t");
+    W[i] = c[0]; F[i] = c[1] || c[0]; N[i] = +c[2]; P[i] = +c[3];
+    Z[i] = c[4]; ZA[i] = c[5]; ZC[i] = c[6]; IDS[i] = c[7];
+  }
+  W.forEach(w => WSET.add(w));
+  const counts = {};
+  for (let i = 0; i < W.length; i++) { const l = W[i].slice(-1); counts[l] = (counts[l] || 0) + 1; }
+  $("letters").innerHTML = LETTERS.map(l => `<button data-l="${l}"><span class="l">${l}</span><span class="c">${ar(counts[l] || 0)}</span></button>`).join("");
+  const lenSel = $("len");
+  for (let k = 2; k <= 12; k++) lenSel.insertAdjacentHTML("beforeend", `<option>${k}</option>`);
+}
+
+// ---------- البحث ----------
+function matcher(raw) {
+  const q = norm(raw, state.mode === "adv");
+  if (!q) return null;
+  if (state.mode === "end") return w => w.endsWith(q);
+  if (state.mode === "start") return w => w.startsWith(q);
+  if (state.mode === "has") return w => w.includes(q);
+  let pat = q.includes("*") || q.includes("?") ? q : "*" + q;
+  const rx = new RegExp("^" + pat.replace(/\*/g, ".*").replace(/\?/g, ".") + "$");
+  return w => rx.test(w);
+}
+
+function search() {
+  const raw = $("q").value;
+  const m = matcher(raw);
+  $("letters").hidden = !!m;
+  if (!m) { $("grid").innerHTML = ""; $("more").hidden = true;
+    $("status").innerHTML = `عدد القوافي: <b>${ar(W.length)}</b>`; return; }
+  const min = +$("min").value, len = +$("len").value || 0, merge = $("noal").checked;
+  const out = new Map();
+  for (let i = 0; i < W.length; i++) {
+    if (!m(W[i])) continue;
+    const key = merge ? stripAl(W[i]) : W[i];
+    const g = out.get(key);
+    if (g) { g.n += N[i]; g.members.push(i); if (N[i] > N[g.rep]) g.rep = i; }
+    else out.set(key, { key, n: N[i], rep: i, members: [i] });
+  }
+  let res = [...out.values()].filter(g => g.n >= min && (!len || g.key.length === len));
+  if ($("sort").value === "a") res.sort((a, b) => a.key.localeCompare(b.key, "ar"));
+  else res.sort((a, b) => b.n - a.n);
+  state.results = res; state.shown = PAGE;
+  $("status").innerHTML = `عدد القوافي: <b>${ar(res.length)}</b>`;
+  render();
+}
+
+function render() {
+  const res = state.results.slice(0, state.shown);
+  $("grid").innerHTML = res.map((g, k) =>
+    `<button class="cell" data-k="${k}"><div class="w">${esc(F[g.rep])}</div><div class="n">${ar(g.n)}</div></button>`).join("");
+  $("more").hidden = state.results.length <= state.shown;
+}
+
+// ---------- الوزن ----------
+function chips(bits) {
+  if (!bits) return "";
+  let i = 0, out = "";
+  while (i < bits.length && bits[i] === "0") { out += `<span class="la s">ـْ</span>`; i++; }
+  while (i < bits.length) {
+    if (bits.startsWith("110", i)) { out += `<span class="la y">نعم</span>`; i += 3; }
+    else if (bits.startsWith("10", i)) { out += `<span class="la n">لا</span>`; i += 2; }
+    else { out += `<span class="bits">${bits.slice(i)}</span>`; break; }
+  }
+  return out + ` <span class="bits">${bits}</span>`;
+}
+
+function waznHtml(i) {
+  if (!Z[i]) return `<p class="note">تعذّر وزنها.</p>`;
+  let h = `<div>${chips(Z[i])}</div>`;
+  if (ZC[i]) h += `<p class="note">مشروط بالنطق:</p>` + ZC[i].split("|").map(x => {
+    const [f, b] = x.split(":"); return `<div><span class="verse" style="font-size:1rem">${esc(f)}</span> ${chips(b)}</div>`; }).join("");
+  else if (ZA[i]) h += `<p class="note">متعادل: قد تُقرأ أيضًا</p>` + ZA[i].split("|").map(b => `<div>${chips(b)}</div>`).join("");
+  return h + `<p class="note">وزن الكلمة منفردة على النطق النجدي. داخل البيت قد يختلف.</p>`;
+}
+
+// ---------- الشواهد ----------
+const bucketCache = new Map();
+async function bucket(b) {
+  if (!bucketCache.has(b)) bucketCache.set(b, fetch(`data/w/${b}.json`).then(r => r.ok ? r.json() : {}).catch(() => ({})));
+  return bucketCache.get(b);
+}
+async function witnessesHtml(i) {
+  const ids = (IDS[i] || "").split(",").filter(Boolean).map(Number);
+  if (!ids.length) return `<p class="note">لا شاهد.</p>`;
+  const rows = await Promise.all(ids.map(async id => (await bucket(id % 256))[id]));
+  const clean = t => esc((t || "").replace(/\u0640/g, "").replace(/\s+/g, " "));
+  return rows.filter(Boolean).map(([s, a, poet, era, url]) => s || a
+    ? `<div class="verse">${clean(s)} <span class="p">***</span> ${clean(a)}<div class="p">${esc(poet)}${era ? " · " + esc(era) : ""} · <a href="${esc(url)}" target="_blank" rel="noopener">المصدر</a></div></div>`
+    : `<div class="verse"><div class="p">${era ? "شاهد من " + esc(era) : "شاهد غير محدد العصر"} للشاعر ${esc(poet)}: <a href="${esc(url)}" target="_blank" rel="noopener">اقرأه في مصدره</a></div></div>`).join("");
+}
+
+// ---------- المعنى من سوار ----------
+const senseKey = w => "qawafi:sense:" + w;
+function getChoice(w) { try { return localStorage.getItem(senseKey(w)); } catch (e) { return null; } }
+function setChoice(w, id) { try { id ? localStorage.setItem(senseKey(w), id) : localStorage.removeItem(senseKey(w)); } catch (e) {} }
+
+function relHtml(rel) {
+  const by = {};
+  for (const [t, w] of rel) (by[t] = by[t] || []).push(w);
+  return Object.entries(by).map(([t, ws]) => `<div class="rel"><b>${esc(t)}:</b> ` +
+    [...new Set(ws)].map(w => WSET.has(norm(w)) ? `<button data-go="${esc(norm(w))}">${esc(w)}</button>` : `<span class="plain">${esc(w)}</span>`).join("، ") + `</div>`).join("");
+}
+
+function entryHtml(e, chosen) {
+  const tags = `<span class="tag" title="${esc(LEX[e.lex] || e.lex)}">${esc(e.lex)}</span>` +
+    (e.root ? `<span class="tag">جذر ${esc(e.root)}</span>` : "") + (e.pattern ? `<span class="tag">${esc(e.pattern)}</span>` : "");
+  const senses = e.senses.map(s => `<div class="def">${esc(s.d)}</div>` + (s.rel ? relHtml(s.rel) : "") +
+    (s.ex ? `<div class="rel plain">مثال: ${s.ex.map(esc).join(" / ")}</div>` : "")).join("");
+  return `<div class="ent${chosen ? " chosen" : ""}"><b class="verse" style="font-size:1.1rem">${esc(e.lemma)}</b> ${tags}${senses}` +
+    `<div><button class="pick" data-pick="${esc(e.id)}">${chosen ? "✓ معناي هنا، ألغِ" : "هذا المعنى"}</button></div></div>`;
+}
+
+function dedupe(entries) {
+  const seen = new Set();
+  return entries.filter(e => { const k = e.lemma + "|" + e.lex + "|" + (e.senses[0] ? e.senses[0].d : "");
+    if (seen.has(k)) return false; seen.add(k); return true; });
+}
+
+async function meaningHtml(word, query) {
+  let j;
+  try {
+    const r = await fetch(PROXY + encodeURIComponent(query));
+    j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || r.status);
+  } catch (e) { return `<p class="note">تعذّر جلب المعنى الآن.</p>`; }
+  if (j.stop) return `<p class="note">كلمة وظيفية، لا معنى معجمي يفيد هنا.</p>`;
+  if (!j.groups.length) return `<p class="note">لم يجد سوار هذه الكلمة في المعاجم العامة.</p>`;
+  const choice = getChoice(word);
+  let chosenHtml = "";
+  const groups = j.groups.map(g => {
+    const ents = dedupe(g.entries.filter(e => e.senses && e.senses.length));
+    if (!ents.length) return "";
+    const c = ents.find(e => e.id === choice);
+    if (c) chosenHtml = `<div class="grp"><div class="gh">المعنى الذي اخترته</div>${entryHtml(c, true)}</div>`;
+    const rest = ents.filter(e => e.id !== choice);
+    if (!rest.length) return "";
+    return `<div class="grp"><div class="gh">${esc(noDiac(ents[0].lemma))}${g.self ? " ✓" : ""}</div>` +
+      rest.map(e => entryHtml(e, false)).join("") + `</div>`;
+  }).join("");
+  const via = j.via && j.via !== "مباشر" ? `<p class="note">جاءت النتائج ${esc(j.via)}.</p>` : "";
+  return chosenHtml + `<p class="note">${chosenHtml ? "خيارات أخرى:" : "اختر المعنى الذي تقصده:"}</p>` + groups + via;
+}
+
+// ---------- البطاقة ----------
+let cardWord = null;
+async function openCard(g) {
+  const i = g.rep, word = W[i];
+  cardWord = { g, word, query: noDiac(F[i]) };
+  const members = g.members.length > 1 ? `<div class="sub">تجمع: ${g.members.map(m => esc(F[m])).join("، ")}</div>` : "";
+  $("card").innerHTML = `<button class="close" id="x">✕</button><h2>${esc(F[i])}</h2>
+    <div class="sub">وردت ${ar(g.n)} مرة عند نحو ${ar(g.members.reduce((s, m) => s + P[m], 0))} شاعرًا</div>${members}
+    <div class="sec"><h3>الوزن</h3>${waznHtml(i)}</div>
+    <div class="sec"><h3>الشاهد</h3><div id="wit" class="note">…</div></div>
+    <div class="sec"><h3>المعنى</h3><div id="mean" class="note">جارٍ البحث في سوار…</div></div>`;
+  $("sheet").classList.add("on");
+  if (!history.state || !history.state.card) history.pushState({ card: true }, "");
+  $("card").scrollTop = 0;
+  const me = cardWord;
+  witnessesHtml(i).then(h => { if (cardWord === me) $("wit").innerHTML = h; });
+  meaningHtml(word, me.query).then(h => { if (cardWord === me) $("mean").innerHTML = h; });
+}
+function closeCard() { $("sheet").classList.remove("on"); cardWord = null; }
+function openWord(w) {
+  const i = W.indexOf(w);
+  if (i >= 0) openCard({ key: w, n: N[i], rep: i, members: [i] });
+}
+
+// ---------- الأحداث ----------
+let timer;
+$("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(search, 140); });
+["noal", "len", "min", "sort"].forEach(id => $(id).addEventListener("change", search));
+$("modes").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]"); if (!b) return;
+  state.mode = b.dataset.m;
+  document.querySelectorAll("#modes .chip").forEach(x => x.classList.toggle("on", x === b));
+  $("wild").classList.toggle("on", state.mode === "adv");
+  $("advhint").hidden = state.mode !== "adv";
+  search(); $("q").focus();
+});
+$("wild").addEventListener("click", e => {
+  const b = e.target.closest("[data-ins]"); if (!b) return;
+  const q = $("q"), s = q.selectionStart ?? q.value.length;
+  q.value = q.value.slice(0, s) + b.dataset.ins + q.value.slice(q.selectionEnd ?? s);
+  q.focus(); q.setSelectionRange(s + 1, s + 1); search();
+});
+$("letters").addEventListener("click", e => {
+  const b = e.target.closest("[data-l]"); if (!b) return;
+  $("q").value = b.dataset.l; search();
+});
+$("grid").addEventListener("click", e => {
+  const c = e.target.closest(".cell"); if (c) openCard(state.results[+c.dataset.k]);
+});
+$("more").addEventListener("click", () => { state.shown += PAGE; render(); });
+$("sheet").addEventListener("click", e => {
+  if (e.target.id === "sheet" || e.target.id === "x") { history.state && history.state.card ? history.back() : closeCard(); return; }
+  const pk = e.target.closest("[data-pick]");
+  if (pk && cardWord) {
+    const id = pk.dataset.pick, me = cardWord;
+    setChoice(me.word, getChoice(me.word) === id ? null : id);
+    $("mean").innerHTML = "…";
+    meaningHtml(me.word, me.query).then(h => { if (cardWord === me) $("mean").innerHTML = h; });
+    return;
+  }
+  const go = e.target.closest("[data-go]");
+  if (go) openWord(go.dataset.go);
+});
+window.addEventListener("popstate", () => { if ($("sheet").classList.contains("on")) closeCard(); });
+
+load().then(() => {
+  const q0 = new URLSearchParams(location.search).get("q");
+  if (q0) $("q").value = q0;
+  search();
+}).catch(err => { $("status").textContent = "تعذّر تحميل الأرشيف: " + err.message; });
+</script>
+</body>
+</html>

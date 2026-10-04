@@ -33,6 +33,8 @@ body { font-family:var(--sans); text-align:right; padding: env(safe-area-inset-t
 button { font-family:inherit; appearance:none; -webkit-appearance:none; cursor:pointer; }
 .wrap { max-width:44rem; margin:0 auto; padding:0.85rem 0.85rem 2.5rem; }
 .kicker { margin:0; font-size:0.72rem; color:var(--muted); }
+.navbtn { float:left; border:1px solid var(--bd); background:var(--elev); color:var(--fg); text-decoration:none;
+  border-radius:999px; padding:0.45rem 0.85rem; font-size:0.85rem; }
 h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:1.25; }
 .lede { margin:0.35rem 0 0.8rem; font-size:0.82rem; line-height:1.7; color:var(--muted); }
 .panel { background:var(--surf); border:1px solid var(--bd); border-radius:0.85rem; padding:0.85rem; }
@@ -132,6 +134,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
 <noscript>فعّل جافاسكربت حتى يشتغل الميزان.</noscript>
 <div class="wrap">
   <header>
+    <a class="navbtn" href="qawafi/">القوافي ←</a>
     <p class="kicker">شعر نبطي · من غير تشكيل</p>
     <h1>ميزان النبط</h1>
     <p class="lede">اكتب الصدر، وإن أحببت العجز. بلا حركات. اضغط الحرف: حركة ثم سكون ثم شدة.</p>
