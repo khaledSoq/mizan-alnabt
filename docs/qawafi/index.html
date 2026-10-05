@@ -112,7 +112,7 @@ h1 { margin:0.1rem 0 0; font-family:var(--disp); font-size:1.85rem; line-height:
       <p class="kicker">أرشيف القوافي · من الشعر العربي</p>
       <h1>القوافي</h1>
     </div>
-    <a class="navbtn" href="../">← ميزان النبط</a>
+    <div style="display:flex;gap:0.35rem;flex-wrap:wrap;justify-content:flex-end"><a class="navbtn" href="../muradif/">المرادفات</a><a class="navbtn" href="../">← ميزان النبط</a></div>
   </div>
   <p class="lede">اكتب آخر حروف القافية. اضغط الكلمة لترى وزنها وشاهدها ومعناها.</p>
 
@@ -298,13 +298,21 @@ function relHtml(rel) {
 
 const plain = t => String(t ?? "").replace(/<br\s*\/?>/gi, " / ").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
-function entryHtml(e, chosen) {
+// الاختيار لكل معنى لا لكل مدخل: المدخل الواحد فيه معانٍ كثيرة (عين: البصر والنبع والجاسوس)،
+// والمرادفات مربوطة بالمعنى. المفتاح "معرّف المدخل#رقم المعنى"، والمفتاح القديم (المدخل وحده) ما زال يُقبل
+const senseId = (e, k) => `${e.id}#${k}`;
+const ownsChoice = (e, choice) => !!choice && (choice === e.id || choice.startsWith(e.id + "#"));
+function entryHtml(e, choice, onlyChosen) {
   const tags = `<span class="tag" title="${esc(LEX[e.lex] || e.lex)}">${esc(e.lex)}</span>` +
     (e.root ? `<span class="tag">جذر ${esc(e.root)}</span>` : "") + (e.pattern ? `<span class="tag">${esc(e.pattern)}</span>` : "");
-  const senses = e.senses.map(s => `<div class="def">${esc(plain(s.d))}</div>` + (s.rel ? relHtml(s.rel) : "") +
-    (s.ex ? `<div class="rel plain">مثال: ${s.ex.map(x => esc(plain(x))).join(" / ")}</div>` : "")).join("");
-  return `<div class="ent${chosen ? " chosen" : ""}"><b class="verse" style="font-size:1.1rem">${esc(e.lemma)}</b> ${tags}${senses}` +
-    `<div><button class="pick" data-pick="${esc(e.id)}">${chosen ? "✓ معناي هنا، ألغِ" : "هذا المعنى"}</button></div></div>`;
+  const senses = e.senses.map((s, k) => {
+    const on = choice === senseId(e, k) || choice === e.id;
+    if (onlyChosen && !on) return "";
+    return `<div class="${on ? "ent chosen" : ""}"><div class="def">${esc(plain(s.d))}</div>` + (s.rel ? relHtml(s.rel) : "") +
+      (s.ex ? `<div class="rel plain">مثال: ${s.ex.map(x => esc(plain(x))).join(" / ")}</div>` : "") +
+      `<div><button class="pick" data-pick="${esc(senseId(e, k))}">${on ? "✓ معناي هنا، ألغِ" : "هذا المعنى"}</button></div></div>`;
+  }).join("");
+  return `<div class="ent"><b class="verse" style="font-size:1.1rem">${esc(e.lemma)}</b> ${tags}${senses}</div>`;
 }
 
 function dedupe(entries) {
@@ -342,12 +350,12 @@ async function meaningHtml(word, query) {
   const groups = j.groups.map(g => {
     const ents = dedupe(g.entries.filter(e => e.senses && e.senses.length));
     if (!ents.length) return "";
-    const c = ents.find(e => e.id === choice);
-    if (c) chosenHtml = `<div class="grp"><div class="gh">المعنى الذي اخترته</div>${entryHtml(c, true)}</div>`;
-    const rest = ents.filter(e => e.id !== choice);
+    const c = ents.find(e => ownsChoice(e, choice));
+    if (c) chosenHtml = `<div class="grp"><div class="gh">المعنى الذي اخترته</div>${entryHtml(c, choice, true)}</div>`;
+    const rest = ents.filter(e => !ownsChoice(e, choice));
     if (!rest.length) return "";
     return `<div class="grp"><div class="gh">${esc(noDiac(ents[0].lemma))}${g.self ? " ✓" : ""}</div>` +
-      rest.map(e => entryHtml(e, false)).join("") + `</div>`;
+      rest.map(e => entryHtml(e, null)).join("") + `</div>`;
   }).join("");
   const via = j.via && j.via !== "مباشر" ? `<p class="note">جاءت النتائج ${esc(j.via)}.</p>` : "";
   return chosenHtml + `<p class="note">${chosenHtml ? "خيارات أخرى:" : "اختر المعنى الذي تقصده:"}</p>` + groups + via;
@@ -396,7 +404,11 @@ async function synonymsHtml(word, query, i) {
   if (j.stop || !j.groups.length) return `<p class="note">لا مرادفات لهذه الكلمة في سوار.</p>`;
   const choice = getChoice(word);
   const ents = [];
-  for (const g of j.groups) for (const e of g.entries) if (choice ? e.id === choice : g.self) ents.push(e);
+  for (const g of j.groups) for (const e of g.entries) {
+    if (choice ? !ownsChoice(e, choice) : !g.self) continue;
+    const k = choice && choice.includes("#") ? +choice.split("#")[1] : -1;
+    ents.push(k >= 0 ? { ...e, senses: e.senses[k] ? [e.senses[k]] : [] } : e);
+  }
   const suf = rhymeSuffix(i), mine = waznSet(i), seen = new Set([W[i]]), syns = [];
   for (const e of ents) for (const s of e.senses || []) for (const r of s.rel || []) {
     if (!/رادف/.test(r[0])) continue;
