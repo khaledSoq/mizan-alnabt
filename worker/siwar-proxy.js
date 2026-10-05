@@ -8,6 +8,7 @@
 // المسارات:
 //   /               صفحة اختبار
 //   /lookup?w=كلمة  المجموعات المقطّرة والمرتبة
+//   /forms?l=لِمة    صيغ التصريف المشكولة من سوار (للأفعال)، للمدخل المطابق بحروفه وشدته
 //   /health         فحص الإعداد
 
 const VERSION = "v2"; // غيّره عند تعديل منطق التقطير ليُتجاهل المحفوظ القديم
@@ -108,6 +109,34 @@ async function siwar(env, q) {
   return r.json();
 }
 
+// صيغ التصريف: سوار يعيدها للأفعال فقط (ثبت بالقياس: الأسماء والصفات بلا صيغ).
+// المدخل يطابق بحروفه مع الشدة، فـ"حزن" بلا شدة غير "حزّن".
+const skel = (s) => (s || "").replace(/[\u064B-\u0650\u0652\u0670\u0640\s]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي");
+async function forms(env, ctx, lemma) {
+  const key = `${VERSION}:forms:${skel(lemma)}`;
+  if (mem.has(key)) return { ...mem.get(key), cached: "mem" };
+  if (env.QAWAFI_KV) {
+    const hit = await env.QAWAFI_KV.get(key, "json");
+    if (hit) { mem.set(key, hit); return { ...hit, cached: "kv" }; }
+  }
+  const url = `https://siwar.ksaa.gov.sa/api/v1/external/public/conjugations?${new URLSearchParams({ query: noDiac(lemma), lexiconIds: LEXICON_IDS })}`;
+  const r = await fetch(url, { headers: { apikey: env.SIWAR_API_KEY, Accept: "application/json" } });
+  if (!r.ok) throw new Error(`siwar ${r.status}`);
+  const data = await r.json();
+  const want = skel(lemma), out = [];
+  for (const e of Array.isArray(data) ? data : []) {
+    if (skel(e.lemma) !== want) continue;
+    for (const f of e.wordForms || []) {
+      const v = (f.value || "").trim();
+      if (v && !out.includes(v)) out.push(v);
+    }
+  }
+  const res = { lemma, forms: out.slice(0, 80) };
+  mem.set(key, res);
+  if (env.QAWAFI_KV) ctx.waitUntil(env.QAWAFI_KV.put(key, JSON.stringify(res), { expirationTtl: 60 * 60 * 24 * 180 }).catch(() => {}));
+  return { ...res, cached: null };
+}
+
 async function lookup(env, ctx, word) {
   const key = `${VERSION}:${word}`;
   if (mem.has(key)) return { ...mem.get(key), cached: "mem" };
@@ -175,6 +204,13 @@ export default {
       } catch (e) {
         return json({ error: String(e.message || e), word }, 502, cors);
       }
+    }
+    if (url.pathname === "/forms") {
+      const lemma = (url.searchParams.get("l") || "").trim();
+      if (!/^[\u0621-\u0652\u0670]{2,30}$/.test(lemma)) return json({ error: "لِمة عربية واحدة" }, 400, cors);
+      if (!env.SIWAR_API_KEY) return json({ error: "المفتاح غير مضبوط في إعدادات الوسيط" }, 500, cors);
+      try { return json(await forms(env, ctx, lemma), 200, cors); }
+      catch (e) { return json({ error: String(e.message || e), lemma }, 502, cors); }
     }
     if (url.pathname === "/") {
       return new Response(TEST_PAGE, { headers: { "Content-Type": "text/html; charset=utf-8" } });
