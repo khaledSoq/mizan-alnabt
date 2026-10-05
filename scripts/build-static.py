@@ -137,6 +137,7 @@ noscript { display:block; margin:0.8rem; padding:1rem; background:#3a1f1c; color
 <div class="wrap">
   <header>
     <a class="navbtn" href="qawafi/">القوافي ←</a>
+    <a class="navbtn" href="muradif/" style="margin-left:0.35rem">المرادفات</a>
     <p class="kicker">شعر نبطي · من غير تشكيل</p>
     <h1>ميزان النبط</h1>
     <p class="lede">اكتب الصدر، وإن أحببت العجز. بلا حركات. اضغط الحرف: حركة ثم سكون ثم شدة.</p>
