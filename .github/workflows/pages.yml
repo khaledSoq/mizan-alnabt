@@ -46,13 +46,13 @@ jobs:
 
       # محرك الموقع يُبنى من TypeScript بنفس إعداد الحزمة السابقة (طابقها حرفًا حرفًا قبل إصلاح الواو والياء)
       - name: build engine bundle
-        run: npx --yes esbuild@0.28.2 src/lib/arud/index.ts --bundle --format=iife --global-name=Arud --target=es2019 --outfile=docs/engine.js --log-level=warning
+        run: npm run build:engine
 
       # حارس التطابق: محرك بايثون (الأرشيف) ومحرك الموقع. الأربعة المسموحة تعادلات قديمة معروفة
       - name: engine parity
-        run: python3 tools/parity/parity.py --max-diffs 4
+        run: npm run parity
 
-      # الصفحة الرئيسية تُولَّد من مولّدها حتى يبقى المولّد هو المرجع
+      # الصفحة الرئيسية تُولَّد من مولّدها حتى يبقى المولّد هو المرجع
       - name: build static index
         run: python3 scripts/build-static.py
 

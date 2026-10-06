@@ -13,3 +13,20 @@ jobs:
           python-version: "3.12"
       - name: unit tests
         run: python -m unittest discover -s tests -v
+
+  # نفس حارس النشر، يعمل على كل PR حتى يُكتشف اختلاف المحركين قبل الدمج لا عند النشر
+  engine-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: meters.json identical in both engines
+        run: cmp data/meters.json src/lib/arud/meters.json
+      - name: build engine bundle
+        run: npm run build:engine
+      - name: engine parity
+        run: npm run parity
+      - name: build static index
+        run: python3 scripts/build-static.py

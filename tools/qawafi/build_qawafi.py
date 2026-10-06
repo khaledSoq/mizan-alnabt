@@ -98,7 +98,9 @@ def vkey(sadr: str, ajz: str) -> bytes:
 
 
 # ---------- البناء ----------
-HF = "https://huggingface.co/datasets/arbml/ashaar/resolve/main/data/"
+# مثبّت على نسخة بعينها (آخر تعديل 2024-07-14) حتى لا يتغير الأرشيف أو ينكسر النشر إن تغيّر المصدر
+ASHAAR_REV = "9b5e723df1c5b13b9e4428caff758fe2f3c737f6"
+HF = f"https://huggingface.co/datasets/arbml/ashaar/resolve/{ASHAAR_REV}/data/"
 PARTS = ["train-00000-of-00002.parquet", "train-00001-of-00002.parquet"]
 
 

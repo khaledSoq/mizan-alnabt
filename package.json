@@ -2,19 +2,12 @@
   "name": "mizan-alnabt",
   "private": true,
   "version": "1.0.0",
-  "description": "ميزان النبط — وزن الشعر النبطي بلا تشكيل",
+  "description": "ميزان النبط: وزن الشعر النبطي بلا تشكيل",
   "type": "module",
   "scripts": {
-    "test": "python3 -m unittest tests/test_engine.py -v"
-  },
-  "dependencies": {
-    "@fontsource/amiri": "^5.3.0",
-    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
-    "@tanstack/react-router": "^1.170.0",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.510.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "tailwind-merge": "^3.5.0"
+    "build:engine": "npx --yes esbuild@0.28.2 src/lib/arud/index.ts --bundle --format=iife --global-name=Arud --target=es2019 --outfile=docs/engine.js --log-level=warning",
+    "build": "npm run build:engine && python3 scripts/build-static.py",
+    "parity": "python3 tools/parity/parity.py --max-diffs 4",
+    "test": "python3 -m unittest discover -s tests -v"
   }
 }
