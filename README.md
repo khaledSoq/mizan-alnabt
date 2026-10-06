@@ -20,7 +20,14 @@ python3 -m unittest tests/test_engine.py -v
 python3 app.py --serve --port 8090
 ```
 
-افتح `docs/index.html` في المتصفح لواجهة الويب بلا خادم.
+واجهة الويب تُولَّد ولا تُرفع للمستودع. لبنائها محليًا (يحتاج Node لأجل esbuild):
+
+```bash
+npm run build      # docs/engine.js ثم docs/index.html
+npm run parity     # تطابق محرك بايثون ومحرك الموقع
+```
+
+ثم افتح `docs/index.html` في المتصفح.
 
 ## البحور
 

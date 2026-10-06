@@ -11,10 +11,11 @@
 
 | الخطوة | الملف | المدة التقريبية |
 |---|---|---|
-| تنزيل Ashaar واستخراج القوافي | `build_qawafi.py --download` | ٩ دقائق |
+| تنزيل Ashaar (نسخة مثبّتة `ASHAAR_REV`) واستخراج القوافي | `build_qawafi.py --download` | ٩ دقائق |
 | عمود الوزن بمحرك الميزان | `wazn.py --mizan ../..` | دقيقة |
 | حارس الجودة: مراجعة الخمسين | `test_wazn.py --min 44` | ثوانٍ |
 | بيانات الصفحة | `make_web.py` | دقيقة |
+| فهرس مفردات الأشعار لصفحة المرادفات | `build_vocab.py` | دقيقتان |
 
 `test_wazn.py` يقيس الوزن على مراجعة خالد اليدوية (`wazn_gold_50.json`)، ويُفشل النشر إن نزلت النتيجة عن الحد. ارفع الحد كلما تحسّن المحرك.
 
@@ -27,7 +28,7 @@ python build_qawafi.py --download --data data --out out
 python wazn.py --mizan ../.. --rhymes out/rhymes.csv
 python test_wazn.py --mizan ../.. --rhymes out/rhymes.csv
 python make_web.py --rhymes out/rhymes.csv --verses out/verses.jsonl.gz --out ../../docs/qawafi/data
-python qafia.py "ين" --rhymes out/rhymes.csv --verses out/verses.jsonl.gz --show 1
+python build_vocab.py --verses out/verses.jsonl.gz --out ../../docs/qawafi/data
 ```
 
 ## قرارات مطبّقة في البيانات
