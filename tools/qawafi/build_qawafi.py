@@ -151,7 +151,7 @@ def build(data_dir: str, out_dir: str) -> None:
                         cands = [(lines[i], lines[i + 1]) for i in range(0, len(lines), 2)]
                     lw = [norm(a).split()[-1] for _, a in cands]
                     ks = [rawi_keys(w) for w in lw]
-                    dom = collections.Counter(x for k in ks for x in k).most_common(1)[0][0]
+                    dom = collections.Counter(x for k in ks for x in sorted(k)).most_common(1)[0][0]  # sorted: ترتيب ثابت للمتعادلين، فترتيب المجموعة يتغير مع كل تشغيل
 
                     # قاعدة ب: قافية الصدر، في القصائد الزوجية فقط لأن تناوب الفردية غير موثوق
                     sw = [None] * len(cands)
@@ -159,7 +159,7 @@ def build(data_dir: str, out_dir: str) -> None:
                     if not odd and len(cands) >= SADR_MIN_BAITS:
                         sw = [norm(s).split()[-1] for s, _ in cands]
                         sks = [rawi_keys(w) for w in sw]
-                        sdom = collections.Counter(x for k in sks for x in k).most_common(1)[0][0]
+                        sdom = collections.Counter(x for k in sks for x in sorted(k)).most_common(1)[0][0]
                         if sum(sdom in k for k in sks) / len(sks) >= SADR_SHARE:
                             st["poems_sadr_rhymed"] += 1
                             s_ok = [sdom in k for k in sks]

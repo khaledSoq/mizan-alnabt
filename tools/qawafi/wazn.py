@@ -71,7 +71,7 @@ def scan_variants(forms, tokenize, generate):
         return base, alts, []
     options = [base] + alts
     votes = {}
-    for f in sorted(set(forms), key=lambda x: -len(DIAC_MARKS.findall(x))):
+    for f in sorted(set(forms), key=lambda x: (-len(DIAC_MARKS.findall(x)), x)):  # x يحسم التعادل بثبات
         # نفس الحروف تمامًا (الهمزة منها): "واحكُمِ" فعل أمر لا "وأحكم"
         if not DIAC_MARKS.search(f) or DIAC.sub("", f) != DIAC.sub("", forms[0]):
             continue

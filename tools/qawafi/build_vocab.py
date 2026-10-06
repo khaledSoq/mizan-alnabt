@@ -83,7 +83,7 @@ def main():
     for i, b in enumerate(buckets):
         p = os.path.join(a.out, "v", f"{i}.json")
         with open(p, "w", encoding="utf-8") as fh:
-            json.dump(b, fh, ensure_ascii=False, separators=(",", ":"))
+            json.dump(b, fh, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
         sizes.append(os.path.getsize(p))
     stats = {"tokens": sum(count.values()), "forms": len(count),
              "forms_indexed": sum(1 for n in count.values() if n >= MIN_COUNT), "stems": len(index),
