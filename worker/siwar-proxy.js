@@ -4,12 +4,15 @@
 //   SIWAR_API_KEY    سرّ (Secret): مفتاح سوار
 //   QAWAFI_KV        ربط KV (اختياري): الذاكرة الدائمة. بدونه يعمل الوسيط بلا حفظ
 //   ALLOWED_ORIGINS  متغير نصي (اختياري): مواقع مسموحة مفصولة بفواصل
+//   RATE_LIMITER     ربط Rate Limiting (اختياري): ٦٠ طلبًا في الدقيقة لكل عنوان IP. بدونه لا حد
 //
 // المسارات:
-//   /               صفحة اختبار
 //   /lookup?w=كلمة  المجموعات المقطّرة والمرتبة
 //   /forms?l=لِمة    صيغ التصريف المشكولة من سوار (للأفعال)، للمدخل المطابق بحروفه وشدته
 //   /health         فحص الإعداد
+//
+// الحماية: /lookup و /forms لا تُخدم إلا لطلب من موقع مسموح (ترويسة Origin)، ثم حد الطلبات.
+// الترويسة يمكن تزويرها من خارج المتصفح، فحد الطلبات هو الضابط الحقيقي لاستهلاك مفتاح سوار.
 
 const VERSION = "v2"; // غيّره عند تعديل منطق التقطير ليُتجاهل المحفوظ القديم
 const SIWAR = "https://siwar.ksaa.gov.sa/api/v1/external/public/search";
@@ -169,14 +172,28 @@ async function lookup(env, ctx, word) {
 }
 
 // ---------- HTTP ----------
+function originAllowed(origin, env) {
+  if (!origin) return false;
+  const allowed = (env.ALLOWED_ORIGINS ? env.ALLOWED_ORIGINS.split(",").map((s) => s.trim()) : DEFAULT_ORIGINS);
+  return allowed.includes(origin) || LOCAL_ORIGIN.test(origin);
+}
+
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin");
-  if (!origin) return {};
-  const allowed = (env.ALLOWED_ORIGINS ? env.ALLOWED_ORIGINS.split(",").map((s) => s.trim()) : DEFAULT_ORIGINS);
-  if (allowed.includes(origin) || LOCAL_ORIGIN.test(origin)) {
-    return { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Access-Control-Allow-Methods": "GET, OPTIONS" };
+  if (!originAllowed(origin, env)) return {};
+  return { "Access-Control-Allow-Origin": origin, "Vary": "Origin", "Access-Control-Allow-Methods": "GET, OPTIONS" };
+}
+
+// حد الطلبات لكل عنوان IP. يُطبّق على الطلب كله (حتى ما يُخدم من الذاكرة) لأنه يحسب طلبات الوسيط أيضًا
+async function rateLimited(request, env) {
+  if (!env.RATE_LIMITER) return false;
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  try {
+    const { success } = await env.RATE_LIMITER.limit({ key: ip });
+    return !success;
+  } catch (e) {
+    return false; // عطل في الحد لا يوقف الخدمة
   }
-  return {};
 }
 
 const json = (obj, status, extra) => new Response(JSON.stringify(obj), {
@@ -191,7 +208,14 @@ export default {
     if (request.method !== "GET") return json({ error: "GET فقط" }, 405, cors);
 
     if (url.pathname === "/health") {
-      return json({ ok: true, version: VERSION, hasKey: Boolean(env.SIWAR_API_KEY), hasKV: Boolean(env.QAWAFI_KV) }, 200, cors);
+      return json({ ok: true, version: VERSION, hasKey: Boolean(env.SIWAR_API_KEY), hasKV: Boolean(env.QAWAFI_KV),
+        hasLimit: Boolean(env.RATE_LIMITER) }, 200, cors);
+    }
+    if (url.pathname === "/lookup" || url.pathname === "/forms") {
+      if (!originAllowed(request.headers.get("Origin"), env)) return json({ error: "غير مسموح" }, 403, cors);
+      if (await rateLimited(request, env)) {
+        return json({ error: "طلبات كثيرة، انتظر دقيقة" }, 429, { ...cors, "Retry-After": "60" });
+      }
     }
     if (url.pathname === "/lookup") {
       const word = noDiac(url.searchParams.get("w"));
@@ -212,39 +236,7 @@ export default {
       try { return json(await forms(env, ctx, lemma), 200, cors); }
       catch (e) { return json({ error: String(e.message || e), lemma }, 502, cors); }
     }
-    if (url.pathname === "/") {
-      return new Response(TEST_PAGE, { headers: { "Content-Type": "text/html; charset=utf-8" } });
-    }
     return json({ error: "غير موجود" }, 404, cors);
   },
 };
 
-const TEST_PAGE = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>وسيط سوار</title>
-<style>
-:root{--bg:#12100e;--surf:#211d18;--paper:#f3ead8;--ink:#1c1612;--fg:#f4efe6;--muted:#9a9186;--bd:#3a342d;--ok:#6b7f63}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:"Noto Naskh Arabic",Tahoma,sans-serif}
-.w{max-width:40rem;margin:auto;padding:1rem}
-form{display:flex;gap:.5rem}input{flex:1;font-size:1.3rem;padding:.6rem;border-radius:.5rem;border:1px solid var(--bd);background:var(--surf);color:var(--fg)}
-button{font-size:1rem;padding:.6rem 1rem;border:0;border-radius:.5rem;background:var(--paper);color:var(--ink);font-weight:700}
-.meta{color:var(--muted);font-size:.8rem;margin:.6rem 0}
-details{background:var(--paper);color:var(--ink);border-radius:.6rem;margin:.5rem 0;padding:.5rem .8rem}
-summary{font-size:1.25rem;font-weight:700;cursor:pointer}.self{color:var(--ok)}
-.e{border-top:1px dashed #c9bba3;padding:.4rem 0}.tag{font-size:.75rem;background:#e4d7c0;border-radius:99px;padding:.1rem .5rem;margin-left:.3rem}
-.d{line-height:1.8}.rel{font-size:.85rem;color:#5a4e42}
-</style></head><body><div class="w">
-<h2>وسيط سوار</h2><form id="f"><input id="q" placeholder="اكتب كلمة" autocomplete="off"><button>ابحث</button></form>
-<div id="m" class="meta"></div><div id="r"></div></div>
-<script>
-const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-document.getElementById("f").onsubmit=async ev=>{ev.preventDefault();
- const w=document.getElementById("q").value.trim();if(!w)return;
- const m=document.getElementById("m"),r=document.getElementById("r");m.textContent="…";r.innerHTML="";
- const t=performance.now();const res=await fetch("/lookup?w="+encodeURIComponent(w));const j=await res.json();
- m.textContent=j.error?("خطأ: "+j.error):("المجموعات: "+j.groups.length+" · الطريق: "+(j.via||"لا شيء")+(j.stop?" · كلمة وظيفية":"")+" · الذاكرة: "+(j.cached||"لا")+" · الخادم "+j.ms+"ms · الكلي "+Math.round(performance.now()-t)+"ms");
- if(j.error)return;
- r.innerHTML=j.groups.map((g,i)=>'<details'+(i===0?" open":"")+'><summary class="'+(g.self?"self":"")+'">'+esc(g.bare)+(g.self?" ✓":"")+'</summary>'+
-  g.entries.map(e=>'<div class="e"><b>'+esc(e.lemma)+'</b> <span class="tag">'+esc(e.lex)+'</span>'+(e.root?'<span class="tag">جذر '+esc(e.root)+'</span>':'')+(e.pattern?'<span class="tag">'+esc(e.pattern)+'</span>':'')+
-  e.senses.map(s=>'<div class="d">'+esc(s.d)+'</div>'+(s.rel?'<div class="rel">'+s.rel.map(x=>esc(x[0])+": "+esc(x[1])+(x[2]?" ("+esc(x[2])+")":"")).join(" · ")+'</div>':'')+(s.ex?'<div class="rel">مثال: '+s.ex.map(esc).join(" / ")+'</div>':'')).join("")+'</div>').join("")+'</details>').join("");
-};
-</script></body></html>`;
